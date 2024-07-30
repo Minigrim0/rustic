@@ -1,0 +1,18 @@
+[package]
+name = "music"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "input_scale"
+path = "src/bin/scale_test.rs"
+
+[dependencies]
+libc = "0.2.155"
+rand = {version="0.8.5", features = ["small_rng"]}
+rodio = "0.17.3"
+threadpool = "1.8.1"
+winit = "0.30.0"
+
+[dev-dependencies]
+pretty_assertions = "1.1.0"
