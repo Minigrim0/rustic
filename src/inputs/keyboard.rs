@@ -1,7 +1,6 @@
 use evdev::{Device, Key};
-use std::io;
 
-fn find_keyboard() -> Option<Device> {
+pub fn find_keyboard() -> Option<Device> {
     let mut enumerator = evdev::enumerate();
     loop {
         let device_enum = enumerator.next();
@@ -17,38 +16,15 @@ fn find_keyboard() -> Option<Device> {
                 };
                 if device
                     .supported_keys()
-                    .map_or(false, |key| key.contains(Key::KEY_ENTER))
+                    .map_or(false, |key| key.contains(Key::KEY_ENTER) && key.contains(Key::KEY_Q))
                 {
-                    println!("OK");
+                    println!("`{}` - OK", device.name().unwrap_or("Unknown device"));
                     break Some(device);
                 } else {
-                    println!("NO");
+                    println!("`{}` - NO", device.name().unwrap_or("Unknown device"));
                 }
             }
             None => break None,
-        }
-    }
-}
-
-fn main() {
-    match find_keyboard() {
-        Some(mut keyboard) => loop {
-            match keyboard.fetch_events() {
-                Ok(events) => {
-                    for event in events {
-                        println!(
-                            "Event:\n\t{:?}\t{:?}\t{:?}",
-                            event.event_type(),
-                            event.code(),
-                            event.value()
-                        );
-                    }
-                }
-                Err(_) => {}
-            }
-        },
-        None => {
-            println!("No keyboard could be found");
         }
     }
 }

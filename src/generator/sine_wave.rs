@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
-use crate::tone_generator::ToneGenerator;
-use crate::adsr::ADSR;
+use crate::generator::traits::ToneGenerator;
+use crate::generator::adsr::ADSR;
 
 pub struct SineWave {
     frequency: f32,
