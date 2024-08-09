@@ -1,4 +1,25 @@
 use evdev::{Device, Key};
+use std::collections::HashMap;
+
+use crate::core::keys;
+use crate::note;
+
+pub fn get_mapping() -> HashMap<u16, keys::Key> {
+    HashMap::from([
+        (16, note!(keys::KeyCode::NoteC)),
+        (17, note!(keys::KeyCode::NoteCS)),
+        (18, note!(keys::KeyCode::NoteD)),
+        (19, note!(keys::KeyCode::NoteDS)),
+        (20, note!(keys::KeyCode::NoteE)),
+        (21, note!(keys::KeyCode::NoteF)),
+        (22, note!(keys::KeyCode::NoteFS)),
+        (23, note!(keys::KeyCode::NoteG)),
+        (24, note!(keys::KeyCode::NoteGS)),
+        (25, note!(keys::KeyCode::NoteA)),
+        (26, note!(keys::KeyCode::NoteAS)),
+        (27, note!(keys::KeyCode::NoteB)),
+    ])
+}
 
 pub fn find_keyboard() -> Option<Device> {
     let mut enumerator = evdev::enumerate();
@@ -14,10 +35,9 @@ pub fn find_keyboard() -> Option<Device> {
                         continue;
                     }
                 };
-                if device
-                    .supported_keys()
-                    .map_or(false, |key| key.contains(Key::KEY_ENTER) && key.contains(Key::KEY_Q))
-                {
+                if device.supported_keys().map_or(false, |key| {
+                    key.contains(Key::KEY_ENTER) && key.contains(Key::KEY_Q)
+                }) {
                     println!("`{}` - OK", device.name().unwrap_or("Unknown device"));
                     break Some(device);
                 } else {
