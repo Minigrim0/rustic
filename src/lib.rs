@@ -1,5 +1,4 @@
 pub mod core;
-pub mod init;
 pub mod tones;
 
 pub mod generator;

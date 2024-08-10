@@ -1,8 +1,16 @@
 use evdev::{Device, Key};
 use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use std::default::Default;
 
 use crate::core::keys;
 use crate::note;
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct KeyboardConfig {
+    pub device_path: Option<String>
+}
+
 
 pub fn get_mapping() -> HashMap<u16, keys::Key> {
     HashMap::from([
@@ -21,7 +29,22 @@ pub fn get_mapping() -> HashMap<u16, keys::Key> {
     ])
 }
 
+pub fn list_devices() {
+    let enumerator = evdev::enumerate();
+    for d in enumerator {
+        match Device::open(&d.0) {
+            Ok(device) => {
+                println!("Device {:?} - `{}`", &d.0, device.name().unwrap_or("Unknown device"));
+            },
+            Err(e) => {
+                println!("Unable to open device {:?} - {}", &d.0, e);
+            }
+        };
+    }
+}
+
 pub fn find_keyboard() -> Option<Device> {
+    list_devices();
     let mut enumerator = evdev::enumerate();
     loop {
         let device_enum = enumerator.next();

@@ -1,11 +1,29 @@
+use clap::Parser;
 use evdev::EventType;
-use music::init;
+use std::io::{self};
+use log::info;
+
+use music::core::init;
 use music::inputs;
 use music::tones::NOTES;
-use std::io::{self};
+use music::core::cli::Cli;
+
 
 fn main() -> io::Result<()> {
-    init::init();
+    let args = Cli::parse();
+    let app = if let Some(path) = args.config {
+        init::from_file(&path)
+    } else {
+        init::default()
+    };
+
+    if args.dump_config {
+        match toml::to_string(&app.config) {
+            Ok(s) => println!("{}", s),
+            Err(e) => println!("Unable to dump config: {}", e.to_string())
+        }
+        return Ok(())
+    }
 
     let buf = [0u8; 1024];
     let stdin = io::stdin();
@@ -33,7 +51,9 @@ fn main() -> io::Result<()> {
                         }
                     }
                 }
-                Err(_) => {}
+                Err(_) => {
+                    info!("Error fetching events");
+                }
             }
         },
         None => {
