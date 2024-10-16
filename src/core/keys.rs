@@ -5,6 +5,13 @@ pub enum KeyType {
     Control,
 }
 
+#[derive(Debug)]
+pub enum EventType {
+    Pressed,
+    Released,
+    Repeat,
+}
+
 /// All the keys present in the program.
 /// Every KEY corresponds to an action.
 /// They can either be up/down like the note keys or one-shot like the change octave_key.
@@ -51,6 +58,7 @@ pub struct Key {
     /// The code of the key
     pub code: KeyCode,
     pub ktype: KeyType,
+    // pub etype: EventType,
     /// Wether the keys has a sustain effect (e.g. notes can be kept playing)
     pub sustain: bool,
 }
