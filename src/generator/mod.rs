@@ -7,4 +7,5 @@ pub trait ToneGenerator {
 }
 
 pub use envelope::Envelope;
+pub use segment::Segment;
 pub mod sine_wave;
