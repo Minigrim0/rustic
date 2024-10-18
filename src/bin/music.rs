@@ -92,7 +92,6 @@ fn main() {
         Note::new(TONES_FREQ[NOTES::DS as usize][5],  11.7, 0.2),
         Note::new(TONES_FREQ[NOTES::D as usize][5],  11.85, 0.2),
         Note::new(TONES_FREQ[NOTES::C as usize][5],  12.0, 0.2),
-
     ];
 
     let mut notes = notes.iter().map(|n| (n, envelope.attach(&n.generator))).collect::<Vec<(&Note, Generator)>>();

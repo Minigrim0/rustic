@@ -9,3 +9,4 @@ pub trait ToneGenerator: std::fmt::Debug {
 pub use envelope::{Envelope, Generator};
 pub use segment::Segment;
 pub mod sine_wave;
+pub mod saw_tooth;
