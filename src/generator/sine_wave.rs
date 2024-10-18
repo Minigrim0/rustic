@@ -1,13 +1,14 @@
 use crate::generator::ToneGenerator;
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 
+#[derive(Debug)]
 pub struct SineWave {
-    frequency: f32,
-    amplitude: f32,
+    frequency: f64,
+    amplitude: f64,
 }
 
 impl SineWave {
-    pub fn new(frequency: f32, amplitude: f32) -> Self {
+    pub fn new(frequency: f64, amplitude: f64) -> Self {
         Self {
             frequency,
             amplitude,
@@ -16,7 +17,7 @@ impl SineWave {
 }
 
 impl ToneGenerator for SineWave {
-    fn generate(&self, time: f32) -> f32 {
+    fn generate(&self, time: f64) -> f64 {
         self.amplitude * (2.0 * PI * self.frequency * time).sin()
     }
 }

@@ -58,7 +58,7 @@ pub fn find_keyboard() -> Option<Device> {
                         continue;
                     }
                 };
-                if device.supported_keys().map_or(false, |key| {
+                if !device.name().unwrap_or("").contains("virtual") && device.supported_keys().map_or(false, |key| {
                     key.contains(Key::KEY_ENTER) && key.contains(Key::KEY_Q)
                 }) {
                     println!("`{}` - OK", device.name().unwrap_or("Unknown device"));

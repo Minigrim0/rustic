@@ -11,3 +11,6 @@ This sub-scoring module can be used for looping a section of music.
 
 ## Music generation
 The generation of music is done by the music generation module.
+
+
+## Inputs

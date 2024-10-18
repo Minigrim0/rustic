@@ -1,9 +1,10 @@
 use std::default::Default;
 
+#[derive(Debug, Clone)]
 pub struct Segment {
-    from: (f32, f32), // Time, Amplitude
-    to: (f32, f32),
-    pub control: Option<(f32, f32)>,
+    from: (f64, f64), // Time, Amplitude
+    to: (f64, f64),
+    pub control: Option<(f64, f64)>,
 }
 
 impl Default for Segment {
@@ -18,11 +19,11 @@ impl Default for Segment {
 
 impl Segment {
     pub fn new(
-        from: f32,
-        to: f32,
-        duration: f32,
-        offset: f32,
-        control: Option<(f32, f32)>,
+        from: f64,
+        to: f64,
+        duration: f64,
+        offset: f64,
+        control: Option<(f64, f64)>,
     ) -> Self {
         Self {
             from: (offset, from),
@@ -31,33 +32,37 @@ impl Segment {
         }
     }
 
+    pub fn change_from(&mut self, new_from: f64) {
+        self.from.1 = new_from;
+    }
+
     /// Returns true if the given time is covered by this segment.
-    pub fn covers(&self, time: f32) -> bool {
+    pub fn covers(&self, time: f64) -> bool {
         self.from.0 <= time && time <= self.to.0
     }
 
     //. Returns the start time for the current segment
-    pub fn start(&self) -> f32 {
+    pub fn start(&self) -> f64 {
         self.from.0
     }
 
     //. Returns the start time for the current segment
-    pub fn start_value(&self) -> f32 {
+    pub fn start_value(&self) -> f64 {
         self.from.1
     }
 
     //. Returns the end time for the current segment
-    pub fn end(&self) -> f32 {
+    pub fn end(&self) -> f64 {
         self.to.0
     }
 
     //. Returns the end time for the current segment
-    pub fn end_value(&self) -> f32 {
+    pub fn end_value(&self) -> f64 {
         self.to.1
     }
 
     // Returns the envelope value at the given point in time
-    pub fn at(&self, time: f32) -> f32 {
+    pub fn at(&self, time: f64) -> f64 {
         let (x0, y0) = self.from;
         let (x1, y1) = self.to;
 
