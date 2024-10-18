@@ -9,7 +9,7 @@ fn main() {
     let sine_440 = SineWave::new(440.0, 1.0);
     let mut envelope = Envelope::new(44100.0, Box::from(sine_440));
 
-    let sine_367 = SineWave::new(367.0, 1.0);
+    let sine_367 = SineWave::new(20.0, 1.0);
     let mut envelope2 = Envelope::new(44100.0, Box::from(sine_367));
 
     envelope.set_attack(0.2, 1.0, Some((0.0, 1.0)));
@@ -80,7 +80,7 @@ fn plot_data(
     let root = BitMapBackend::new("envelope.png", (1920, 1080)).into_drawing_area();
     root.fill(&WHITE)?;
     let mut chart = ChartBuilder::on(&root)
-        .caption("Envelope", ("sans-serif", 50).into_font())
+        .caption("Envelopes testing", ("sans-serif", 50).into_font())
         .margin(5)
         .x_label_area_size(30)
         .y_label_area_size(30)
@@ -88,20 +88,20 @@ fn plot_data(
 
     chart.configure_mesh().draw()?;
 
-    // chart
-    //     .draw_series(LineSeries::new(data, &RED))?
-    //     .label("Envelope")
-    //     .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+    chart
+        .draw_series(LineSeries::new(data, &RED))?
+        .label("Envelope")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
 
     chart
         .draw_series(LineSeries::new(data2, &GREEN))?
         .label("Envelope2")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &GREEN));
 
-    // chart
-    //     .draw_series(LineSeries::new(data_comb, &BLACK))?
-    //     .label("Combination")
-    //     .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+    chart
+        .draw_series(LineSeries::new(data_comb, &BLACK))?
+        .label("Combination")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLACK));
 
     // Note important times
     // chart.draw_series(PointSeries::of_element(
