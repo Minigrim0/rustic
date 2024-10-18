@@ -1,6 +1,8 @@
+use log::info;
 use music::generator::sine_wave::SineWave;
 use music::generator::Envelope;
 use plotters::prelude::*;
+use std::time::Instant;
 
 fn main() {
     // Tone Generator
@@ -13,14 +15,19 @@ fn main() {
 
     let mut results: Vec<(f32, f32)> = Vec::new();
 
-    for sample in 0..1000 {
-        // Generate over one second at 1000Hz
-        let current_time = sample as f32 / 1000.0;
+    let sample_rate = 44100.0; // Hertz
+    let duration = 1.0; // Seconds
 
-        let val = if sample < 20 {
+    info!("Generating one second sample");
+    let now = Instant::now();
+    for sample in 0..(duration * sample_rate) as i32 {
+        // Generate over one second at 1000Hz
+        let current_time = sample as f32 / sample_rate;
+
+        let val = if current_time < 0.02 * duration {
             // Note is not on yet
             envelope.get_at(current_time, None, None)
-        } else if sample < 500 {
+        } else if current_time < 0.5 * duration {
             // Note is on for the moment
             envelope.get_at(current_time, Some(0.02), None)
         } else {
@@ -30,6 +37,10 @@ fn main() {
 
         results.push((current_time, val));
     }
+    let elapsed = now.elapsed();
+
+    info!("Completed");
+    println!("Elapsed: {:.4?}", elapsed);
 
     if let Err(e) = plot_data(results, &envelope, 0.02, 0.5) {
         println!("Error: {}", e.to_string());
@@ -42,7 +53,7 @@ fn plot_data(
     note_on: f32,
     note_off: f32,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::new("envelope.png", (640, 480)).into_drawing_area();
+    let root = BitMapBackend::new("envelope.png", (1920, 1080)).into_drawing_area();
     root.fill(&WHITE)?;
     let mut chart = ChartBuilder::on(&root)
         .caption("Envelope", ("sans-serif", 50).into_font())

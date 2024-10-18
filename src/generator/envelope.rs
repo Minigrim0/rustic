@@ -54,12 +54,14 @@ impl Envelope {
 
     /// Returns the note value at a point in time, given the note_on, note_off and current time.
     pub fn get_at(&self, time: f32, note_on_time: Option<f32>, note_off_time: Option<f32>) -> f32 {
+        let current = self.generator.generate(time);
+
         let amplitude = if let Some(off_time) = note_off_time {
             // Note is off
             let elapsed = time - off_time;
             if elapsed < self.release.end() {
                 // During release
-                self.release.at(elapsed)
+                self.release.at(elapsed) * current
             } else {
                 // After release is done
                 0.0
@@ -70,18 +72,18 @@ impl Envelope {
 
             if elapsed < self.attack.end() {
                 // During attack
-                self.attack.at(elapsed)
+                self.attack.at(elapsed) * current
             } else if elapsed < self.decay.end() {
                 // During decay
-                self.decay.at(elapsed)
+                self.decay.at(elapsed) * current
             } else {
                 // During sustain
-                self.sustain()
+                self.sustain() * current
             }
         } else {
             0.0
         };
 
-        amplitude.max(0.0)
+        amplitude
     }
 }
