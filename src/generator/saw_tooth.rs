@@ -17,6 +17,8 @@ impl SawTooth {
 
 impl ToneGenerator for SawTooth {
     fn generate(&self, time: f64) -> f64 {
-        2.0 * (( time / self.period ) - ((1.0 / 2.0) + (time / self.period)).floor())
+        self.amplitude * (
+            2.0 * (( time / self.period ) - ((1.0 / 2.0) + (time / self.period)).floor())
+        )
     }
 }

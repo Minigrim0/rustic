@@ -23,6 +23,15 @@ impl Envelope {
         }
     }
 
+    pub fn constant(sample_rate: f64) -> Self {
+        Self {
+            attack: Segment::default(),
+            decay: Segment::default(),
+            release: Segment::default(),
+            sample_rate,
+        }
+    }
+
     pub fn attach<'a>(&self, generator: &'a Box<dyn ToneGenerator>) -> Generator<'a> {
         Generator::new(self.clone(), generator)
     }
@@ -58,21 +67,24 @@ impl Envelope {
 
 pub struct Generator<'a> {
     envelope: Envelope,
+    pitch_envelope: Envelope,
     generator: &'a Box<dyn ToneGenerator>,
-    last: (bool, bool, f64)  // note on ? - note off ? - last_value
+    pub last: (bool, bool, f64)  // note on ? - note off ? - last_value
 }
 
 impl<'a> Generator<'a> {
     pub fn new(envelope: Envelope, generator: &'a Box<dyn ToneGenerator>) -> Generator<'a> {
+        let sample_rate = envelope.sample_rate;
         Self {
             envelope,
+            pitch_envelope: Envelope::constant(sample_rate),
             generator,
             last: (false, false, 0.0),
         }
     }
 
     /// Returns the note value at a point in time, given the note_on, note_off and current time.
-    pub fn get_at(&mut self, time: f64, note_on_time: Option<f64>, note_off_time: Option<f64>) -> (u8, f64) {
+    pub fn get_at(&mut self, time: f64, note_on_time: Option<f64>, note_off_time: Option<f64>) -> f64 {
         let ampl = match note_on_time {
             Some(on_time) => {
                 let on_elapsed = time - on_time;
@@ -86,67 +98,20 @@ impl<'a> Generator<'a> {
                         }
                         let off_elapsed = time - off_time;
                         if off_elapsed < self.envelope.release.end() {
-                            (4, self.envelope.release.at(off_elapsed))
+                            self.envelope.release.at(off_elapsed)
                         } else {
-                            (0, 0.0)
+                            0.0
                         }
                     },
-                    None if on_elapsed < self.envelope.attack.end() => (1, self.envelope.attack.at(on_elapsed)),
-                    None if on_elapsed < self.envelope.decay.end() => (2, self.envelope.decay.at(on_elapsed)),
-                    None => (3, self.envelope.sustain())
+                    None if on_elapsed < self.envelope.attack.end() => self.envelope.attack.at(on_elapsed),
+                    None if on_elapsed < self.envelope.decay.end() => self.envelope.decay.at(on_elapsed),
+                    None => self.envelope.sustain()
                 }
             },
-            None => (0, 0.0)
+            None => 0.0
         };
 
-        self.last = (note_on_time.is_some(), note_off_time.is_some(), ampl.1);
-        (ampl.0,  ampl.1 * self.generator.generate(time))
-
-        // // After decay
-        // let amplitude = if note_on_time.is_none() {
-        //     // No note yet
-        //     print!("NNY - ");
-        //     0.0
-        // } else if let Some(on_time) = note_on_time {
-        //     print!("BDY - ");
-        //     // Note is on
-        //     let elapsed = time - on_time;
-
-        //     if elapsed < self.envelope.attack.end() {
-        //         // During attack
-        //         self.envelope.attack.at(elapsed) * current
-        //     } else if elapsed < self.envelope.decay.end() {
-        //         // During decay
-        //         self.envelope.decay.at(elapsed) * current
-        //     } else {
-        //         // Shouldn't happen
-        //         0.0
-        //     } } else if time > self.envelope.decay.end() {
-        //     // Note is off
-        //     if let Some(off_time) = note_off_time {
-        //         print!("ADN - ");
-        //         let elapsed = time - off_time;
-
-        //         if elapsed < self.envelope.release.end() {
-        //             // During release
-        //             self.envelope.release.at(elapsed) * current
-        //         } else {
-        //             // After release is done
-        //             0.0
-        //         }
-        //     // Note is still on, sustain
-        //     } else {
-        //         print!("ADY - ");
-        //         self.envelope.sustain() * current
-        //     }
-        // // Before decay & note is on
-        // }
-        // // Before decay no note
-        // } else {
-        //     print!("BDN - ");
-        //     0.0
-        // };
-
-        // amplitude
+        self.last = (note_on_time.is_some(), note_off_time.is_some(), ampl);
+        ampl * self.generator.generate(time)
     }
 }

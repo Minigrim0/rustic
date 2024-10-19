@@ -10,3 +10,5 @@ pub use envelope::{Envelope, Generator};
 pub use segment::Segment;
 pub mod sine_wave;
 pub mod saw_tooth;
+pub mod square_wave;
+pub mod white_noise;
