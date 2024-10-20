@@ -9,43 +9,40 @@ pub struct Envelope {
     pub attack: Segment,
     pub decay: Segment,
     pub release: Segment,
-    sample_rate: f64,
 }
 
 impl Envelope {
     /// Creates a new Envelope with
-    pub fn new(sample_rate: f64) -> Self {
+    pub fn new() -> Self {
         Self {
             attack: Segment::default(),
             decay: Segment::default(),
             release: Segment::default(),
-            sample_rate,
         }
     }
 
-    pub fn constant(sample_rate: f64) -> Self {
+    pub fn constant() -> Self {
         Self {
             attack: Segment::default(),
             decay: Segment::default(),
             release: Segment::default(),
-            sample_rate,
         }
     }
 
-    pub fn attach<'a>(&self, generator: &'a Box<dyn ToneGenerator>) -> Generator<'a> {
+    pub fn attach(&self, generator: Box<dyn ToneGenerator>) -> Generator {
         Generator::new(self.clone(), generator)
     }
 
-    pub fn sustain(&self) -> f64 {
+    pub fn sustain(&self) -> f32 {
         self.decay.end_value()
     }
 
-    pub fn set_attack(&mut self, duration: f64, to: f64, control: Option<(f64, f64)>) -> bool {
+    pub fn set_attack(&mut self, duration: f32, to: f32, control: Option<(f32, f32)>) -> bool {
         self.attack = Segment::new(0.0, to, duration, 0.0, control);
         true
     }
 
-    pub fn set_decay(&mut self, duration: f64, to: f64, control: Option<(f64, f64)>) -> bool {
+    pub fn set_decay(&mut self, duration: f32, to: f32, control: Option<(f32, f32)>) -> bool {
         // TODO: Check decay is correct
         self.decay = Segment::new(
             self.attack.end_value(),
@@ -58,33 +55,33 @@ impl Envelope {
     }
 
     // For release, elapsed is from 0 to release duration
-    pub fn set_release(&mut self, duration: f64, to: f64, control: Option<(f64, f64)>) -> bool {
+    pub fn set_release(&mut self, duration: f32, to: f32, control: Option<(f32, f32)>) -> bool {
         // TODO: Check release is correct
         self.release = Segment::new(self.decay.end_value(), to, duration, 0.0, control);
         true
     }
 }
 
-pub struct Generator<'a> {
-    envelope: Envelope,
-    pitch_envelope: Envelope,
-    generator: &'a Box<dyn ToneGenerator>,
-    pub last: (bool, bool, f64)  // note on ? - note off ? - last_value
+#[derive(Debug)]
+pub struct Generator {
+    envelope: Envelope,  // An envelope for the note amplitude
+    pitch_envelope: Envelope,  // An evelope for the note pitch
+    tone_generator: Box<dyn ToneGenerator>,
+    pub last: (bool, bool, f32)  // note on ? - note off ? - last_value
 }
 
-impl<'a> Generator<'a> {
-    pub fn new(envelope: Envelope, generator: &'a Box<dyn ToneGenerator>) -> Generator<'a> {
-        let sample_rate = envelope.sample_rate;
+impl Generator {
+    pub fn new(envelope: Envelope, tone_generator: Box<dyn ToneGenerator>) -> Generator {
         Self {
             envelope,
-            pitch_envelope: Envelope::constant(sample_rate),
-            generator,
+            pitch_envelope: Envelope::constant(),
+            tone_generator,
             last: (false, false, 0.0),
         }
     }
 
     /// Returns the note value at a point in time, given the note_on, note_off and current time.
-    pub fn get_at(&mut self, time: f64, note_on_time: Option<f64>, note_off_time: Option<f64>) -> f64 {
+    pub fn get_at(&mut self, time: f32, note_on_time: Option<f32>, note_off_time: Option<f32>) -> f32 {
         let ampl = match note_on_time {
             Some(on_time) => {
                 let on_elapsed = time - on_time;
@@ -112,6 +109,18 @@ impl<'a> Generator<'a> {
         };
 
         self.last = (note_on_time.is_some(), note_off_time.is_some(), ampl);
-        ampl * self.generator.generate(time)
+        ampl * self.tone_generator.generate(time)
+    }
+
+    pub fn set_tone_generator(&mut self, tone_generator: Box<dyn ToneGenerator>) {
+        self.tone_generator = tone_generator;
+    }
+
+    pub fn set_pitch_envelope(&mut self, pitch_envelope: Envelope) {
+        self.pitch_envelope = pitch_envelope
+    }
+
+    pub fn set_ampl_envelope(&mut self, ampl_envelope: Envelope) {
+        self.envelope = ampl_envelope
     }
 }

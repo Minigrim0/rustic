@@ -1,52 +1,96 @@
-use std::f64::consts::PI;
+use std::cmp::Ordering;
 
+use crate::generator::GENERATORS;
 use crate::generator::white_noise::WhiteNoise;
-use crate::generator::ToneGenerator;
+use crate::generator::{Envelope, Generator, ToneGenerator};
 use crate::generator::sine_wave::SineWave;
 use crate::generator::saw_tooth::SawTooth;
 use crate::generator::square_wave::SquareWave;
 
-// Purpose: Contains the Score struct, which is used to store a sequence of notes to be played.
+/// Represents a musical note that can be part of a score. It has an associated generator,
+/// that can generate the tone of the note in any of the `GENERATORS` shapes.
+///
+/// # Fields
+///
+/// * `frequency` - The frequency of the note in Hertz (Hz).
+/// * `start_time` - The start time of the note in seconds.
+/// * `duration` - The duration of the note in seconds.
+/// * `generator` - A boxed trait object that generates the tone for the note.
 #[derive(Debug)]
 pub struct Note {
-    pub frequency: f64,
-    pub start_time: f64,
-    pub duration: f64,
-    pub generator: Box<dyn ToneGenerator>,
+    pub frequency: f32,
+    pub start_time: f32,
+    pub duration: f32,
+    pub generator: Box<Generator>,
 }
 
-pub enum GENERATORS {
-    SINE,
-    SAW,
-    SQUARE,
-    NOISE
+impl Eq for Note {}
+
+impl PartialEq for Note {
+    fn eq(&self, other: &Self) -> bool {
+        self.start_time == other.start_time && self.frequency == other.frequency
+    }
+}
+
+impl PartialOrd for Note {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.start_time.partial_cmp(&other.start_time)
+    }
+}
+
+impl Ord for Note {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap_or(Ordering::Equal)
+    }
 }
 
 impl Note {
-    // Generate a note with a Sine generator
-    pub fn new(frequency: f64, start_time: f64, duration: f64) -> Self {
-        Self { frequency, start_time, duration, generator: Box::new(SawTooth::new(frequency, 1.0)) }
+    /// Creates a new note instance with the given parameters. The default generator is a Sine generator.
+    pub fn new(frequency: f32, start_time: f32, duration: f32) -> Self {
+        let env: Envelope = Envelope::constant();
+        let tone_generator: Box<dyn ToneGenerator> = Box::from(SineWave::new(frequency, 1.0));
+
+        Self {
+            frequency,
+            start_time,
+            duration,
+            generator: Box::from(env.attach(tone_generator))
+        }
     }
 
+    /// Sets the tone generator for the note and returns the modified note.
+    ///
+    /// This method allows you to specify the type of tone generator to be used for the note.
+    /// It takes a `GENERATORS` enum value and sets the corresponding generator.
+    ///
+    /// # Arguments
+    ///
+    /// * `generator` - The type of tone generator to be used for the note.
+    ///
+    /// # Returns
+    ///
+    /// The modified `Note` instance with the specified tone generator.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let note = Note::new(440.0, 0.0, 1.0).with_generator(GENERATORS::SINE);
+    /// ```
     pub fn with_generator(mut self, generator: GENERATORS) -> Self {
-        match generator {
-            GENERATORS::SAW => {
-                self.generator = Box::from(SawTooth::new(self.frequency, 1.0));
-                self
-            },
-            GENERATORS::SINE => {
-                self.generator = Box::from(SineWave::new(self.frequency, 1.0));
-                self
-            },
-            GENERATORS::SQUARE => {
-                self.generator = Box::from(SquareWave::new(self.frequency, 1.0));
-                self
-            },
-            GENERATORS::NOISE => {
-                self.generator = Box::from(WhiteNoise::new(1.0));
-                self
-            }
-        }
+        let new_tone_generator: Box<dyn ToneGenerator> = match generator {
+            GENERATORS::SAW => Box::from(SawTooth::new(self.frequency, 1.0)),
+            GENERATORS::SINE => Box::from(SineWave::new(self.frequency, 1.0)),
+            GENERATORS::SQUARE => Box::from(SquareWave::new(self.frequency, 1.0)),
+            GENERATORS::NOISE => Box::from(WhiteNoise::new(1.0))
+        };
+
+        self.generator.set_tone_generator(new_tone_generator);
+        self
+    }
+
+    pub fn with_envelope(mut self, envelope: &Envelope) -> Self {
+        self.generator.set_ampl_envelope(envelope.clone());
+        self
     }
 }
 

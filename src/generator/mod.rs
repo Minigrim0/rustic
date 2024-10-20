@@ -1,9 +1,17 @@
 mod envelope;
 mod segment;
 
+/// The different types of generator shapes.
+pub enum GENERATORS {
+    SINE,
+    SAW,
+    SQUARE,
+    NOISE
+}
+
 pub trait ToneGenerator: std::fmt::Debug {
     /// Generates the current time's wave value.
-    fn generate(&self, time: f64) -> f64;
+    fn generate(&self, time: f32) -> f32;
 }
 
 pub use envelope::{Envelope, Generator};

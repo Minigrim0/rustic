@@ -3,11 +3,11 @@ use rand;
 
 #[derive(Debug)]
 pub struct WhiteNoise {
-    amplitude: f64,
+    amplitude: f32,
 }
 
 impl WhiteNoise {
-    pub fn new(amplitude: f64) -> Self {
+    pub fn new(amplitude: f32) -> Self {
         Self {
             amplitude,
         }
@@ -15,7 +15,7 @@ impl WhiteNoise {
 }
 
 impl ToneGenerator for WhiteNoise {
-    fn generate(&self, _time: f64) -> f64 {
-        self.amplitude * (rand::random::<f64>() * 2.0 - 1.0)
+    fn generate(&self, _time: f32) -> f32 {
+        self.amplitude * (rand::random::<f32>() * 2.0 - 1.0)
     }
 }

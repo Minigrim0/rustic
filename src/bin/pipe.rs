@@ -1,5 +1,5 @@
 struct Pipe {
-    buff: Vec<f64>,
+    buff: Vec<f32>,
 }
 
 impl Pipe {
@@ -9,15 +9,15 @@ impl Pipe {
         }
     }
 
-    pub fn push(&mut self, item: f64) {
+    pub fn push(&mut self, item: f32) {
         self.buff.push(item);
     }
 
-    pub fn pop(&mut self) -> Option<f64> {
+    pub fn pop(&mut self) -> Option<f32> {
         self.buff.pop()
     }
 
-    pub fn take(&mut self, amount: usize) -> Vec<f64> {
+    pub fn take(&mut self, amount: usize) -> Vec<f32> {
         self.buff.drain(0..amount).collect()
     }
 }
