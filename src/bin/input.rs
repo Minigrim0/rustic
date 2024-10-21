@@ -1,13 +1,11 @@
 use clap::Parser;
 use evdev::EventType;
-use std::io::{self};
 use log::info;
+use std::io;
 
-use music::core::init;
-use music::inputs;
-use music::tones::NOTES;
-use music::core::cli::Cli;
-
+use rustic::core::cli::Cli;
+use rustic::core::init;
+use rustic::inputs;
 
 fn main() -> io::Result<()> {
     let args = Cli::parse();
@@ -20,17 +18,12 @@ fn main() -> io::Result<()> {
     if args.dump_config {
         match toml::to_string(&app.config) {
             Ok(s) => println!("{}", s),
-            Err(e) => println!("Unable to dump config: {}", e.to_string())
+            Err(e) => println!("Unable to dump config: {}", e.to_string()),
         }
-        return Ok(())
+        return Ok(());
     }
 
-    let buf = [0u8; 1024];
-    let stdin = io::stdin();
-
     let mapping = inputs::keyboard::get_mapping();
-
-    let current_scale = 4;
 
     match inputs::keyboard::find_keyboard() {
         Some(mut keyboard) => loop {

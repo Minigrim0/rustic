@@ -1,3 +1,4 @@
+use log::trace;
 use std::default::Default;
 
 use super::{segment::Segment, ToneGenerator};
@@ -21,11 +22,13 @@ impl Envelope {
         }
     }
 
+    /// A simple envelope, where the note is a maximum as soon as it is played and
+    /// at minimum as soon as it is released
     pub fn constant() -> Self {
         Self {
-            attack: Segment::default(),
-            decay: Segment::default(),
-            release: Segment::default(),
+            attack: Segment::new(0.0, 1.0, 0.0, 0.0, None),
+            decay: Segment::new(1.0, 1.0, 0.0, 0.0, None),
+            release: Segment::new(1.0, 0.0, 0.0, 0.0, None),
         }
     }
 
@@ -64,10 +67,10 @@ impl Envelope {
 
 #[derive(Debug)]
 pub struct Generator {
-    envelope: Envelope,  // An envelope for the note amplitude
-    pitch_envelope: Envelope,  // An evelope for the note pitch
+    envelope: Envelope,       // An envelope for the note amplitude
+    pitch_envelope: Envelope, // An evelope for the note pitch
     tone_generator: Box<dyn ToneGenerator>,
-    pub last: (bool, bool, f32)  // note on ? - note off ? - last_value
+    pub last: (bool, bool, f32), // note on ? - note off ? - last_value
 }
 
 impl Generator {
@@ -82,12 +85,14 @@ impl Generator {
 
     /// Returns the note value at a point in time, given the note_on, note_off and current time.
     pub fn get_at(&mut self, time: f32, note_on_time: f32, note_off_time: f32) -> f32 {
-        let ampl = if note_on_time >= time {
+        let ampl = if note_on_time <= time {
             let on_elapsed = time - note_on_time;
-            if note_off_time >= time {
-                if !self.last.1 { // The note was just released
-                    if on_elapsed < self.envelope.decay.end() {  // We haven't finished the decay cycle
-                        println!("Note off before end of decay ! - Last value: {}", self.last.2);
+            if note_off_time <= time {
+                if !self.last.1 {
+                    // The note was just released
+                    if on_elapsed < self.envelope.decay.end() {
+                        // We haven't finished the decay cycle
+                        // println!("Note off before end of decay ! - Last value: {}", self.last.2);
                         self.envelope.release.change_from(self.last.2);
                     }
                 }
@@ -122,5 +127,9 @@ impl Generator {
 
     pub fn set_ampl_envelope(&mut self, ampl_envelope: Envelope) {
         self.envelope = ampl_envelope
+    }
+
+    pub fn covers(&self, time: f32, note_on_time: f32, note_off_time: f32) -> bool {
+        time >= note_on_time && time <= note_off_time + self.envelope.release.end()
     }
 }

@@ -1,6 +1,6 @@
 pub mod core;
-pub mod tones;
 pub mod score;
+pub mod tones;
 
 pub mod generator;
 
@@ -9,3 +9,6 @@ pub mod inputs;
 
 #[cfg(feature = "plotting")]
 pub mod plotting;
+
+#[cfg(test)]
+pub mod tests;
