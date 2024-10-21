@@ -7,8 +7,10 @@ pub fn plot_data(
     y_scale: (f32, f32),
     filename: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::new(filename, (1920, 1080)).into_drawing_area();
+    let out_path = "output/".to_owned() + filename;
+    let root = BitMapBackend::new(&out_path, (1920, 1080)).into_drawing_area();
     root.fill(&WHITE)?;
+
     let mut chart = ChartBuilder::on(&root)
         .caption(title, ("sans-serif", 50).into_font())
         .margin(5)
