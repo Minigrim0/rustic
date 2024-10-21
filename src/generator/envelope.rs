@@ -81,34 +81,34 @@ impl Generator {
     }
 
     /// Returns the note value at a point in time, given the note_on, note_off and current time.
-    pub fn get_at(&mut self, time: f32, note_on_time: Option<f32>, note_off_time: Option<f32>) -> f32 {
-        let ampl = match note_on_time {
-            Some(on_time) => {
-                let on_elapsed = time - on_time;
-                match note_off_time {
-                    Some(off_time) => {
-                        if !self.last.1 { // The note was just released
-                            if on_elapsed < self.envelope.decay.end() {  // We haven't finished the decay cycle
-                                println!("Note off before end of decay ! - Last value: {}", self.last.2);
-                                self.envelope.release.change_from(self.last.2);
-                            }
-                        }
-                        let off_elapsed = time - off_time;
-                        if off_elapsed < self.envelope.release.end() {
-                            self.envelope.release.at(off_elapsed)
-                        } else {
-                            0.0
-                        }
-                    },
-                    None if on_elapsed < self.envelope.attack.end() => self.envelope.attack.at(on_elapsed),
-                    None if on_elapsed < self.envelope.decay.end() => self.envelope.decay.at(on_elapsed),
-                    None => self.envelope.sustain()
+    pub fn get_at(&mut self, time: f32, note_on_time: f32, note_off_time: f32) -> f32 {
+        let ampl = if note_on_time >= time {
+            let on_elapsed = time - note_on_time;
+            if note_off_time >= time {
+                if !self.last.1 { // The note was just released
+                    if on_elapsed < self.envelope.decay.end() {  // We haven't finished the decay cycle
+                        println!("Note off before end of decay ! - Last value: {}", self.last.2);
+                        self.envelope.release.change_from(self.last.2);
+                    }
                 }
-            },
-            None => 0.0
+                let off_elapsed = time - note_off_time;
+                if off_elapsed < self.envelope.release.end() {
+                    self.envelope.release.at(off_elapsed)
+                } else {
+                    0.0
+                }
+            } else if on_elapsed < self.envelope.attack.end() {
+                self.envelope.attack.at(on_elapsed)
+            } else if on_elapsed < self.envelope.decay.end() {
+                self.envelope.decay.at(on_elapsed)
+            } else {
+                self.envelope.sustain()
+            }
+        } else {
+            0.0
         };
 
-        self.last = (note_on_time.is_some(), note_off_time.is_some(), ampl);
+        self.last = (note_on_time >= time, note_off_time >= time, ampl);
         ampl * self.tone_generator.generate(time)
     }
 

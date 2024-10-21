@@ -6,8 +6,8 @@ use rodio::buffer::SamplesBuffer;
 
 
 use music::tones::{NOTES, TONES_FREQ};
-use music::generator::{Envelope, Generator};
-use music::score::{Note, GENERATORS};
+use music::score::Note;
+use music::generator::{GENERATORS, Envelope, Generator};
 
 #[cfg(feature = "plotting")]
 use music::plotting::plot_data;
@@ -18,7 +18,7 @@ fn main() {
     let sample_rate = 44100.0;  // Sample rate
     let mut event_queue = BinaryHeap::new();  // Event queue for the notes to play
 
-    let mut envelope = {
+    let envelope = {
         let mut env = Envelope::new();
         env.set_attack(0.1, scale * 1.0, Some((0.1, 0.0)));
         env.set_decay(0.05, scale * 0.8, None);
@@ -26,8 +26,8 @@ fn main() {
         env
     };
 
-    let mut other_envelope = {
-        let env = Envelope::new();
+    let other_envelope = {
+        let mut env = Envelope::new();
         env.set_attack(0.0, scale * 1.0, None);
         env.set_decay(0.05, scale * 0.0, None);
         env.set_release(0.0, scale * 0.0, None);
@@ -118,22 +118,60 @@ fn main() {
             Note::new(TONES_FREQ[NOTES::C as usize][5],  12.0, 0.2).with_generator(GENERATORS::SAW),
         ];
 
-        let mut enveloped_notes = notes.iter().map(|n| n.with_envelope(&envelope)).collect::<Vec<Note>>();
-        enveloped_notes.append(perc.iter().map(|n| n.with_envelope(&other_envelope)).collect::<Vec<Note>>().as_mut());
+        let mut enveloped_notes = notes.into_iter().map(|n| n.with_envelope(&envelope)).collect::<Vec<Note>>();
+        enveloped_notes.append(perc.into_iter().map(|n| n.with_envelope(&other_envelope)).collect::<Vec<Note>>().as_mut());
         enveloped_notes
     };
 
-    for note in notes.iter() {
+    for note in notes.into_iter() {
         println!("Note: {:?}", note);
         event_queue.push(note);
     }
 
 
     let mut final_vals: Vec<(f32, f32)> = Vec::new();
+    let mut current_notes: Vec<Note> = Vec::new();
+    let mut current_time: f32 = 0.0;
 
-    // _stream must live as long as the sink
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
+
+    'builder: loop {
+        current_time += 1.0 / sample_rate as f32;
+
+        // Find currently playing notes in the binary heap and push themm to the current_notes vector
+        if let Some(note) = event_queue.peek() {
+            if note.start_time <= current_time {
+                current_notes.push(event_queue.pop().unwrap());
+            }
+        }
+
+        if final_vals.len() % 1000 == 0 {
+            sink.append(SamplesBuffer::new(1 as u16, 44100, final_vals.iter().map(|(_, n)| *n).collect::<Vec<f32>>()));
+            final_vals.clear();
+        }
+
+        // If there are no notes to play, break the loop
+        if current_notes.is_empty() {
+            println!("No current notes");
+            if event_queue.is_empty() {
+                println!("Event queue is empty ! Breaking the loop");
+                break 'builder;
+            }
+            final_vals.push((current_time, 0.0));
+        }
+
+        // Generate the current sample
+        final_vals.push((
+            current_time,
+            current_notes
+                .iter_mut()
+                .map(|note| note.generator.get_at(current_time, note.start_time, note.start_time + note.duration))
+                .sum()
+        ));
+    }
+
+    // _stream must live as long as the sink
 
     // for over_sample in (0..((sample_rate * duration) as i64)).step_by(sample_rate as usize) {
     //     let mut vals: Vec<f32> = Vec::new();
