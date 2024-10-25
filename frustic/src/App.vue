@@ -4,8 +4,11 @@
 
 import { BaklavaEditor, useBaklava } from '@baklavajs/renderer-vue';
 import "@baklavajs/themes/dist/syrup-dark.css";
+import SumCombinator from "./components/nodes/testnode";
 
 const baklava = useBaklava();
+baklava.editor.registerNodeType(SumCombinator);
+// return { baklava };
 </script>
 
 <template>
