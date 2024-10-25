@@ -15,9 +15,9 @@ description = "Produces plots of envelopes"
 path = "src/bin/wave.rs"
 required-features = ["plotting"]
 
-# [[bin]]
-# name = "pipe"
-# path = "src/bin/pipe.rs"
+[[bin]]
+name = "pipe"
+path = "src/bin/pipe.rs"
 
 [dependencies]
 clap = { version = "4.5.15", features = ["derive"] }

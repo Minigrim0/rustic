@@ -33,6 +33,9 @@ impl PFSystem {
 fn main() {
     colog::init();
 
+    let duration = 1.0;  // 0.25 seconds
+    let sample_rate = 100.0;  // 100 Hz
+
     let mut filters: Vec<Box<dyn Filter>> = vec![];
 
     let source1 = Rc::new(RefCell::new(Pipe::new()));
@@ -58,7 +61,7 @@ fn main() {
     let delay_filter = DelayFilter::new(
         Rc::clone(&feedback_source),
         Rc::clone(&feedback_delayed),
-        22050,
+        (0.5 * sample_rate) as usize,
     );
 
     let ampl_filter = AmplifierFilter::new(Rc::clone(&feedback_delayed), Rc::clone(&source2), 0.75);
@@ -74,7 +77,10 @@ fn main() {
         sinks: vec![system_sink],
     };
 
-    system.push(0, 100.0);
+    // Create a `duration` second(s) long impulse
+    for i in 0..(duration * sample_rate) as usize {
+        system.push(0, 100.0 - (i as f32 / (duration * sample_rate)) * 100.0);
+    }
 
     loop {
         println!("{}", system.get_sink(0).borrow_mut().pop());
