@@ -1,9 +1,9 @@
 /// This file contains structural filters i.e. filters that do not modify
 /// values that pass through it but rather duplicate/merges its inputs
-use super::Filter;
+use super::{Filter, SafePipe};
 
 /// Duplicates the content of the input onto two outputs
-struct DuplicateFilter {
+pub struct DuplicateFilter {
     source: SafePipe,
     sinks: [SafePipe; 2],
 }
@@ -16,9 +16,9 @@ impl DuplicateFilter {
 
 impl Filter for DuplicateFilter {
     fn transform(&mut self) {
-        let input = self.source.borrow_mut().pop();
+        let source_value = self.source.borrow_mut().pop();
         self.sinks
             .iter()
-            .for_each(|sink| sink.borrow_mut().push(input));
+            .for_each(|sink| sink.borrow_mut().push(source_value));
     }
 }

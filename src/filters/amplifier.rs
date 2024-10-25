@@ -1,5 +1,4 @@
-use super::Filter;
-use crate::pf::pipe::SafePipe;
+use super::{Filter, SafePipe};
 
 /// A filter that returns the input value multiplied by a constant factor.
 /// Note: a factor < 1.0 will attenuate the input signal, while a factor > 1.0

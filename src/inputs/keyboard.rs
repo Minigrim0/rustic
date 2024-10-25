@@ -1,16 +1,8 @@
 use evdev::{Device, Key};
 use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use std::default::Default;
 
 use crate::core::keys;
 use crate::note;
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct KeyboardConfig {
-    pub device_path: Option<String>
-}
-
 
 pub fn get_mapping() -> HashMap<u16, keys::Key> {
     HashMap::from([

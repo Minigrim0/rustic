@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
 
-use super::Filter;
-use crate::pf::pipe::SafePipe;
+use super::{Filter, SafePipe};
 
 /// Delays it input for x samples
 pub struct DelayFilter {

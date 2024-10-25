@@ -1,5 +1,5 @@
 pub mod core;
-pub mod pf;
+pub mod filters;
 pub mod score;
 pub mod tones;
 

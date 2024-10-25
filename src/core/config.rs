@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 
-use crate::inputs::keyboard::KeyboardConfig;
+use crate::inputs::InputConfig;
 
 #[derive(Debug, Deserialize, Serialize)]
 /// Application Filesystem configuration
@@ -24,7 +24,8 @@ impl Default for FSConfig {
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 /// The application configuration
-pub struct Config {
-    pub keyboard: KeyboardConfig,
+pub struct AppConfig {
+    pub input: InputConfig,
     pub fs: FSConfig,
+    // pub sound_system: SoundSystemConfig,
 }

@@ -1,5 +1,4 @@
-use super::Filter;
-use crate::pf::pipe::SafePipe;
+use super::{Filter, SafePipe};
 
 /// A filter that take input from two sources and combines them into a single
 /// output by adding them together.

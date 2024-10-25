@@ -1,4 +1,3 @@
-use log::trace;
 use std::default::Default;
 
 use super::{segment::Segment, ToneGenerator};

@@ -1,6 +1,5 @@
 /// Low-pass filter using a first-order IIR filter
-use super::Filter;
-use crate::pf::pipe::SafePipe;
+use super::{Filter, SafePipe};
 
 pub struct LowPassFilter {
     source: SafePipe,

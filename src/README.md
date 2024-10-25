@@ -1,4 +1,5 @@
 # Binaries
+Folder: `bin`
 This folder contains the different binary main files.
 These are used mainly for testing purposes.
 
@@ -12,3 +13,7 @@ to a correct device and that the system (under low load at least) is fast enough
 
 ## Pipe
 A mockup of the pipe & filter system. Simulates the execution of a pipe & filter system, with a feedback loop.
+
+# Core
+Folder: `core`
+Contains the core functionality of the project. The App structure is defined here, as well as the main loop.

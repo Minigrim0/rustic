@@ -5,9 +5,8 @@ use log::info;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use rustic::pf::filters::Filter;
-use rustic::pf::filters::{AmplifierFilter, CombinatorFilter, DelayFilter, DuplicateFilter};
-use rustic::pf::pipe::{Pipe, SafePipe};
+use rustic::filters::{AmplifierFilter, CombinatorFilter, DelayFilter, DuplicateFilter};
+use rustic::filters::{Filter, Pipe, SafePipe};
 
 struct PFSystem {
     filters: Vec<Box<dyn Filter>>,
