@@ -1,0 +1,24 @@
+@import './base.css';
+
+#app {
+  margin: 0 auto;
+  font-weight: normal;
+}
+
+nav {
+    height: 5vh;
+    display: flex;
+    margin: auto auto;
+    background: #1b212e;
+}
+
+.editor {
+    width: 100vw;
+    height: 95vh;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}
