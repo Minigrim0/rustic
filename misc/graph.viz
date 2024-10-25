@@ -1,0 +1,13 @@
+digraph {
+    Source1     -> Sum1 [color=blue]
+    Source2     -> Sum [color=blue]
+    Sum1        -> Duplication [color=green]
+    Duplication -> {Delay Sum} [color=green]
+    Delay       -> Ampl [color=green]
+    Ampl        -> lowpass [color=green]
+    lowpass     -> Sum [color=green]
+    Sum         -> Sink [color=red]
+    subgraph sources {
+        rank = same; Source1; Source2;
+    }
+}
