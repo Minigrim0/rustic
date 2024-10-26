@@ -1,16 +1,17 @@
 # Music generator
 This project aims to generate music using rust and the `rodio` crate.
 
+## Frontend
+A frontend application is available under the `app` folder. This application is created using the tauri framework, with a Vue.js frontend.
+
+It aims to provide a simple user interface to create audio pipelines for the instruments.
 
 # Architecture
+The project aims to use the Pipe & Filter architecture, alongside an Event-Driven architecture.
 
-## Scoring
-The scoring module is responsible for generating the music score. This score can be recorded and played back.
-It can either record a complete piece of music in a file for later playback, or record a subset of music for immediate playback.
-This sub-scoring module can be used for looping a section of music.
+## Pipe & Filter
+This architecture is used to create a pipeline of filters that process the audio data. Each filter is a simple function that takes an input and returns an output. The output of a filter is the input of the next filter in the pipeline.
+The frontend application aims at providing a simple way to create these pipelines.
 
-## Music generation
-The generation of music is done by the music generation module.
-
-
-## Inputs
+## Event-Driven
+The event-dirven architecture aims at triggering the creation of audio from keyboard events. This is done using the evdev crate, which allows to listen to keyboard events. These events will, depending on the context (provided by the `Application` structure, trigger an instrument to start playing a certain note.
