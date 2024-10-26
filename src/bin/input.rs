@@ -4,15 +4,15 @@ use log::info;
 use std::io;
 
 use rustic::core::cli::Cli;
-use rustic::core::init;
+use rustic::core::App;
 use rustic::inputs;
 
 fn main() -> io::Result<()> {
     let args = Cli::parse();
     let app = if let Some(path) = args.config {
-        init::from_file(&path)
+        App::from_file(&path)
     } else {
-        init::default()
+        App::default()
     };
 
     if args.dump_config {

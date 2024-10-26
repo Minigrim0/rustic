@@ -1,7 +1,6 @@
 //! Pipe and Filter Architecture test
 //!! Run with `cargo run --bin pipe | uv too run pipeplot` to plot the output
 
-use log::info;
 use std::cell::RefCell;
 use std::rc::Rc;
 
