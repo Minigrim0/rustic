@@ -6,29 +6,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use rustic::filters::{AmplifierFilter, CombinatorFilter, DelayFilter, DuplicateFilter};
-use rustic::filters::{Filter, Pipe, SafePipe};
+use rustic::filters::{Filter, Pipe, PFSystem};
 
-struct PFSystem {
-    filters: Vec<Box<dyn Filter>>,
-    sources: Vec<SafePipe>,
-    sinks: Vec<SafePipe>,
-}
-
-impl PFSystem {
-    pub fn run(&mut self) {
-        for filter in self.filters.iter_mut() {
-            filter.transform();
-        }
-    }
-
-    pub fn get_sink(&self, index: usize) -> SafePipe {
-        self.sinks[index].clone()
-    }
-
-    pub fn push(&self, index: usize, value: f32) {
-        self.sources[index].borrow_mut().push(value * 2.0);
-    }
-}
 
 fn main() {
     colog::init();
@@ -71,11 +50,11 @@ fn main() {
     filters.push(Box::from(delay_filter));
     filters.push(Box::from(ampl_filter));
 
-    let mut system = PFSystem {
+    let mut system = PFSystem::new(
         filters,
-        sources: vec![source1, source2],
-        sinks: vec![system_sink],
-    };
+        vec![source1, source2],
+        vec![system_sink],
+    );
 
     // Create a `duration` second(s) long impulse
     for i in 0..(duration * sample_rate) as usize {

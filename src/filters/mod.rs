@@ -7,13 +7,21 @@ pub trait Filter {
     fn transform(&mut self);
 }
 
-struct PFSystem {
+pub struct PFSystem {
     filters: Vec<Box<dyn Filter>>,
     sources: Vec<SafePipe>,
     sinks: Vec<SafePipe>,
 }
 
 impl PFSystem {
+    pub fn new(filters: Vec<Box<dyn Filter>>, sources: Vec<SafePipe>, sinks: Vec<SafePipe>) -> Self {
+        PFSystem {
+            filters,
+            sources,
+            sinks,
+        }
+    }
+
     pub fn run(&mut self) {
         for filter in self.filters.iter_mut() {
             filter.transform();
