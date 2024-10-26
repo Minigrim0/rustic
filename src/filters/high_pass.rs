@@ -1,14 +1,14 @@
 use super::{Filter, FilterMetadata, Metadata, SafePipe};
 
-/// Low-pass filter using a first-order IIR filter
-pub struct LowPassFilter {
+/// High-pass filter using a first-order IIR filter
+pub struct HighPassFilter {
     source: SafePipe,
     sink: SafePipe,
     cutoff_frequency: f32,
     previous_output: f32,
 }
 
-impl LowPassFilter {
+impl HighPassFilter {
     pub fn new(source: SafePipe, sink: SafePipe, cutoff_frequency: f32) -> Self {
         Self {
             source,
@@ -19,21 +19,21 @@ impl LowPassFilter {
     }
 }
 
-impl Filter for LowPassFilter {
+impl Filter for HighPassFilter {
     fn transform(&mut self) {
         let input = self.source.borrow_mut().pop();
-        let alpha = self.cutoff_frequency / (self.cutoff_frequency + 1.0);
-        let output = alpha * input + (1.0 - alpha) * self.previous_output;
+        let alpha = 1.0 / (self.cutoff_frequency + 1.0);
+        let output = alpha * input + alpha * self.previous_output;
         self.previous_output = output;
         self.sink.borrow_mut().push(output);
     }
 }
 
-impl Metadata for LowPassFilter {
+impl Metadata for HighPassFilter {
     fn get_metadata() -> FilterMetadata {
         FilterMetadata {
-            name: "LowPassFilter".to_string(),
-            description: "Low-pass filter using a first-order IIR filter".to_string(),
+            name: "HighPassFilter".to_string(),
+            description: "High-pass filter using a first-order IIR filter".to_string(),
             inputs: 1,
             outputs: 1,
         }

@@ -1,6 +1,19 @@
+use serde::{Serialize, Deserialize};
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FilterMetadata {
+    pub name: String,  // Name of the filter
+    pub description: String,  // Description of the filter
+    pub inputs: usize,  // Number of input pipes
+    pub outputs: usize,  // Number of output pipes
+}
+
+pub trait Metadata {
+    fn get_metadata() -> FilterMetadata;
+}
 
 /// A filter that can process data from source pipes and send to sink pipes.
 pub trait Filter {
@@ -73,6 +86,7 @@ mod amplifier;
 mod combinator;
 mod delay;
 mod low_pass;
+mod high_pass;
 mod structural;
 
 pub type SafePipe = Rc<RefCell<Pipe>>;
@@ -81,4 +95,5 @@ pub use amplifier::*;
 pub use combinator::*;
 pub use delay::*;
 pub use low_pass::*;
+pub use high_pass::*;
 pub use structural::*;

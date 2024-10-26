@@ -1,3 +1,12 @@
+// extern crate proc_macro;
+// use proc_macro::TokenStream;
+
+// #[proc_macro_attribute]
+// pub fn derive_answer_fn(_args: TokenStream, input: TokenStream) -> TokenStream {
+//     "fn answer() -> u32 { 42 }".parse().unwrap()
+// }
+
+
 pub mod core;
 pub mod filters;
 pub mod score;
@@ -13,3 +22,17 @@ pub mod plotting;
 
 #[cfg(test)]
 pub mod tests;
+
+use filters::{Metadata, FilterMetadata};
+
+// Todo: this function must be moved to a more correct place
+pub fn filter_metadata() -> Vec<FilterMetadata> {
+    vec![
+        filters::AmplifierFilter::get_metadata(),
+        filters::DelayFilter::get_metadata(),
+        filters::LowPassFilter::get_metadata(),
+        filters::HighPassFilter::get_metadata(),
+        filters::CombinatorFilter::get_metadata(),
+        filters::DuplicateFilter::get_metadata(),
+    ]
+}

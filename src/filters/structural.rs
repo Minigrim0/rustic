@@ -1,6 +1,6 @@
 /// This file contains structural filters i.e. filters that do not modify
 /// values that pass through it but rather duplicate/merges its inputs
-use super::{Filter, SafePipe};
+use super::{Filter, FilterMetadata, Metadata, SafePipe};
 
 /// Duplicates the content of the input onto two outputs
 pub struct DuplicateFilter {
@@ -20,5 +20,16 @@ impl Filter for DuplicateFilter {
         self.sinks
             .iter()
             .for_each(|sink| sink.borrow_mut().push(source_value));
+    }
+}
+
+impl Metadata for DuplicateFilter {
+    fn get_metadata() -> FilterMetadata {
+        FilterMetadata {
+            name: "DuplicateFilter".to_string(),
+            description: "Duplicates the content of the input onto two outputs".to_string(),
+            inputs: 1,
+            outputs: 2,
+        }
     }
 }

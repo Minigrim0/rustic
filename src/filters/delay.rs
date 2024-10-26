@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use super::{Filter, SafePipe};
+use super::{Filter, FilterMetadata, Metadata, SafePipe};
 
 /// Delays it input for x samples
 pub struct DelayFilter {
@@ -27,5 +27,16 @@ impl Filter for DelayFilter {
         let output = self.buffer.pop_front().unwrap_or(0.0);
         self.buffer.push_back(input);
         self.sink.borrow_mut().push(output);
+    }
+}
+
+impl Metadata for DelayFilter {
+    fn get_metadata() -> FilterMetadata {
+        FilterMetadata {
+            name: "DelayFilter".to_string(),
+            description: "Delays its input for x samples".to_string(),
+            inputs: 1,
+            outputs: 1,
+        }
     }
 }

@@ -1,8 +1,9 @@
-use super::{Filter, SafePipe};
+use super::{Filter, FilterMetadata, Metadata, SafePipe};
 
 /// A filter that returns the input value multiplied by a constant factor.
 /// Note: a factor < 1.0 will attenuate the input signal, while a factor > 1.0
 /// will amplify it.
+// #[cfg_attr(feature = "meta", derive(Metadata))]
 pub struct AmplifierFilter {
     source: SafePipe,
     sink: SafePipe,
@@ -24,5 +25,16 @@ impl Filter for AmplifierFilter {
         let input = self.source.borrow_mut().pop();
         let output = input * self.factor;
         self.sink.borrow_mut().push(output);
+    }
+}
+
+impl Metadata for AmplifierFilter {
+    fn get_metadata() -> FilterMetadata {
+        FilterMetadata {
+            name: "AmplifierFilter".to_string(),
+            description: "A filter that returns the input value multiplied by a constant factor.".to_string(),
+            inputs: 1,
+            outputs: 1,
+        }
     }
 }

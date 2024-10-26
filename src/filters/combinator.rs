@@ -1,4 +1,4 @@
-use super::{Filter, SafePipe};
+use super::{Filter, FilterMetadata, Metadata, SafePipe};
 
 /// A filter that take input from two sources and combines them into a single
 /// output by adding them together.
@@ -19,5 +19,16 @@ impl Filter for CombinatorFilter {
         let input2 = self.source[1].borrow_mut().pop();
         let output = input1 + input2;
         self.sink.borrow_mut().push(output);
+    }
+}
+
+impl Metadata for CombinatorFilter {
+    fn get_metadata() -> FilterMetadata {
+        FilterMetadata {
+            name: "CombinatorFilter".to_string(),
+            description: "Combines two inputs by adding them together".to_string(),
+            inputs: 2,
+            outputs: 1,
+        }
     }
 }
