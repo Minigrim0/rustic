@@ -1,14 +1,16 @@
-use serde::{Serialize, Deserialize};
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
+use petgraph::graph::Graph;
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FilterMetadata {
-    pub name: String,  // Name of the filter
-    pub description: String,  // Description of the filter
-    pub inputs: usize,  // Number of input pipes
-    pub outputs: usize,  // Number of output pipes
+    pub name: String,        // Name of the filter
+    pub description: String, // Description of the filter
+    pub inputs: usize,       // Number of input pipes
+    pub outputs: usize,      // Number of output pipes
 }
 
 pub trait Metadata {
@@ -24,14 +26,20 @@ pub struct PFSystem {
     filters: Vec<Box<dyn Filter>>,
     sources: Vec<SafePipe>,
     sinks: Vec<SafePipe>,
+    graph: Graph<Rc<RefCell<Box<dyn Filter>>>, ()>,
 }
 
 impl PFSystem {
-    pub fn new(filters: Vec<Box<dyn Filter>>, sources: Vec<SafePipe>, sinks: Vec<SafePipe>) -> Self {
+    pub fn new(
+        filters: Vec<Box<dyn Filter>>,
+        sources: Vec<SafePipe>,
+        sinks: Vec<SafePipe>,
+    ) -> Self {
         PFSystem {
             filters,
             sources,
             sinks,
+            graph: Graph::new(),
         }
     }
 
@@ -47,6 +55,13 @@ impl PFSystem {
 
     pub fn push(&self, index: usize, value: f32) {
         self.sources[index].borrow_mut().push(value * 2.0);
+    }
+
+    pub fn save(&mut self) -> Result<(), ()> {
+        for filter in self.filters.iter() {
+            self.graph.add_node(Rc::new(RefCell::from(filter)));
+        }
+        Ok(())
     }
 }
 
@@ -85,8 +100,8 @@ impl Pipe {
 mod amplifier;
 mod combinator;
 mod delay;
-mod low_pass;
 mod high_pass;
+mod low_pass;
 mod structural;
 
 pub type SafePipe = Rc<RefCell<Pipe>>;
@@ -94,6 +109,6 @@ pub type SafePipe = Rc<RefCell<Pipe>>;
 pub use amplifier::*;
 pub use combinator::*;
 pub use delay::*;
-pub use low_pass::*;
 pub use high_pass::*;
+pub use low_pass::*;
 pub use structural::*;
