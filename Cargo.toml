@@ -31,6 +31,7 @@ threadpool = "1.8.1"
 toml = "0.8.19"
 winit = "0.30.0"
 plotters = { version = "0.3.7", optional = true }
+petgraph = "0.6.5"
 # macros = { path = "macros" }
 
 [dev-dependencies]
