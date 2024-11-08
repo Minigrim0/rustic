@@ -1,16 +1,22 @@
 /// This file contains structural filters i.e. filters that do not modify
 /// values that pass through it but rather duplicate/merges its inputs
 use super::{Filter, FilterMetadata, Metadata, SafePipe};
+use uuid::Uuid;
 
 /// Duplicates the content of the input onto two outputs
 pub struct DuplicateFilter {
     source: SafePipe,
     sinks: [SafePipe; 2],
+    uuid: Uuid,
 }
 
 impl DuplicateFilter {
     pub fn new(source: SafePipe, sinks: [SafePipe; 2]) -> Self {
-        Self { source, sinks }
+        Self {
+            source,
+            sinks,
+            uuid: Uuid::new_v4(),
+        }
     }
 }
 
@@ -20,6 +26,10 @@ impl Filter for DuplicateFilter {
         self.sinks
             .iter()
             .for_each(|sink| sink.borrow_mut().push(source_value));
+    }
+
+    fn get_uuid(&self) -> Uuid {
+        self.uuid
     }
 }
 

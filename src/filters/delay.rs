@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use uuid::Uuid;
 
 use super::{Filter, FilterMetadata, Metadata, SafePipe};
 
@@ -8,6 +9,7 @@ pub struct DelayFilter {
     sink: SafePipe,
     delay_for: usize,
     buffer: VecDeque<f32>,
+    uuid: Uuid,
 }
 
 impl DelayFilter {
@@ -17,6 +19,7 @@ impl DelayFilter {
             sink,
             delay_for: delay,
             buffer: VecDeque::from(vec![0.0; delay]),
+            uuid: Uuid::new_v4(),
         }
     }
 }
@@ -27,6 +30,10 @@ impl Filter for DelayFilter {
         let output = self.buffer.pop_front().unwrap_or(0.0);
         self.buffer.push_back(input);
         self.sink.borrow_mut().push(output);
+    }
+
+    fn get_uuid(&self) -> Uuid {
+        self.uuid
     }
 }
 

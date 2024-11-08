@@ -1,9 +1,11 @@
-use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
+use std::{cell::RefCell, collections::HashMap};
 
+use log::warn;
 use petgraph::graph::Graph;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FilterMetadata {
@@ -20,32 +22,68 @@ pub trait Metadata {
 /// A filter that can process data from source pipes and send to sink pipes.
 pub trait Filter {
     fn transform(&mut self);
+    fn get_uuid(&self) -> Uuid;
 }
 
-pub struct PFSystem {
-    filters: Vec<Box<dyn Filter>>,
-    sources: Vec<SafePipe>,
-    sinks: Vec<SafePipe>,
-    graph: Graph<Rc<RefCell<Box<dyn Filter>>>, ()>,
+/// A Filter that is safe to share (same-thread)
+type SafeFilter = Rc<RefCell<Box<dyn Filter>>>;
+/// A Layer that contains safe filters
+type FilterLayer = Vec<SafeFilter>;
+
+/// A Pipe & Filter system
+/// The system is composed of filters, sources, sinks and pipes.
+/// The system is represented as a directed graph where the filters are the nodes
+/// The Sources & Sinks are special nodes that have respectivilly only outgoing (source) or incoming (sink) edges
+/// The edges represent the pipes between the filters
+/// Some filters have special output properties. E.g. the delay filter's input pipe is ignored when
+/// the topology sorting is done, in order to avoid cycles. A system with cycles must include a delay or similar filter
+/// to break the cycle.
+pub struct System {
+    // The actual filter graph, from which the execution order is derived
+    graph: Graph<SafeFilter, SafePipe>,
+    // Each layer represent filters that can be run concurrently.
+    layers: Vec<FilterLayer>,
+    // The sources of the system,
+    sources: HashMap<Uuid, SafeFilter>,
+    sinks: HashMap<Uuid, SafeFilter>,
 }
 
-impl PFSystem {
-    pub fn new(
-        filters: Vec<Box<dyn Filter>>,
-        sources: Vec<SafePipe>,
-        sinks: Vec<SafePipe>,
-    ) -> Self {
-        PFSystem {
-            filters,
-            sources,
-            sinks,
+impl System {
+    pub fn new() -> Self {
+        System {
             graph: Graph::new(),
+            layers: Vec::new(),
+            sources: HashMap::new(),
+            sinks: HashMap::new(),
         }
     }
 
+    // Adds a filter to the system. Further references to this filter should be done using the returned uuid
+    pub fn add_filter(&mut self, filter: Box<dyn Filter>) -> Uuid {
+        let uuid = filter.get_uuid();
+        self.graph.add_node(Rc::from(RefCell::from(filter)));
+        uuid
+    }
+
+    // Performs one full run of the system, running every filter once in an order such that data that entered the system this
+    // run, can exit it this run as well.
     pub fn run(&mut self) {
-        for filter in self.filters.iter_mut() {
-            filter.transform();
+        for layer in self.layers.iter() {
+            // TODO: Make this parallel
+            layer.iter().for_each(|f| {
+                if let Ok(mut filter) = f.try_borrow_mut() {
+                    filter.transform();
+                } else {
+                    warn!(
+                        "Unable to borrow filter {} for transformation",
+                        if let Ok(filter) = f.try_borrow() {
+                            filter.get_uuid().to_string()
+                        } else {
+                            "ERR".to_string()
+                        }
+                    )
+                }
+            });
         }
     }
 
@@ -55,13 +93,6 @@ impl PFSystem {
 
     pub fn push(&self, index: usize, value: f32) {
         self.sources[index].borrow_mut().push(value * 2.0);
-    }
-
-    pub fn save(&mut self) -> Result<(), ()> {
-        for filter in self.filters.iter() {
-            self.graph.add_node(Rc::new(RefCell::from(filter)));
-        }
-        Ok(())
     }
 }
 

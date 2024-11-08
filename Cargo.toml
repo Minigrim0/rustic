@@ -32,6 +32,7 @@ toml = "0.8.19"
 winit = "0.30.0"
 plotters = { version = "0.3.7", optional = true }
 petgraph = "0.6.5"
+uuid = { version = "1.11.0", features = ["serde", "v4"] }
 # macros = { path = "macros" }
 
 [dev-dependencies]

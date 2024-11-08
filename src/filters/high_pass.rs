@@ -1,4 +1,5 @@
 use super::{Filter, FilterMetadata, Metadata, SafePipe};
+use uuid::Uuid;
 
 /// High-pass filter using a first-order IIR filter
 pub struct HighPassFilter {
@@ -6,6 +7,7 @@ pub struct HighPassFilter {
     sink: SafePipe,
     cutoff_frequency: f32,
     previous_output: f32,
+    uuid: Uuid,
 }
 
 impl HighPassFilter {
@@ -15,6 +17,7 @@ impl HighPassFilter {
             sink,
             cutoff_frequency,
             previous_output: 0.0,
+            uuid: Uuid::new_v4(),
         }
     }
 }
@@ -26,6 +29,10 @@ impl Filter for HighPassFilter {
         let output = alpha * input + alpha * self.previous_output;
         self.previous_output = output;
         self.sink.borrow_mut().push(output);
+    }
+
+    fn get_uuid(&self) -> Uuid {
+        self.uuid
     }
 }
 
