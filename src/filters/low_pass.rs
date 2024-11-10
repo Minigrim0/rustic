@@ -31,8 +31,8 @@ impl Filter for LowPassFilter {
         self.sink.borrow_mut().push(output);
     }
 
-    fn get_uuid(&self) -> Uuid {
-        self.uuid
+    fn get_name(&self) -> &str {
+        "Low Pass Filter"
     }
 }
 

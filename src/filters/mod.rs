@@ -1,11 +1,11 @@
+use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
-use std::{cell::RefCell, collections::HashMap};
 
 use log::warn;
-use petgraph::graph::Graph;
+use petgraph::algo::toposort;
+use petgraph::graph::{Graph, NodeIndex};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FilterMetadata {
@@ -22,7 +22,7 @@ pub trait Metadata {
 /// A filter that can process data from source pipes and send to sink pipes.
 pub trait Filter {
     fn transform(&mut self);
-    fn get_uuid(&self) -> Uuid;
+    fn get_name(&self) -> &str;
 }
 
 /// A Filter that is safe to share (same-thread)
@@ -44,8 +44,8 @@ pub struct System {
     // Each layer represent filters that can be run concurrently.
     layers: Vec<FilterLayer>,
     // The sources of the system,
-    sources: HashMap<Uuid, SafeFilter>,
-    sinks: HashMap<Uuid, SafeFilter>,
+    sources: Vec<SafePipe>,
+    sinks: Vec<SafePipe>,
 }
 
 impl System {
@@ -53,16 +53,40 @@ impl System {
         System {
             graph: Graph::new(),
             layers: Vec::new(),
-            sources: HashMap::new(),
-            sinks: HashMap::new(),
+            sources: Vec::new(),
+            sinks: Vec::new(),
         }
     }
 
     // Adds a filter to the system. Further references to this filter should be done using the returned uuid
-    pub fn add_filter(&mut self, filter: Box<dyn Filter>) -> Uuid {
-        let uuid = filter.get_uuid();
-        self.graph.add_node(Rc::from(RefCell::from(filter)));
-        uuid
+    pub fn add_filter(&mut self, filter: Box<dyn Filter>) -> NodeIndex<u32> {
+        self.graph.add_node(Rc::from(RefCell::from(filter)))
+    }
+
+    // Connects two filters together
+    pub fn connect(&mut self, from: NodeIndex<u32>, to: NodeIndex<u32>, pipe: SafePipe) {
+        self.graph.add_edge(from, to, pipe);
+    }
+
+    pub fn add_source(&mut self, source: SafePipe) {
+        self.sources.push(source);
+    }
+
+    pub fn add_sink(&mut self, sink: SafePipe) {
+        self.sinks.push(sink);
+    }
+
+    // Creates the execution layers by sorting the graph topologically.
+    pub fn compute(&mut self) -> Result<(), ()> {
+        if let Ok(topo) = toposort(&self.graph, None) {
+            for node in topo {
+                self.layers.push(vec![self.graph[node].clone()])
+            }
+
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 
     // Performs one full run of the system, running every filter once in an order such that data that entered the system this
@@ -77,7 +101,7 @@ impl System {
                     warn!(
                         "Unable to borrow filter {} for transformation",
                         if let Ok(filter) = f.try_borrow() {
-                            filter.get_uuid().to_string()
+                            filter.get_name().to_string()
                         } else {
                             "ERR".to_string()
                         }
@@ -87,12 +111,20 @@ impl System {
         }
     }
 
-    pub fn get_sink(&self, index: usize) -> SafePipe {
-        self.sinks[index].clone()
+    /// Returns a sink pipe from the system. If the index is out of bounds, returns an error.
+    pub fn get_sink(&self, index: usize) -> Result<SafePipe, ()> {
+        self.sinks.get(index).cloned().ok_or(())
     }
 
-    pub fn push(&self, index: usize, value: f32) {
-        self.sources[index].borrow_mut().push(value * 2.0);
+    /// Tries to push a value to a source pipe. Returns an error if the index is out of bounds.
+    pub fn push(&self, index: usize, value: f32) -> Result<(), ()> {
+        match self.sources.get(index) {
+            Some(source) => {
+                source.borrow_mut().push(value);
+                Ok(())
+            }
+            None => Err(()),
+        }
     }
 }
 

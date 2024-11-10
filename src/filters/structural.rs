@@ -28,8 +28,8 @@ impl Filter for DuplicateFilter {
             .for_each(|sink| sink.borrow_mut().push(source_value));
     }
 
-    fn get_uuid(&self) -> Uuid {
-        self.uuid
+    fn get_name(&self) -> &str {
+        "Duplicate"
     }
 }
 

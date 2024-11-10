@@ -4,30 +4,29 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use rustic::filters::{AmplifierFilter, CombinatorFilter, DelayFilter, DuplicateFilter};
-use rustic::filters::{Filter, Pipe, PFSystem};
+use log::error;
 
+use rustic::filters::{CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter};
+use rustic::filters::{Pipe, System};
 
 fn main() {
     colog::init();
 
-    let duration = 1.0;  // 0.25 seconds
-    let sample_rate = 100.0;  // 100 Hz
-
-    let mut filters: Vec<Box<dyn Filter>> = vec![];
+    let duration = 1.0; // 0.25 seconds
+    let sample_rate = 100.0; // 100 Hz
 
     let source1 = Rc::new(RefCell::new(Pipe::new()));
-    let source2 = Rc::new(RefCell::new(Pipe::new()));
 
     let sum_result = Rc::new(RefCell::new(Pipe::new()));
 
     let feedback_source = Rc::new(RefCell::new(Pipe::new())); // Source for the feedback loop
     let feedback_delayed = Rc::new(RefCell::new(Pipe::new())); // Delayed feedback
+    let feedback_end = Rc::new(RefCell::new(Pipe::new()));
 
     let system_sink = Rc::new(RefCell::new(Pipe::new()));
 
     let sum_filter = CombinatorFilter::new(
-        [Rc::clone(&source1), Rc::clone(&source2)],
+        [Rc::clone(&source1), Rc::clone(&feedback_end)],
         Rc::clone(&sum_result),
     );
     let dupe_filter = DuplicateFilter::new(
@@ -42,26 +41,39 @@ fn main() {
         (0.5 * sample_rate) as usize,
     );
 
-    let ampl_filter = AmplifierFilter::new(Rc::clone(&feedback_delayed), Rc::clone(&source2), 0.75);
+    // Diminish gain in feedback loop
+    let gain_filter = GainFilter::new(Rc::clone(&feedback_delayed), Rc::clone(&feedback_end), 0.75);
 
-    filters.push(Box::from(sum_filter));
-    filters.push(Box::from(dupe_filter));
-    filters.push(Box::from(delay_filter));
-    filters.push(Box::from(ampl_filter));
+    let mut system = System::new();
+    let sum_filter = system.add_filter(Box::from(sum_filter));
+    let dupe_filter = system.add_filter(Box::from(dupe_filter));
+    let delay_filter = system.add_filter(Box::from(delay_filter));
+    let gain_filter = system.add_filter(Box::from(gain_filter));
 
-    let mut system = PFSystem::new(
-        filters,
-        vec![source1, source2],
-        vec![system_sink],
-    );
+    system.connect(sum_filter, dupe_filter, sum_result);
+    system.connect(dupe_filter, delay_filter, feedback_source);
+    system.connect(delay_filter, gain_filter, feedback_delayed);
+    // Do not connect those in the graph to avoid cycles
+    // system.connect(gain_filter, sum_filter, feedback_end);
+
+    // Single system source
+    system.add_source(source1);
+
+    system.add_sink(system_sink);
+
+    if let Err(_) = system.compute() {
+        error!("An error occured while computing the filter graph's layers");
+    }
 
     // Create a `duration` second(s) long impulse
     for i in 0..(duration * sample_rate) as usize {
-        system.push(0, 100.0 - (i as f32 / (duration * sample_rate)) * 100.0);
+        system
+            .push(0, 100.0 - (i as f32 / (duration * sample_rate)) * 100.0)
+            .unwrap();
     }
 
     loop {
-        println!("{}", system.get_sink(0).borrow_mut().pop());
+        println!("{}", system.get_sink(0).unwrap().borrow_mut().pop());
         system.run();
     }
 }

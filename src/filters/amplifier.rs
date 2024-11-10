@@ -5,14 +5,14 @@ use uuid::Uuid;
 /// Note: a factor < 1.0 will attenuate the input signal, while a factor > 1.0
 /// will amplify it.
 // #[cfg_attr(feature = "meta", derive(Metadata))]
-pub struct AmplifierFilter {
+pub struct GainFilter {
     source: SafePipe,
     sink: SafePipe,
     factor: f32,
     uuid: Uuid,
 }
 
-impl AmplifierFilter {
+impl GainFilter {
     pub fn new(source: SafePipe, sink: SafePipe, factor: f32) -> Self {
         Self {
             source,
@@ -23,22 +23,22 @@ impl AmplifierFilter {
     }
 }
 
-impl Filter for AmplifierFilter {
+impl Filter for GainFilter {
     fn transform(&mut self) {
         let input = self.source.borrow_mut().pop();
         let output = input * self.factor;
         self.sink.borrow_mut().push(output);
     }
 
-    fn get_uuid(&self) -> Uuid {
-        self.uuid
+    fn get_name(&self) -> &str {
+        "Gain Filter"
     }
 }
 
-impl Metadata for AmplifierFilter {
+impl Metadata for GainFilter {
     fn get_metadata() -> FilterMetadata {
         FilterMetadata {
-            name: "AmplifierFilter".to_string(),
+            name: "GainFilter".to_string(),
             description: "A filter that returns the input value multiplied by a constant factor."
                 .to_string(),
             inputs: 1,
