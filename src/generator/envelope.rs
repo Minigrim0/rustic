@@ -21,6 +21,21 @@ impl Envelope {
         }
     }
 
+    pub fn with_attack(mut self, duration: f32, to: f32, control: Option<(f32, f32)>) -> Self {
+        self.set_attack(duration, to, control);
+        self
+    }
+
+    pub fn with_decay(mut self, duration: f32, to: f32, control: Option<(f32, f32)>) -> Self {
+        self.set_decay(duration, to, control);
+        self
+    }
+
+    pub fn with_release(mut self, duration: f32, to: f32, control: Option<(f32, f32)>) -> Self {
+        self.set_release(duration, to, control);
+        self
+    }
+
     /// A simple envelope, where the note is a maximum as soon as it is played and
     /// at minimum as soon as it is released
     pub fn constant() -> Self {

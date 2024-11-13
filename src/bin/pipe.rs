@@ -6,14 +6,20 @@ use std::rc::Rc;
 
 use log::error;
 
+use rodio::buffer::SamplesBuffer;
+use rodio::{OutputStream, Sink};
+
 use rustic::filters::{CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter};
 use rustic::filters::{Pipe, System};
+use rustic::generator::{Envelope, GENERATORS};
+use rustic::score::Note;
+use rustic::tones::{NOTES, TONES_FREQ};
 
 fn main() {
     colog::init();
 
     let duration = 1.0; // 0.25 seconds
-    let sample_rate = 100.0; // 100 Hz
+    let sample_rate = 44100.0; // 44100 Hz
 
     let source1 = Rc::new(RefCell::new(Pipe::new()));
 
@@ -38,11 +44,11 @@ fn main() {
     let delay_filter = DelayFilter::new(
         Rc::clone(&feedback_source),
         Rc::clone(&feedback_delayed),
-        (0.5 * sample_rate) as usize,
+        (0.6 * sample_rate) as usize,
     );
 
     // Diminish gain in feedback loop
-    let gain_filter = GainFilter::new(Rc::clone(&feedback_delayed), Rc::clone(&feedback_end), 0.75);
+    let gain_filter = GainFilter::new(Rc::clone(&feedback_delayed), Rc::clone(&feedback_end), 0.8);
 
     let mut system = System::new();
     let sum_filter = system.add_filter(Box::from(sum_filter));
@@ -65,15 +71,45 @@ fn main() {
         error!("An error occured while computing the filter graph's layers");
     }
 
+    let envelope = Envelope::new()
+        .with_attack(0.01, 1.0, None)
+        .with_decay(0.1, 0.8, None)
+        .with_release(0.4, 0.0, None);
+
+    let mut initial_note = Note::new(TONES_FREQ[NOTES::A as usize][5], 0.0, 0.3)
+        .with_generator(GENERATORS::SINE)
+        .with_envelope(&envelope);
+    let mut second_note = Note::new(TONES_FREQ[NOTES::C as usize][5], 0.5, 0.3)
+        .with_generator(GENERATORS::SINE)
+        .with_envelope(&envelope);
+    let mut third_note = Note::new(TONES_FREQ[NOTES::E as usize][5], 1.0, 0.3)
+        .with_generator(GENERATORS::SINE)
+        .with_envelope(&envelope);
+
     // Create a `duration` second(s) long impulse
     for i in 0..(duration * sample_rate) as usize {
         system
-            .push(0, 100.0 - (i as f32 / (duration * sample_rate)) * 100.0)
+            .push(0, initial_note.get_at(i as f32 / sample_rate))
             .unwrap();
     }
 
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let sink = Sink::try_new(&stream_handle).unwrap();
+
+    let mut values = vec![];
     loop {
+        values.clear();
+        for _ in 0..sample_rate as usize {
+            system.run();
+            values.push(system.get_sink(0).unwrap().borrow_mut().pop());
+        }
+
         println!("{}", system.get_sink(0).unwrap().borrow_mut().pop());
-        system.run();
+
+        sink.append(SamplesBuffer::new(
+            1 as u16,
+            sample_rate as u32,
+            values.iter().map(|n| *n).collect::<Vec<f32>>(),
+        ));
     }
 }

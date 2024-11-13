@@ -80,6 +80,7 @@ impl System {
     pub fn compute(&mut self) -> Result<(), ()> {
         if let Ok(topo) = toposort(&self.graph, None) {
             for node in topo {
+                // TODO: Add same-layer ability (to run some filters in parallel)
                 self.layers.push(vec![self.graph[node].clone()])
             }
 
