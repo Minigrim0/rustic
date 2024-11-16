@@ -89,7 +89,7 @@ fn main() {
     // Create a `duration` second(s) long impulse
     for i in 0..(duration * sample_rate) as usize {
         system
-            .push(0, initial_note.get_at(i as f32 / sample_rate) + second_note.get_at(i as f32 / sample_rate) + third_note.get_at(i as f32 / sample_rate))
+            .push(0, initial_note.tick(i as i32, sample_rate as i32) + second_note.tick(i as i32, sample_rate as i32) + third_note.tick(i as i32, sample_rate as i32))
             .unwrap();
     }
 

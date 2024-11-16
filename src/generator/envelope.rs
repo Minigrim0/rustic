@@ -1,4 +1,5 @@
 use std::default::Default;
+use log::info;
 
 use super::{segment::Segment, ToneGenerator};
 
@@ -82,7 +83,7 @@ impl Envelope {
 #[derive(Debug)]
 pub struct Generator {
     envelope: Envelope,       // An envelope for the note amplitude
-    pitch_envelope: Envelope, // An evelope for the note pitch
+    pitch_curve: Segment, // An evelope for the note pitch
     tone_generator: Box<dyn ToneGenerator>,
     pub last: (bool, bool, f32), // note on ? - note off ? - last_value
 }
@@ -91,14 +92,16 @@ impl Generator {
     pub fn new(envelope: Envelope, tone_generator: Box<dyn ToneGenerator>) -> Generator {
         Self {
             envelope,
-            pitch_envelope: Envelope::constant(),
+            pitch_curve: Segment::default(),  // Segment default is a constant segment
             tone_generator,
             last: (false, false, 0.0),
         }
     }
 
     /// Returns the note value at a point in time, given the note_on, note_off and current time.
-    pub fn get_at(&mut self, time: f32, note_on_time: f32, note_off_time: f32) -> f32 {
+    pub fn tick(&mut self, sample: i32, sample_rate: i32, note_on_time: f32, note_off_time: f32) -> f32 {
+        let time = sample as f32 / sample_rate as f32;
+
         let ampl = if note_on_time <= time {
             let on_elapsed = time - note_on_time;
             if note_off_time <= time {
@@ -127,16 +130,24 @@ impl Generator {
             0.0
         };
 
+        let warp = if time < note_on_time {
+            self.pitch_curve.start_value()
+        } else if time < note_off_time {
+            self.pitch_curve.at(time - note_on_time)
+        } else {
+            self.pitch_curve.end_value()
+        };
+
         self.last = (note_on_time >= time, note_off_time >= time, ampl);
-        ampl * self.tone_generator.generate(time)
+        ampl * self.tone_generator.tick(1.0 / sample_rate as f32 * warp)
     }
 
     pub fn set_tone_generator(&mut self, tone_generator: Box<dyn ToneGenerator>) {
         self.tone_generator = tone_generator;
     }
 
-    pub fn set_pitch_envelope(&mut self, pitch_envelope: Envelope) {
-        self.pitch_envelope = pitch_envelope
+    pub fn set_pitch_bend(&mut self, pitch_curve: Segment) {
+        self.pitch_curve = pitch_curve
     }
 
     pub fn set_ampl_envelope(&mut self, ampl_envelope: Envelope) {

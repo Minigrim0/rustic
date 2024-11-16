@@ -4,13 +4,13 @@ use std::default::Default;
 pub struct Segment {
     from: (f32, f32), // Time, Amplitude
     to: (f32, f32),
-    pub control: Option<(f32, f32)>,
+    control: Option<(f32, f32)>,
 }
 
 impl Default for Segment {
     fn default() -> Self {
         Self {
-            from: (0.0, 0.0),
+            from: (0.0, 1.0),
             to: (1.0, 1.0),
             control: None,
         }

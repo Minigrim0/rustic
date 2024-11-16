@@ -15,7 +15,7 @@ impl WhiteNoise {
 }
 
 impl ToneGenerator for WhiteNoise {
-    fn generate(&self, _time: f32) -> f32 {
+    fn tick(&mut self, _elapsed_time: f32) -> f32 {
         self.amplitude * (rand::random::<f32>() * 2.0 - 1.0)
     }
 }

@@ -4,6 +4,7 @@ use crate::generator::ToneGenerator;
 pub struct SawTooth {
     period: f32,
     amplitude: f32,
+    timer: f32,
 }
 
 impl SawTooth {
@@ -11,14 +12,16 @@ impl SawTooth {
         Self {
             period: 1.0 / frequency,
             amplitude,
+            timer: 0.0,
         }
     }
 }
 
 impl ToneGenerator for SawTooth {
-    fn generate(&self, time: f32) -> f32 {
+    fn tick(&mut self, elapsed_time: f32) -> f32 {
+        self.timer += elapsed_time;
         self.amplitude * (
-            2.0 * (( time / self.period ) - ((1.0 / 2.0) + (time / self.period)).floor())
+            2.0 * (( self.timer / self.period ) - ((1.0 / 2.0) + (self.timer / self.period)).floor())
         )
     }
 }

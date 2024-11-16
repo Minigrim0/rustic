@@ -10,8 +10,9 @@ pub enum GENERATORS {
 }
 
 pub trait ToneGenerator: std::fmt::Debug {
-    /// Generates the current time's wave value.
-    fn generate(&self, time: f32) -> f32;
+    /// Ticks the generator and returns the current amplitude.
+    /// The amplitude is in the range of -1.0 to 1.0.
+    fn tick(&mut self, elapsed_time: f32) -> f32;
 }
 
 pub use envelope::{Envelope, Generator};

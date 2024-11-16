@@ -5,6 +5,7 @@ use std::f32::consts::PI;
 pub struct SineWave {
     frequency: f32,
     amplitude: f32,
+    timer: f32,
 }
 
 impl SineWave {
@@ -12,12 +13,14 @@ impl SineWave {
         Self {
             frequency,
             amplitude,
+            timer: 0.0,
         }
     }
 }
 
 impl ToneGenerator for SineWave {
-    fn generate(&self, time: f32) -> f32 {
-        self.amplitude * (2.0 * PI * self.frequency * time).sin()
+    fn tick(&mut self, elapsed_time: f32) -> f32 {
+        self.timer += elapsed_time;
+        self.amplitude * (2.0 * PI * self.frequency * self.timer).sin()
     }
 }
