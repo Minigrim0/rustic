@@ -5,6 +5,7 @@ use uuid::Uuid;
 /// Note: a factor < 1.0 will attenuate the input signal, while a factor > 1.0
 /// will amplify it.
 // #[cfg_attr(feature = "meta", derive(Metadata))]
+// #[cfg_attr(feature = "python", pyo3::pyclass(name = "GainFilter"))]
 pub struct GainFilter {
     source: SafePipe,
     sink: SafePipe,

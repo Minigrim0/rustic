@@ -76,20 +76,20 @@ fn main() {
         .with_decay(0.1, 0.8, None)
         .with_release(0.4, 0.0, None);
 
-    let mut initial_note = Note::new(TONES_FREQ[NOTES::A as usize][5], 0.0, 0.3)
+    let mut initial_note = Note::new(TONES_FREQ[NOTES::A as usize][4], 0.0, 0.3)
         .with_generator(GENERATORS::SINE)
         .with_envelope(&envelope);
-    let mut second_note = Note::new(TONES_FREQ[NOTES::C as usize][5], 0.5, 0.3)
+    let mut second_note = Note::new(TONES_FREQ[NOTES::C as usize][4], 0.5, 0.3)
         .with_generator(GENERATORS::SINE)
         .with_envelope(&envelope);
-    let mut third_note = Note::new(TONES_FREQ[NOTES::E as usize][5], 1.0, 0.3)
+    let mut third_note = Note::new(TONES_FREQ[NOTES::E as usize][4], 1.0, 0.3)
         .with_generator(GENERATORS::SINE)
         .with_envelope(&envelope);
 
     // Create a `duration` second(s) long impulse
     for i in 0..(duration * sample_rate) as usize {
         system
-            .push(0, initial_note.get_at(i as f32 / sample_rate))
+            .push(0, initial_note.get_at(i as f32 / sample_rate) + second_note.get_at(i as f32 / sample_rate) + third_note.get_at(i as f32 / sample_rate))
             .unwrap();
     }
 
