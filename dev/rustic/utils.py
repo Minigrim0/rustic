@@ -1,14 +1,4 @@
-from typing_extensions import Optional
 import numpy as np
-
-class Segment:
-    def __init__(self, _from: tuple[float, float], to: tuple[float, float], control: Optional[tuple[float, float]] = None):
-        pass
-
-
-class Envelope:
-    def __init__(self, attack: Segment, decay: Segment, release: Segment):
-        pass
 
 
 def time_scale(nsample: int, sample_rate: int, offset: int = 0) -> np.ndarray:
@@ -41,5 +31,7 @@ def generate_bezier(time: float, _from: float = 1.0, to: float = 0.0, duration: 
     from_point = (0.0, _from)
     to_point = (duration, to)
 
+    progress = time / duration
+
     # Calculate the current value of the bezier curve
-    return (1 - time) ** 3 * from_point[1] + 3 * (1 - time) ** 2 * time * control[1] + 3 * (1 - time) * time ** 2 * to_point[1] + time ** 3 * to_point[1]
+    return (1 - progress) ** 2 * from_point[1] + 2 * (1 - progress) * progress * control[1] + progress ** 2 * to_point[1]

@@ -1,28 +1,12 @@
-[build-system]
-requires = ["maturin>=1.7,<2.0"]
-build-backend = "maturin"
-
 [project]
 name = "rustic-devel"
-description = "A development environment for sound creation & modulation"
+description = "A development environment for prototyping rustic features"
 readme = "README.md"
 requires-python = ">=3.10"
-classifiers = [
-    "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
-]
-dynamic = ["version"]
+version = "0.1.0"
 dependencies = [
     "jupyter>=1.1.1",
     "matplotlib>=3.9.2",
     "numpy>=2.1.3",
     "typing-extensions>=4.12.2",
 ]
-
-[tool.uv]
-dev-dependencies = ["maturin>=1.7.4"]
-
-[tool.maturin]
-python-source = "python"
-features = ["pyo3/extension-module"]
