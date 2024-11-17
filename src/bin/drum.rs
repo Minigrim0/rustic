@@ -1,8 +1,8 @@
 use rodio::buffer::SamplesBuffer;
 use rodio::{OutputStream, Sink};
 
-use rustic::generator::{Envelope, GENERATORS, Segment};
-use rustic::score::Note;
+use rustic::generator::{Envelope, Segment, GENERATORS};
+use rustic::score::{Note, Score};
 use rustic::tones::{NOTES, TONES_FREQ};
 
 #[cfg(feature = "plotting")]
@@ -26,24 +26,24 @@ fn main() {
 
     for x in 0..100 {
         notes.push(
-            Note::new(TONES_FREQ[NOTES::E as usize][2], x as f32 * 1.0 + 0.5, 0.05)
+            Note::new(TONES_FREQ[NOTES::A as usize][2], x as f32 * 1.0 + 0.5, 0.05)
                 .with_generator(GENERATORS::SINE)
                 .with_envelope(&envelope)
-                .with_pitch_bend(&pitch_bend)
+                .with_pitch_bend(&pitch_bend),
         );
+
         notes.push(
-            Note::new(0.0, x as f32 * 1.0 + 1.0, 0.05)
-                .with_generator(GENERATORS::NOISE)
-                .with_envelope(&envelope)
-                .with_pitch_bend(&pitch_bend)
-        );
-        notes.push(
-            Note::new(TONES_FREQ[NOTES::C as usize][4], x as f32 * 0.5 + 0.75, 0.05)
+            Note::new(TONES_FREQ[NOTES::E as usize][4], x as f32, 0.05)
                 .with_generator(GENERATORS::SINE)
                 .with_envelope(&envelope)
-                .with_pitch_bend(&pitch_bend)
+                .with_pitch_bend(&pitch_bend),
         );
     }
 
-    let score = Score::new(sample_rate);
+    let mut score = Score::new("Drum".to_string(), sample_rate);
+    for note in notes {
+        score.add_note(note);
+    }
+
+    score.play();
 }

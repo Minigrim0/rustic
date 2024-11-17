@@ -1,4 +1,4 @@
-use rustic::generator::{Envelope, GENERATORS, Segment};
+use rustic::generator::{Envelope, Segment, GENERATORS};
 use rustic::score::{Note, Score};
 use rustic::tones::{NOTES, TONES_FREQ};
 
@@ -7,7 +7,7 @@ use rustic::plotting::plot_data;
 
 fn main() {
     let scale = 0.1; // Master volume
-    let sample_rate = 5512; // Sample rate
+    let sample_rate = 44100; // Sample rate
 
     let envelope = {
         let mut env = Envelope::new();
@@ -29,82 +29,200 @@ fn main() {
 
     let notes = {
         let mut notes = vec![
-            Note::new(TONES_FREQ[NOTES::C as usize][5], 0.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][2], 0.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][5], 0.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][2], 0.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][5], 0.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][2], 0.33, 0.7).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-
-            Note::new(TONES_FREQ[NOTES::DS as usize][5], 1.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][3], 1.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::F as usize][5], 1.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::F as usize][3], 1.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::G as usize][5], 1.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::G as usize][3], 1.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-
-            Note::new(TONES_FREQ[NOTES::G as usize][5], 2.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::G as usize][3], 2.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::AS as usize][5], 2.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::AS as usize][3], 2.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::F as usize][5], 2.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::F as usize][3], 2.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-
-            Note::new(TONES_FREQ[NOTES::DS as usize][5], 3.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][3], 3.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][5], 3.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][3], 3.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][5], 3.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][3], 3.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-
-            Note::new(TONES_FREQ[NOTES::C as usize][5], 4.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][3], 4.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][5], 4.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][3], 4.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][5], 4.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][3], 4.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-
-            Note::new(TONES_FREQ[NOTES::DS as usize][5], 5.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][3], 5.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::F as usize][5], 5.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::F as usize][3], 5.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::G as usize][5], 5.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::G as usize][3], 5.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-
-            Note::new(TONES_FREQ[NOTES::G as usize][5], 6.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::G as usize][3], 6.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::AS as usize][5], 6.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::AS as usize][3], 6.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][6], 6.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][4], 6.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-
-            Note::new(TONES_FREQ[NOTES::AS as usize][5], 7.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::AS as usize][3], 7.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][6], 7.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][4], 7.0 + (0.33 / 2.0), 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][6], 7.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][4], 7.33, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-
-            Note::new(TONES_FREQ[NOTES::C as usize][6], 8.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][6], 8.15, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][6], 8.3, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][6], 8.6, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][6], 8.9, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::AS as usize][5], 9.2, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::GS as usize][5], 9.5, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::G as usize][5], 9.8, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::F as usize][5], 10.1, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][5], 10.7, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::G as usize][5], 10.85, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::F as usize][5], 11.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::DS as usize][5], 11.7, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::D as usize][5], 11.85, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
-            Note::new(TONES_FREQ[NOTES::C as usize][5], 12.0, 0.2).with_generator(GENERATORS::SINE).with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][5], 0.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][2], 0.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][5], 0.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][2], 0.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][5], 0.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][2], 0.33, 0.7)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][5], 1.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][3], 1.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::F as usize][5], 1.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::F as usize][3], 1.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][5], 1.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][3], 1.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][5], 2.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][3], 2.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::AS as usize][5], 2.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::AS as usize][3], 2.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::F as usize][5], 2.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::F as usize][3], 2.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][5], 3.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][3], 3.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][5], 3.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][3], 3.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][5], 3.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][3], 3.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][5], 4.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][3], 4.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][5], 4.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][3], 4.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][5], 4.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][3], 4.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][5], 5.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][3], 5.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::F as usize][5], 5.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::F as usize][3], 5.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][5], 5.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][3], 5.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][5], 6.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][3], 6.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::AS as usize][5], 6.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::AS as usize][3], 6.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][6], 6.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][4], 6.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::AS as usize][5], 7.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::AS as usize][3], 7.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][6], 7.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][4], 7.0 + (0.33 / 2.0), 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][6], 7.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][4], 7.33, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][6], 8.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][6], 8.15, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][6], 8.3, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][6], 8.6, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][6], 8.9, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::AS as usize][5], 9.2, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::GS as usize][5], 9.5, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][5], 9.8, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::F as usize][5], 10.1, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][5], 10.7, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::G as usize][5], 10.85, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::F as usize][5], 11.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::DS as usize][5], 11.7, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::D as usize][5], 11.85, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
+            Note::new(TONES_FREQ[NOTES::C as usize][5], 12.0, 0.2)
+                .with_generator(GENERATORS::SINE)
+                .with_envelope(&envelope),
         ];
 
         for i in 0..12 {
             notes.push(
-                Note::new(TONES_FREQ[NOTES::A as usize][2], i as f32, 0.3)
+                Note::new(TONES_FREQ[NOTES::A as usize][3], i as f32, 0.3)
                     .with_generator(GENERATORS::SINE)
                     .with_pitch_bend(&pitch_bend)
                     .with_envelope(&drum_envelope),
@@ -117,10 +235,14 @@ fn main() {
             );
 
             notes.push(
-                Note::new(TONES_FREQ[NOTES::A as usize][2], i as f32 + 0.5 + 2.0 * (0.5 / 3.0), 0.1)
-                    .with_generator(GENERATORS::NOISE)
-                    .with_pitch_bend(&pitch_bend)
-                    .with_envelope(&drum_envelope),
+                Note::new(
+                    TONES_FREQ[NOTES::A as usize][2],
+                    i as f32 + 0.5 + 2.0 * (0.5 / 3.0),
+                    0.1,
+                )
+                .with_generator(GENERATORS::NOISE)
+                .with_pitch_bend(&pitch_bend)
+                .with_envelope(&drum_envelope),
             );
         }
 
