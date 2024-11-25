@@ -1,5 +1,8 @@
-use super::{Filter, FilterMetadata, Metadata, SafePipe};
+use super::{Filter, SafePipe};
 use uuid::Uuid;
+
+#[cfg(feature = "meta")]
+use super::{FilterMetadata, Metadata};
 
 /// Low-pass filter using a first-order IIR filter
 pub struct LowPassFilter {
@@ -36,6 +39,7 @@ impl Filter for LowPassFilter {
     }
 }
 
+#[cfg(feature = "meta")]
 impl Metadata for LowPassFilter {
     fn get_metadata() -> FilterMetadata {
         FilterMetadata {

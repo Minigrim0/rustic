@@ -1,20 +1,11 @@
 use std::cmp::Ordering;
-use std::collections::BinaryHeap;
-
-use log::info;
-
-use rodio::buffer::SamplesBuffer;
-use rodio::{OutputStream, Sink};
 
 use crate::generator::saw_tooth::SawTooth;
 use crate::generator::sine_wave::SineWave;
 use crate::generator::square_wave::SquareWave;
 use crate::generator::white_noise::WhiteNoise;
-use crate::generator::{Segment, GENERATORS};
 use crate::generator::{Envelope, Generator, ToneGenerator};
-
-#[cfg(feature = "plotting")]
-use crate::plotting::plot_data;
+use crate::generator::{Segment, GENERATORS};
 
 /// Represents a musical note that can be part of a score. It has an associated generator,
 /// that can generate the tone of the note in any of the `GENERATORS` shapes.
@@ -83,7 +74,7 @@ impl Note {
     /// # Examples
     ///
     /// ```
-    /// use rustic::score::Note;
+    /// use rustic::core::note::Note;
     /// use rustic::generator::GENERATORS;
     ///
     /// let note = Note::new(440.0, 0.0, 1.0)
@@ -118,7 +109,7 @@ impl Note {
     /// # Example
     ///
     /// ```
-    /// use rustic::score::Note;
+    /// use rustic::core::note::Note;
     /// use rustic::generator::Envelope;
     ///
     /// let note = Note::new(440.0, 0.0, 1.0)
@@ -139,11 +130,11 @@ impl Note {
     /// The modified `Note` instance with the specified pitch bend.
     /// # Example
     /// ```
-    /// use rustic::score::Note;
+    /// use rustic::core::note::Note;
     /// use rustic::generator::Segment;
     ///
     /// let note = Note::new(440.0, 0.0, 1.0)
-    ///    .with_pitch_bend(&Segment::new(0.0, 1.0, 440.0, 880.0));
+    ///    .with_pitch_bend(&Segment::new(0.0, 1.0, 440.0, 880.0, None));
     /// ```
     pub fn with_pitch_bend(mut self, pitch_bend: &Segment) -> Self {
         self.generator.set_pitch_bend(pitch_bend.clone());
@@ -151,8 +142,12 @@ impl Note {
     }
 
     pub fn tick(&mut self, sample: i32, sample_rate: i32) -> f32 {
-        self.generator
-            .tick(sample, sample_rate, self.start_time, self.start_time + self.duration)
+        self.generator.tick(
+            sample,
+            sample_rate,
+            self.start_time,
+            self.start_time + self.duration,
+        )
     }
 
     /// Returns true when to note is completed (amplitude envelope release has finished)
@@ -162,118 +157,5 @@ impl Note {
             .generator
             .covers(time, self.start_time, self.start_time + self.duration)
             && time > self.start_time
-    }
-}
-
-pub struct Score {
-    notes: BinaryHeap<Note>,
-    playing: bool,
-    current_sample: i32,
-    sample_rate: i32,
-    name: String
-}
-
-impl Score {
-    pub fn new(name: String, sample_rate: i32) -> Self {
-        Self {
-            notes: BinaryHeap::new(),
-            playing: false,
-            current_sample: 0,
-            sample_rate,
-            name
-        }
-    }
-
-    pub fn add_note(&mut self, note: Note) {
-        self.notes.push(note);
-    }
-
-    pub fn play(&mut self) {
-        let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-        let sink = Sink::try_new(&stream_handle).unwrap();
-        let mut current_notes = vec![];
-        let mut vals = vec![];
-
-        #[cfg(feature = "plotting")]
-        let mut plotting_vals = vec![];
-
-        'builder: loop {
-            self.current_sample += 1;
-            let current_time = self.current_sample as f32 / self.sample_rate as f32;
-
-            // Find currently playing notes in the binary heap and push themm to the current_notes vector
-            'fetcher: loop {
-                if let Some(note) = self.notes.peek() {
-                    if note.start_time <= current_time {
-                        current_notes.push(self.notes.pop().unwrap());
-                    } else {
-                        break 'fetcher;
-                    }
-                }
-                break 'fetcher;
-            }
-
-            // Push to sink every second
-            if vals.len() == self.sample_rate as usize {
-                sink.append(SamplesBuffer::new(
-                    1 as u16,
-                    self.sample_rate as u32,
-                    vals.iter().map(|(_, n)| *n).collect::<Vec<f32>>(),
-                ));
-                #[cfg(feature = "plotting")]
-                plotting_vals.append(&mut vals);
-            }
-
-            current_notes.retain(|n| !n.is_completed(current_time));
-
-            // If there are no notes to play, break the loop
-            if current_notes.is_empty() {
-                if self.notes.is_empty() {
-                    sink.append(SamplesBuffer::new(
-                        1 as u16,
-                        self.sample_rate as u32,
-                        vals.iter().map(|(_, n)| *n).collect::<Vec<f32>>(),
-                    ));
-
-                    #[cfg(feature = "plotting")]
-                    plotting_vals.append(&mut vals);
-
-                    info!(
-                        "Event queue is empty ! Breaking the loop - {}",
-                        current_time
-                    );
-
-                    break 'builder;
-                }
-
-                vals.push((current_time, 0.0));
-                continue;
-            }
-
-            // Generate the current sample
-            vals.push((
-                current_time,
-                current_notes
-                    .iter_mut()
-                    .map(|note| note.tick(self.current_sample, self.sample_rate as i32))
-                    .sum(),
-            ));
-        }
-
-        #[cfg(feature = "plotting")]
-        {
-            let duration = plotting_vals.len() as f32 / self.sample_rate as f32 + 0.1;
-            if let Err(e) = plot_data(
-                plotting_vals,
-                format!("Score {} (SR={}Hz)", self.name, self.sample_rate).as_str(),
-                (0.0, duration),
-                (-1.1, 1.1),
-                format!("score_{}_{}.png", self.name, self.sample_rate).as_str(),
-            ) {
-                println!("Error: {}", e.to_string());
-            }
-        }
-
-        sink.sleep_until_end();
     }
 }

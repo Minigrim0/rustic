@@ -1,7 +1,10 @@
 /// This file contains structural filters i.e. filters that do not modify
 /// values that pass through it but rather duplicate/merges its inputs
-use super::{Filter, FilterMetadata, Metadata, SafePipe};
+use super::{Filter, SafePipe};
 use uuid::Uuid;
+
+#[cfg(feature = "meta")]
+use super::{FilterMetadata, Metadata};
 
 /// Duplicates the content of the input onto two outputs
 pub struct DuplicateFilter {
@@ -33,6 +36,7 @@ impl Filter for DuplicateFilter {
     }
 }
 
+#[cfg(feature = "meta")]
 impl Metadata for DuplicateFilter {
     fn get_metadata() -> FilterMetadata {
         FilterMetadata {

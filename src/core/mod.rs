@@ -1,11 +1,14 @@
+use log::info;
 use serde::Deserialize;
 use std::default::Default;
-use log::info;
 
-pub mod keys;
-pub mod macros;
 pub mod cli;
 pub mod config;
+pub mod keys;
+pub mod macros;
+pub mod note;
+pub mod score;
+pub mod tones;
 
 use config::AppConfig;
 
@@ -15,7 +18,6 @@ use config::AppConfig;
 pub struct App {
     pub config: AppConfig,
 }
-
 
 impl App {
     pub fn new() -> App {

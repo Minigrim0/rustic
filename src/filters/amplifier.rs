@@ -1,5 +1,8 @@
-use super::{Filter, FilterMetadata, Metadata, SafePipe};
+use super::{Filter, SafePipe};
 use uuid::Uuid;
+
+#[cfg(feature = "meta")]
+use super::{FilterMetadata, Metadata};
 
 /// A filter that returns the input value multiplied by a constant factor.
 /// Note: a factor < 1.0 will attenuate the input signal, while a factor > 1.0
@@ -36,6 +39,7 @@ impl Filter for GainFilter {
     }
 }
 
+#[cfg(feature = "meta")]
 impl Metadata for GainFilter {
     fn get_metadata() -> FilterMetadata {
         FilterMetadata {

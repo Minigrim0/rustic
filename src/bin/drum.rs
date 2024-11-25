@@ -1,16 +1,9 @@
-use rodio::buffer::SamplesBuffer;
-use rodio::{OutputStream, Sink};
-
+use rustic::core::tones::{NOTES, TONES_FREQ};
+use rustic::core::{note::Note, score::Score};
 use rustic::generator::{Envelope, Segment, GENERATORS};
-use rustic::score::{Note, Score};
-use rustic::tones::{NOTES, TONES_FREQ};
-
-#[cfg(feature = "plotting")]
-use rustic::plotting::plot_data;
 
 fn main() {
-    let scale = 0.2; // Master volume
-    let duration = 20.0; // Duration of the song
+    let scale = 0.4; // Master volume
     let sample_rate = 44100; // Sample rate
 
     let envelope = {

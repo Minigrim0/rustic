@@ -1,6 +1,6 @@
 use pretty_assertions::assert_eq;
 
-use crate::score::Note;
+use crate::core::note::Note;
 
 #[test]
 fn test_note_coverage() {
@@ -28,10 +28,10 @@ fn test_note_coverage() {
 #[test]
 fn test_note_plays() {
     let mut note = Note::new(440.0, 1.0, 1.0);
-    let sample_rate: f32 = 100.0;
+    let sample_rate: i32 = 100;
 
     let count = (0..100)
-        .map(|i| note.get_at(i as f32 / sample_rate))
+        .map(|i| note.tick(i, sample_rate))
         .filter(|v| *v > 0.5 || *v < 0.5)
         .count();
 

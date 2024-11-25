@@ -1,5 +1,8 @@
-use super::{Filter, FilterMetadata, Metadata, SafePipe};
+use super::{Filter, SafePipe};
 use uuid::Uuid;
+
+#[cfg(feature = "meta")]
+use super::{FilterMetadata, Metadata};
 
 /// A filter that take input from two sources and combines them into a single
 /// output by adding them together.
@@ -32,6 +35,7 @@ impl Filter for CombinatorFilter {
     }
 }
 
+#[cfg(feature = "meta")]
 impl Metadata for CombinatorFilter {
     fn get_metadata() -> FilterMetadata {
         FilterMetadata {

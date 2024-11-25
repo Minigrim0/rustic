@@ -7,6 +7,7 @@ use petgraph::algo::toposort;
 use petgraph::graph::{Graph, NodeIndex};
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "meta")]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FilterMetadata {
     pub name: String,        // Name of the filter
@@ -15,6 +16,7 @@ pub struct FilterMetadata {
     pub outputs: usize,      // Number of output pipes
 }
 
+#[cfg(feature = "meta")]
 pub trait Metadata {
     fn get_metadata() -> FilterMetadata;
 }

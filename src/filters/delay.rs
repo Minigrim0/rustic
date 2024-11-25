@@ -1,7 +1,9 @@
 use std::collections::VecDeque;
 use uuid::Uuid;
 
-use super::{Filter, FilterMetadata, Metadata, SafePipe};
+use super::{Filter, SafePipe};
+#[cfg(feature = "meta")]
+use super::{FilterMetadata, Metadata};
 
 /// Delays it input for x samples
 pub struct DelayFilter {
@@ -37,6 +39,7 @@ impl Filter for DelayFilter {
     }
 }
 
+#[cfg(feature = "meta")]
 impl Metadata for DelayFilter {
     fn get_metadata() -> FilterMetadata {
         FilterMetadata {

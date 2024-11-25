@@ -9,11 +9,11 @@ use log::error;
 use rodio::buffer::SamplesBuffer;
 use rodio::{OutputStream, Sink};
 
+use rustic::core::note::Note;
+use rustic::core::tones::{NOTES, TONES_FREQ};
 use rustic::filters::{CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter};
 use rustic::filters::{Pipe, System};
 use rustic::generator::{Envelope, GENERATORS};
-use rustic::score::Note;
-use rustic::tones::{NOTES, TONES_FREQ};
 
 fn main() {
     colog::init();
@@ -89,7 +89,12 @@ fn main() {
     // Create a `duration` second(s) long impulse
     for i in 0..(duration * sample_rate) as usize {
         system
-            .push(0, initial_note.tick(i as i32, sample_rate as i32) + second_note.tick(i as i32, sample_rate as i32) + third_note.tick(i as i32, sample_rate as i32))
+            .push(
+                0,
+                initial_note.tick(i as i32, sample_rate as i32)
+                    + second_note.tick(i as i32, sample_rate as i32)
+                    + third_note.tick(i as i32, sample_rate as i32),
+            )
             .unwrap();
     }
 
