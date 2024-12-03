@@ -5,6 +5,7 @@ use std::rc::Rc;
 use log::warn;
 use petgraph::algo::toposort;
 use petgraph::graph::{Graph, NodeIndex};
+#[cfg(feature = "meta")]
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "meta")]

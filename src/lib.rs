@@ -1,4 +1,5 @@
 pub mod core;
+pub mod envelope;
 pub mod filters;
 pub mod generator;
 pub mod inputs;

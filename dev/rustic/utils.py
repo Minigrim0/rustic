@@ -18,7 +18,6 @@ def generate_wave(freq: int = 440, duration: float = 1, sr: int = 44100, shape: 
         case _:
             raise ValueError(f"Invalid shape: {shape}")
 
-
 def generate_bezier(time: float, _from: float = 1.0, to: float = 0.0, duration: float = 1.0, control: tuple[float, float] = (0.0, 0.0)) -> float:
     """
     Returns the current value of the bezier curve at time `time` with the given control points.

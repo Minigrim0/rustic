@@ -1,6 +1,7 @@
 use rustic::core::tones::{NOTES, TONES_FREQ};
 use rustic::core::{note::Note, score::Score};
-use rustic::generator::{Envelope, Segment, GENERATORS};
+use rustic::envelope::{Envelope, Segment};
+use rustic::generator::GENERATORS;
 
 #[cfg(feature = "plotting")]
 use rustic::plotting::plot_data;

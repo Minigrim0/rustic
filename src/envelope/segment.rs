@@ -1,4 +1,8 @@
+use super::Shape;
 use std::default::Default;
+use std::fmt;
+
+use log::warn;
 
 #[derive(Debug, Clone)]
 pub struct Segment {
@@ -14,6 +18,12 @@ impl Default for Segment {
             to: (1.0, 1.0),
             control: None,
         }
+    }
+}
+
+impl fmt::Display for Segment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?} to {:?} - {:?}", self.from, self.to, self.control)
     }
 }
 
@@ -66,14 +76,30 @@ impl Segment {
         let (x0, y0) = self.from;
         let (x1, y1) = self.to;
 
+        // Normalize time to the segment
+        let t = (time - x0) / (self.to.0 - x0);
+
+        if t < 0.0 {
+            warn!("Asking for time before the segment starts");
+            return y0;
+        } else if t > 1.0 {
+            warn!("Asking for time after the segment ends");
+            return y1;
+        }
+
         if let Some(control) = self.control {
             // Bezier
-            let t = (time - x0) / (self.to.0 - x0);
             (1.0 - t) * ((1.0 - t) * self.from.1 + t * control.1)
                 + t * ((1.0 - t) * control.1 + t * self.to.1)
         } else {
             // Simple linear interp
-            ((y0 * (x1 - time)) + (y1 * (time - x0))) / (x1 - x0)
+            ((y0 * (x1 - t)) + (y1 * (t - x0))) / (x1 - x0)
         }
+    }
+}
+
+impl Shape for Segment {
+    fn get_at(&self, time: f32) -> f32 {
+        self.at(time)
     }
 }
