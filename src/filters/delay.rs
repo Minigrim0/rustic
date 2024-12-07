@@ -1,14 +1,17 @@
 use std::collections::VecDeque;
 use uuid::Uuid;
 
-use super::{Filter, SafeFilter};
+use log::trace;
+
+use super::{Filter, SafeFilter, SafeSink, AudioGraphElement};
 #[cfg(feature = "meta")]
 use super::{FilterMetadata, Metadata};
 
 /// Delays it input for x samples
 pub struct DelayFilter {
     sources: [f32; 1],
-    sinks: [Option<(SafeFilter, usize)>; 1],
+    desc: [Option<(SafeFilter, usize)>; 1],
+    sinks: [Option<(SafeSink, usize)>; 1],
     delay_for: usize,
     buffer: VecDeque<f32>,
     uuid: Uuid,
@@ -18,6 +21,7 @@ impl DelayFilter {
     pub fn new(delay: usize) -> Self {
         Self {
             sources: [0.0],
+            desc: [None],
             sinks: [None],
             delay_for: delay,
             buffer: VecDeque::from(vec![0.0; delay]),
@@ -26,7 +30,13 @@ impl DelayFilter {
     }
 
     /// Set the sink of the filter
-    pub fn with_sink(mut self, position: usize, sink: SafeFilter, sink_port: usize) -> Self {
+    pub fn with_connection(mut self, position: usize, to: SafeFilter, to_port: usize) -> Self {
+        self.desc[position] = Some((to, to_port));
+        self
+    }
+
+    /// Set the sink of the filter
+    pub fn with_sink(mut self, position: usize, sink: SafeSink, sink_port: usize) -> Self {
         self.sinks[position] = Some((sink, sink_port));
         self
     }
@@ -40,16 +50,28 @@ impl Filter for DelayFilter {
     fn transform(&mut self) {
         let input = self.sources[0];
         let output = self.buffer.pop_front().unwrap_or(0.0);
+
+        trace!("Delay filter running {} -> {}", self.sources[0], output);
+
         self.buffer.push_back(input);
-        if let Some((sink, port)) = &self.sinks[0] {
-            sink.borrow_mut().push(output, *port);
-        }
+        self.desc.iter().for_each(|f| if let Some(filter) = f{
+            filter.0.borrow_mut().push(output, filter.1);
+        });
+        self.sinks.iter().for_each(|s| if let Some(sink) = s {
+            sink.0.borrow_mut().push(output, sink.1);
+        });
     }
 
-    fn add_sink(&mut self, out_port: usize, sink: SafeFilter, in_port: usize) {
+    fn connect(&mut self, from_port: usize, to: SafeFilter, to_port: usize) {
+        self.desc[from_port] = Some((to, to_port));
+    }
+
+    fn add_sink(&mut self, out_port: usize, sink: SafeSink, in_port: usize) {
         self.sinks[out_port] = Some((sink, in_port));
     }
+}
 
+impl AudioGraphElement for DelayFilter {
     fn get_name(&self) -> &str {
         "Delay Filter"
     }

@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use log::{warn, error};
+use log::{warn, error, trace};
 use petgraph::algo::toposort;
 use petgraph::graph::{Graph, NodeIndex};
 #[cfg(feature = "meta")]
@@ -22,24 +22,39 @@ pub trait Metadata {
     fn get_metadata() -> FilterMetadata;
 }
 
-/// A filter that can process data. Data should be pushed to the filter's input by either the preceding filter or a source.
-pub trait Filter {
-    fn push(&mut self, value: f32, port: usize);
-    fn add_sink(&mut self, out_port: usize, sink: SafeFilter, in_port: usize);
-    fn transform(&mut self);
+pub trait AudioGraphElement {
     fn get_name(&self) -> &str;
     fn uuid(&self) -> uuid::Uuid;
 }
 
-// A pipe is defined as the filter and the port it is connected to
-type Pipe = (NodeIndex<u32>, usize);
+pub trait Source: AudioGraphElement {
+    /// Pushes a value to the entry of the system
+    fn push(&mut self);
+    /// Connects the source to an entry of the system
+    fn connect_entry(&mut self, to: SafeFilter, in_port: usize);
+}
 
-/// A Filter that is safe to share (same-thread)
+pub trait Sink: AudioGraphElement {
+    // Pushes a value to the sink. The multiple ports are used to allow for multiple outputs or for stereo audio.
+    fn push(&mut self, value: f32, port: usize);
+    fn get_values(&mut self) -> &mut Vec<f32>;
+}
+
+/// A filter that can process data. Data should be pushed to the filter's input by either the preceding filter or a source.
+pub trait Filter: AudioGraphElement {
+    fn push(&mut self, value: f32, port: usize);
+    fn connect(&mut self, out_port: usize, to: SafeFilter, in_port: usize);
+    fn add_sink(&mut self, out_port: usize, sink: SafeSink, in_port: usize);
+    fn transform(&mut self);
+}
+
+// Safe Graph resources
+pub type SafeSource = Rc<RefCell<Box<dyn Source>>>;
 pub type SafeFilter = Rc<RefCell<Box<dyn Filter>>>;
+pub type SafeSink = Rc<RefCell<Box<dyn Sink>>>;
+
 /// A Layer that contains safe filters
 type FilterLayer = Vec<SafeFilter>;
-
-pub type SafeSink = Rc<RefCell<Box<Sink>>>;
 
 /// A Pipe & Filter system
 /// The system is composed of filters, sources, sinks and pipes.
@@ -56,8 +71,9 @@ pub struct System {
     filters: HashMap<uuid::Uuid, NodeIndex<u32>>,
     // Each layer represent filters that can be run concurrently.
     layers: Vec<FilterLayer>,
-    // The sources of the system,
-    sources: Vec<Pipe>,
+    // The sources of the system
+    sources: Vec<SafeSource>,
+    // The sinks of the system
     sinks: Vec<SafeSink>,
 }
 
@@ -90,7 +106,12 @@ impl System {
     pub fn connect(&mut self, from: NodeIndex<u32>, to: NodeIndex<u32>, out_port: usize, in_port: usize) {
         self.graph.add_edge(from, to, ());
         if let Ok(mut filter) = self.graph[from].try_borrow_mut() {
-            filter.add_sink(out_port, self.graph[to].clone(), in_port);
+            trace!("[Graph] Connecting {} (p: {}) to {} (p: {})", filter.get_name(), out_port, if let Ok(filter) = self.graph[to].try_borrow() {
+                filter.get_name().to_string()
+            } else {
+                "ERR".to_string()
+            }, in_port);
+            filter.connect(out_port, self.graph[to].clone(), in_port);
         } else {
             error!("Unable to borrow filter to set sink");
         }
@@ -99,26 +120,46 @@ impl System {
     // Connects two filters creating a feedback loop. This method does not connect the filter in the topology graph to allow for topological sorting.
     pub fn connect_feedback(&mut self, from: NodeIndex<u32>, to: NodeIndex<u32>, out_port: usize, in_port: usize) {
         if let Ok(mut filter) = self.graph[from].try_borrow_mut() {
-            filter.add_sink(out_port, self.graph[to].clone(), in_port);
+            trace!("[Graph] Connecting {} (p: {}) to {} (p: {}) (feedback connection)", filter.get_name(), out_port, if let Ok(filter) = self.graph[to].try_borrow() {
+                filter.get_name().to_string()
+            } else {
+                "ERR".to_string()
+            }, in_port);
+            filter.connect(out_port, self.graph[to].clone(), in_port);
         } else {
             error!("Unable to borrow filter to set sink");
         }
     }
 
-    pub fn connect_sink(&mut self, from: NodeIndex<u32>, sink: usize, out_port: usize, in_port: usize) {
-        if let Ok(mut filter) = self.graph[from].try_borrow_mut() {
-            let sink_filter: SafeFilter = Rc::new(RefCell::new(Box::new(Rc::clone(self.sinks.get(sink).expect("Index out of bounds for sink")))));
-            filter.add_sink(out_port, sink_filter, in_port);
+    pub fn connect_source(&mut self, source: usize, to: NodeIndex<u32>, in_port: usize) {
+        if let Ok(mut source) = self.sources[source].try_borrow_mut() {
+            let filter: SafeFilter = Rc::clone(&self.graph[to]);
+            trace!("[Graph] Connecting source {} to entry {} (p: {})", &source.get_name(), &filter.borrow().get_name(), in_port);
+            source.connect_entry(Rc::clone(&filter), in_port);
+        } else {
+            error!("Unable to borrow source to set sink");
         }
     }
 
-    pub fn add_source(&mut self, source: NodeIndex<u32>, in_port: usize) {
-        self.sources.push((source, in_port));
+    pub fn connect_sink(&mut self, from: NodeIndex<u32>, sink: usize, out_port: usize, in_port: usize) {
+        if let Ok(mut filter) = self.graph[from].try_borrow_mut() {
+            trace!("[Graph] Connecting {} (p: {}) to sink {} (p: {})", filter.get_name(), out_port, sink, in_port);
+            let sink: &SafeSink = self.sinks.get(sink).expect("Index out of bounds for sink");
+            filter.add_sink(out_port, Rc::clone(sink), in_port);
+        } else {
+            error!("Unable to borrow filter to set sink");
+        }
     }
 
     pub fn add_sink(&mut self, sink: SafeSink) -> usize {
         self.sinks.push(sink);
         self.sinks.len() - 1
+    }
+
+    pub fn add_source(&mut self, source: SafeSource) -> usize {
+        trace!("[Graph] Setting Node {} as source", source.borrow().get_name());
+        self.sources.push(source);
+        self.sources.len() - 1
     }
 
     // Creates the execution layers by sorting the graph topologically.
@@ -138,6 +179,13 @@ impl System {
     // Performs one full run of the system, running every filter once in an order such that data that entered the system this
     // run, can exit it this run as well.
     pub fn run(&mut self) {
+        self.sources.iter().for_each(|source| {
+            if let Ok(mut source) = source.try_borrow_mut() {
+                source.push();
+            } else {
+                error!("Unable to borrow source for pushing");
+            }
+        });
         for layer in self.layers.iter() {
             // TODO: Make this parallel
             layer.iter().for_each(|f| {
@@ -162,17 +210,6 @@ impl System {
         self.sinks.get(index)
             .and_then(|f| Some(Rc::clone(f)))
             .ok_or("Index out of bounds")
-    }
-
-    /// Tries to push a value to a source pipe. Returns an error if the index is out of bounds.
-    pub fn push(&self, index: usize, value: f32) -> Result<(), ()> {
-        match self.sources.get(index) {
-            Some((index, port)) => {
-                self.graph[*index].borrow_mut().push(value, *port);
-                Ok(())
-            }
-            None => Err(()),
-        }
     }
 }
 

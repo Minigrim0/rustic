@@ -1,7 +1,9 @@
 /// This file contains structural filters i.e. filters that do not modify
 /// values that pass through it but rather duplicate/merges its inputs
-use super::{Filter, SafeFilter};
+use super::{Filter, SafeFilter, SafeSink, AudioGraphElement};
 use uuid::Uuid;
+
+use log::trace;
 
 #[cfg(feature = "meta")]
 use super::{FilterMetadata, Metadata};
@@ -9,7 +11,8 @@ use super::{FilterMetadata, Metadata};
 /// Duplicates the content of the input onto two outputs
 pub struct DuplicateFilter {
     sources: [f32; 1],
-    sinks: [Option<(SafeFilter, usize)>; 2],
+    desc: [Option<(SafeFilter, usize)>; 2],
+    sinks: [Option<(SafeSink, usize)>; 1],
     uuid: Uuid,
 }
 
@@ -17,13 +20,20 @@ impl DuplicateFilter {
     pub fn new() -> Self {
         Self {
             sources: [0.0],
-            sinks: [None, None],
+            desc: [None, None],
+            sinks: [None],
             uuid: Uuid::new_v4(),
         }
     }
 
     /// Set the sink of the filter
-    pub fn with_sink(mut self, position: usize, sink: SafeFilter, sink_port: usize) -> Self {
+    pub fn with_connection(mut self, position: usize, to: SafeFilter, to_port: usize) -> Self {
+        self.desc[position] = Some((to, to_port));
+        self
+    }
+
+    /// Set the sink of the filter
+    pub fn with_sink(mut self, position: usize, sink: SafeSink, sink_port: usize) -> Self {
         self.sinks[position] = Some((sink, sink_port));
         self
     }
@@ -36,18 +46,26 @@ impl Filter for DuplicateFilter {
 
     fn transform(&mut self) {
         let source_value = self.sources[0];
-        self.sinks
-            .iter()
-            .for_each(|sink| match sink {
-                Some((sink, port)) => sink.borrow_mut().push(source_value, *port),
-                None => (),
-            });
+
+        trace!("Duplicate filter running {} -> {}, {}", source_value, source_value, source_value);
+        self.desc.iter().for_each(|f| if let Some(filter) = f{
+            filter.0.borrow_mut().push(source_value, filter.1);
+        });
+        self.sinks.iter().for_each(|s| if let Some(sink) = s {
+            sink.0.borrow_mut().push(source_value, sink.1);
+        });
     }
 
-    fn add_sink(&mut self, out_port: usize, sink: SafeFilter, in_port: usize) {
+    fn connect(&mut self, from_port: usize, sink: SafeFilter, to_port: usize) {
+        self.desc[from_port] = Some((sink, to_port));
+    }
+
+    fn add_sink(&mut self, out_port: usize, sink: SafeSink, in_port: usize) {
         self.sinks[out_port] = Some((sink, in_port));
     }
+}
 
+impl AudioGraphElement for DuplicateFilter {
     fn get_name(&self) -> &str {
         "Duplicate"
     }
