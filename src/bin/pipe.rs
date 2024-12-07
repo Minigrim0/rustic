@@ -12,7 +12,7 @@ use rodio::{OutputStream, Sink};
 use rustic::core::note::Note;
 use rustic::core::tones::{NOTES, TONES_FREQ};
 use rustic::envelope::Envelope;
-use rustic::filters::{CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, Pipe, System};
+use rustic::filters::{CombinatorFilter, DelayFilter, DuplicateFilter, Filter, GainFilter, SafeSink, Sink as SysSink, System};
 use rustic::generator::GENERATORS;
 
 fn main() {
@@ -21,51 +21,35 @@ fn main() {
     let duration = 5.0; // 0.25 seconds
     let sample_rate = 44100.0; // 44100 Hz
 
-    let source1 = Rc::new(RefCell::new(Pipe::new()));
-
-    let sum_result = Rc::new(RefCell::new(Pipe::new()));
-
-    let feedback_source = Rc::new(RefCell::new(Pipe::new())); // Source for the feedback loop
-    let feedback_delayed = Rc::new(RefCell::new(Pipe::new())); // Delayed feedback
-    let feedback_end = Rc::new(RefCell::new(Pipe::new()));
-
-    let system_sink = Rc::new(RefCell::new(Pipe::new()));
-
-    let sum_filter = CombinatorFilter::new(
-        [Rc::clone(&source1), Rc::clone(&feedback_end)],
-        Rc::clone(&sum_result),
-    );
-    let dupe_filter = DuplicateFilter::new(
-        Rc::clone(&sum_result),
-        [Rc::clone(&feedback_source), Rc::clone(&system_sink)],
-    );
+    let dupe_filter: Box<dyn Filter> = Box::from(DuplicateFilter::new());
+    let sum_filter: Box<dyn Filter> = Box::from(CombinatorFilter::new());
 
     // Delay of half a second
-    let delay_filter = DelayFilter::new(
-        Rc::clone(&feedback_source),
-        Rc::clone(&feedback_delayed),
-        (0.2 * sample_rate) as usize,
-    );
+    let delay_filter: Box<dyn Filter> = Box::from(DelayFilter::new((0.5 * sample_rate) as usize));
 
     // Diminish gain in feedback loop
-    let gain_filter = GainFilter::new(Rc::clone(&feedback_delayed), Rc::clone(&feedback_end), 0.6);
+    let gain_filter: Box<dyn Filter> = Box::from(GainFilter::new(0.6));
+
+    let system_sink: SafeSink = Rc::new(RefCell::new(SysSink::new()));
 
     let mut system = System::new();
-    let sum_filter = system.add_filter(Box::from(sum_filter));
-    let dupe_filter = system.add_filter(Box::from(dupe_filter));
-    let delay_filter = system.add_filter(Box::from(delay_filter));
-    let gain_filter = system.add_filter(Box::from(gain_filter));
+    let sum_filter = system.add_filter(sum_filter);
+    let dupe_filter = system.add_filter(dupe_filter);
+    let delay_filter = system.add_filter(delay_filter);
+    let gain_filter = system.add_filter(gain_filter);
 
-    system.connect(sum_filter, dupe_filter, sum_result);
-    system.connect(dupe_filter, delay_filter, feedback_source);
-    system.connect(delay_filter, gain_filter, feedback_delayed);
+    let system_sink_id = system.add_sink(Rc::clone(&system_sink));
+
+    system.add_source(sum_filter, 0);
+
+    system.connect(sum_filter, dupe_filter, 0, 0);
+    system.connect(dupe_filter, delay_filter, 1, 0);
+    system.connect(delay_filter, gain_filter, 0, 0);
+
     // Do not connect those in the graph to avoid cycles
-    // system.connect(gain_filter, sum_filter, feedback_end);
+    system.connect_feedback(gain_filter, sum_filter, 0, 1);
 
-    // Single system source
-    system.add_source(source1);
-
-    system.add_sink(system_sink);
+    system.connect_sink(dupe_filter, system_sink_id, 0, 0);
 
     if let Err(_) = system.compute() {
         error!("An error occured while computing the filter graph's layers");
@@ -107,7 +91,8 @@ fn main() {
         values.clear();
         for _ in 0..sample_rate as usize {
             system.run();
-            values.push(system.get_sink(0).unwrap().borrow_mut().pop());
+            let sink: SafeSink = system.get_sink(0).unwrap();
+            values.append(sink.borrow_mut().get_values());
         }
 
         sink.append(SamplesBuffer::new(

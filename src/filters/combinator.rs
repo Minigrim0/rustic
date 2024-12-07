@@ -1,4 +1,4 @@
-use super::{Filter, SafePipe};
+use super::{Filter, SafeFilter};
 use uuid::Uuid;
 
 #[cfg(feature = "meta")]
@@ -7,31 +7,49 @@ use super::{FilterMetadata, Metadata};
 /// A filter that take input from two sources and combines them into a single
 /// output by adding them together.
 pub struct CombinatorFilter {
-    source: [SafePipe; 2],
-    sink: SafePipe,
+    sources: [f32; 2],
+    sinks: [Option<(SafeFilter, usize)>; 1],
     uuid: Uuid,
 }
 
 impl CombinatorFilter {
-    pub fn new(source: [SafePipe; 2], sink: SafePipe) -> Self {
+    pub fn new() -> Self {
         Self {
-            source,
-            sink,
+            sources: [0.0; 2],
+            sinks: [None],
             uuid: Uuid::new_v4(),
         }
+    }
+
+    /// Set the sink of the filter
+    pub fn with_sink(mut self, position: usize, sink: SafeFilter, sink_port: usize) -> Self {
+        self.sinks[position] = Some((sink, sink_port));
+        self
     }
 }
 
 impl Filter for CombinatorFilter {
+    fn push(&mut self, value: f32, port: usize) {
+        self.sources[port] = value;
+    }
+
     fn transform(&mut self) {
-        let input1 = self.source[0].borrow_mut().pop();
-        let input2 = self.source[1].borrow_mut().pop();
-        let output = input1 + input2;
-        self.sink.borrow_mut().push(output);
+        let output = self.sources.iter().sum();
+        if let Some((sink, port)) = &self.sinks[0] {
+            sink.borrow_mut().push(output, *port);
+        }
+    }
+
+    fn add_sink(&mut self, out_port: usize, sink: SafeFilter, in_port: usize) {
+        self.sinks[out_port] = Some((sink, in_port));
     }
 
     fn get_name(&self) -> &str {
         "Combinator"
+    }
+
+    fn uuid(&self) -> uuid::Uuid {
+        self.uuid
     }
 }
 

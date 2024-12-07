@@ -1,41 +1,61 @@
 use std::collections::VecDeque;
 use uuid::Uuid;
 
-use super::{Filter, SafePipe};
+use super::{Filter, SafeFilter};
 #[cfg(feature = "meta")]
 use super::{FilterMetadata, Metadata};
 
 /// Delays it input for x samples
 pub struct DelayFilter {
-    source: SafePipe,
-    sink: SafePipe,
+    sources: [f32; 1],
+    sinks: [Option<(SafeFilter, usize)>; 1],
     delay_for: usize,
     buffer: VecDeque<f32>,
     uuid: Uuid,
 }
 
 impl DelayFilter {
-    pub fn new(source: SafePipe, sink: SafePipe, delay: usize) -> Self {
+    pub fn new(delay: usize) -> Self {
         Self {
-            source,
-            sink,
+            sources: [0.0],
+            sinks: [None],
             delay_for: delay,
             buffer: VecDeque::from(vec![0.0; delay]),
             uuid: Uuid::new_v4(),
         }
     }
+
+    /// Set the sink of the filter
+    pub fn with_sink(mut self, position: usize, sink: SafeFilter, sink_port: usize) -> Self {
+        self.sinks[position] = Some((sink, sink_port));
+        self
+    }
 }
 
 impl Filter for DelayFilter {
+    fn push(&mut self, value: f32, port: usize) {
+        self.sources[port] = value;
+    }
+
     fn transform(&mut self) {
-        let input = self.source.borrow_mut().pop();
+        let input = self.sources[0];
         let output = self.buffer.pop_front().unwrap_or(0.0);
         self.buffer.push_back(input);
-        self.sink.borrow_mut().push(output);
+        if let Some((sink, port)) = &self.sinks[0] {
+            sink.borrow_mut().push(output, *port);
+        }
+    }
+
+    fn add_sink(&mut self, out_port: usize, sink: SafeFilter, in_port: usize) {
+        self.sinks[out_port] = Some((sink, in_port));
     }
 
     fn get_name(&self) -> &str {
         "Delay Filter"
+    }
+
+    fn uuid(&self) -> uuid::Uuid {
+        self.uuid
     }
 }
 
