@@ -1,11 +1,75 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use rustic::core::tones::{NOTES, TONES_FREQ};
 use rustic::core::{note::Note, score::Score};
 use rustic::envelope::{Envelope, Segment};
-use rustic::filters::{CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, Pipe, System};
+use rustic::filters::{
+    AudioGraphElement, CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, SafeFilter,
+    Source, System,
+};
 use rustic::generator::GENERATORS;
+
+struct Player {
+    notes: Vec<Note>,
+    i: usize,
+    desc: [Option<(SafeFilter, usize)>; 1],
+    sample_rate: f32,
+}
+
+impl Player {
+    fn new() -> Self {
+        let envelope = Envelope::new()
+            .with_attack(0.025, 1.0, None)
+            .with_decay(0.0, 0.5, None)
+            .with_release(0.5, 0.0, None);
+
+        let initial_note = Note::new(TONES_FREQ[NOTES::A as usize][4], 0.0, 0.05)
+            .with_generator(GENERATORS::SINE)
+            .with_envelope(&envelope);
+        let second_note = Note::new(TONES_FREQ[NOTES::C as usize][4], 1.0, 0.05)
+            .with_generator(GENERATORS::SINE)
+            .with_envelope(&envelope);
+        let third_note = Note::new(TONES_FREQ[NOTES::E as usize][4], 2.0, 0.05)
+            .with_generator(GENERATORS::SINE)
+            .with_envelope(&envelope);
+
+        let notes = vec![initial_note, second_note, third_note];
+
+        Self {
+            notes,
+            i: 0,
+            desc: [None],
+            sample_rate: 44100.0,
+        }
+    }
+}
+
+impl Source for Player {
+    fn push(&mut self) {
+        self.i += 1;
+        if let Some(desc) = &self.desc[0] {
+            if let Ok(mut filter) = desc.0.try_borrow_mut() {
+                let data = self.notes[0].tick(self.i as i32, self.sample_rate as i32)
+                    + self.notes[1].tick(self.i as i32, self.sample_rate as i32)
+                    + self.notes[2].tick(self.i as i32, self.sample_rate as i32);
+
+                filter.push(data, desc.1)
+            }
+        }
+    }
+
+    fn connect_entry(&mut self, to: SafeFilter, in_port: usize) {
+        self.desc[0] = Some((to, in_port));
+    }
+}
+
+impl AudioGraphElement for Player {
+    fn get_name(&self) -> &str {
+        "Player"
+    }
+
+    fn uuid(&self) -> uuid::Uuid {
+        unimplemented!()
+    }
+}
 
 fn main() {
     let scale = 0.4; // Master volume
@@ -66,34 +130,14 @@ fn main() {
         score.add_note(note);
     }
 
-    let source1 = Rc::new(RefCell::new(Pipe::new()));
-
-    let sum_result = Rc::new(RefCell::new(Pipe::new()));
-
-    let feedback_source = Rc::new(RefCell::new(Pipe::new())); // Source for the feedback loop
-    let feedback_delayed = Rc::new(RefCell::new(Pipe::new())); // Delayed feedback
-    let feedback_end = Rc::new(RefCell::new(Pipe::new()));
-
-    let system_sink = Rc::new(RefCell::new(Pipe::new()));
-
-    let sum_filter = CombinatorFilter::new(
-        [Rc::clone(&source1), Rc::clone(&feedback_end)],
-        Rc::clone(&sum_result),
-    );
-    let dupe_filter = DuplicateFilter::new(
-        Rc::clone(&sum_result),
-        [Rc::clone(&feedback_source), Rc::clone(&system_sink)],
-    );
+    let sum_filter = CombinatorFilter::new();
+    let dupe_filter = DuplicateFilter::new();
 
     // Delay of half a second
-    let delay_filter = DelayFilter::new(
-        Rc::clone(&feedback_source),
-        Rc::clone(&feedback_delayed),
-        (0.2 * sample_rate as f32) as usize,
-    );
+    let delay_filter = DelayFilter::new((0.2 * sample_rate as f32) as usize);
 
     // Diminish gain in feedback loop
-    let gain_filter = GainFilter::new(Rc::clone(&feedback_delayed), Rc::clone(&feedback_end), 0.6);
+    let gain_filter = GainFilter::new(0.6);
 
     let mut system = System::new();
     let sum_filter = system.add_filter(Box::from(sum_filter));
@@ -101,11 +145,11 @@ fn main() {
     let delay_filter = system.add_filter(Box::from(delay_filter));
     let gain_filter = system.add_filter(Box::from(gain_filter));
 
-    system.connect(sum_filter, dupe_filter, sum_result);
-    system.connect(dupe_filter, delay_filter, feedback_source);
-    system.connect(delay_filter, gain_filter, feedback_delayed);
+    system.connect(sum_filter, dupe_filter, 0, 0);
+    system.connect(dupe_filter, delay_filter, 1, 0);
+    system.connect(delay_filter, gain_filter, 0, 0);
     // Do not connect those in the graph to avoid cycles
-    // system.connect(gain_filter, sum_filter, feedback_end);
+    system.connect_feedback(gain_filter, sum_filter, 0, 1);
 
     // Single system source
     system.add_source(source1);

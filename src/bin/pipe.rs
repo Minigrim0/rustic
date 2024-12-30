@@ -12,7 +12,10 @@ use rodio::{OutputStream, Sink};
 use rustic::core::note::Note;
 use rustic::core::tones::{NOTES, TONES_FREQ};
 use rustic::envelope::Envelope;
-use rustic::filters::{CombinatorFilter, DelayFilter, DuplicateFilter, Filter, GainFilter, SafeSink, SafeFilter, AudioSink, System, Source, AudioGraphElement};
+use rustic::filters::{
+    AudioGraphElement, AudioSink, CombinatorFilter, DelayFilter, DuplicateFilter, Filter,
+    GainFilter, SafeFilter, SafeSink, Source, System,
+};
 use rustic::generator::GENERATORS;
 
 struct Player {
@@ -45,7 +48,7 @@ impl Player {
             notes,
             i: 0,
             desc: [None],
-            sample_rate: 44100.0
+            sample_rate: 44100.0,
         }
     }
 }
@@ -59,10 +62,7 @@ impl Source for Player {
                     + self.notes[1].tick(self.i as i32, self.sample_rate as i32)
                     + self.notes[2].tick(self.i as i32, self.sample_rate as i32);
 
-                filter.push(
-                    data,
-                    desc.1
-                )
+                filter.push(data, desc.1)
             }
         }
     }
@@ -85,7 +85,6 @@ impl AudioGraphElement for Player {
 fn main() {
     colog::init();
 
-    let duration = 5.0; // 0.25 seconds
     let sample_rate = 44100.0; // 44100 Hz
 
     let source = Player::new();
@@ -109,7 +108,9 @@ fn main() {
 
     let system_sink_id = system.add_sink(Rc::clone(&system_sink));
 
-    let system_source_id = system.add_source(Rc::from(RefCell::from(Box::from(source) as Box<dyn Source>)));
+    let system_source_id = system.add_source(Rc::from(RefCell::from(
+        Box::from(source) as Box<dyn Source>
+    )));
 
     system.connect(sum_filter, dupe_filter, 0, 0);
     system.connect(dupe_filter, delay_filter, 1, 0);
