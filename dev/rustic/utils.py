@@ -5,6 +5,7 @@ def time_scale(nsample: int, sample_rate: int, offset: int = 0) -> np.ndarray:
     """Converts a number of sample to their seconds equivalent."""
     return np.arange(offset / sample_rate, (offset + nsample) / sample_rate, 1 / sample_rate)
 
+
 def generate_wave(freq: int = 440, duration: float = 1, sr: int = 44100, shape: str = 'sine'):
     match shape:
         case 'sine':
@@ -17,6 +18,7 @@ def generate_wave(freq: int = 440, duration: float = 1, sr: int = 44100, shape: 
             return 2 * np.abs(2 * (freq * np.arange(0, duration, 1 / sr) - np.floor(freq * np.arange(0, duration, 1 / sr) + 0.5))) - 1
         case _:
             raise ValueError(f"Invalid shape: {shape}")
+
 
 def generate_bezier(time: float, _from: float = 1.0, to: float = 0.0, duration: float = 1.0, control: tuple[float, float] = (0.0, 0.0)) -> float:
     """
