@@ -1,4 +1,4 @@
-use crate::generator::ToneGenerator;
+use super::ToneGenerator;
 
 #[derive(Debug)]
 pub struct SquareWave {
@@ -21,8 +21,10 @@ impl ToneGenerator for SquareWave {
     fn tick(&mut self, elapsed_time: f32) -> f32 {
         self.timer += elapsed_time;
 
-        self.amplitude * (
-            2.0 * ( 2.0 * ( self.timer * self.frequency ).floor() - (2.0 * self.timer * self.frequency).floor()) + 1.0
-        )
+        self.amplitude
+            * (2.0
+                * (2.0 * (self.timer * self.frequency).floor()
+                    - (2.0 * self.timer * self.frequency).floor())
+                + 1.0)
     }
 }

@@ -1,4 +1,4 @@
-use crate::generator::ToneGenerator;
+use super::ToneGenerator;
 use rand;
 
 #[derive(Debug)]
@@ -8,9 +8,7 @@ pub struct WhiteNoise {
 
 impl WhiteNoise {
     pub fn new(amplitude: f32) -> Self {
-        Self {
-            amplitude,
-        }
+        Self { amplitude }
     }
 }
 

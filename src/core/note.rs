@@ -1,11 +1,8 @@
 use std::cmp::Ordering;
 
-use crate::envelope::{Envelope, Segment};
-use crate::generator::saw_tooth::SawTooth;
-use crate::generator::sine_wave::SineWave;
-use crate::generator::square_wave::SquareWave;
-use crate::generator::white_noise::WhiteNoise;
-use crate::generator::{Generator, ToneGenerator, GENERATORS};
+use super::envelope::prelude::*;
+use super::generator::prelude::*;
+use super::generator::{Generator, ToneGenerator, GENERATORS};
 
 /// Represents a musical note that can be part of a score. It has an associated generator,
 /// that can generate the tone of the note in any of the `GENERATORS` shapes.
