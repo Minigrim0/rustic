@@ -4,6 +4,7 @@ use std::default::Default;
 
 pub mod cli;
 pub mod config;
+pub mod graph;
 pub mod keys;
 pub mod macros;
 pub mod note;
@@ -40,3 +41,7 @@ impl App {
         info!("Running application");
     }
 }
+
+pub mod envelope;
+pub mod filters;
+pub mod generator;

@@ -1,16 +1,15 @@
+use rustic::core::envelope::prelude::{Envelope, Segment};
+use rustic::core::filters::{
+    CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, Source, System,
+};
+use rustic::core::generator::GENERATORS;
+use rustic::core::graph::AudioGraphElement;
 use rustic::core::tones::{NOTES, TONES_FREQ};
 use rustic::core::{note::Note, score::Score};
-use rustic::envelope::{Envelope, Segment};
-use rustic::filters::{
-    AudioGraphElement, CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, SafeFilter,
-    Source, System,
-};
-use rustic::generator::GENERATORS;
 
 struct Player {
     notes: Vec<Note>,
     i: usize,
-    desc: [Option<(SafeFilter, usize)>; 1],
     sample_rate: f32,
 }
 
@@ -36,7 +35,6 @@ impl Player {
         Self {
             notes,
             i: 0,
-            desc: [None],
             sample_rate: 44100.0,
         }
     }
@@ -55,10 +53,6 @@ impl Source for Player {
             }
         }
     }
-
-    fn connect_entry(&mut self, to: SafeFilter, in_port: usize) {
-        self.desc[0] = Some((to, in_port));
-    }
 }
 
 impl AudioGraphElement for Player {
@@ -66,9 +60,11 @@ impl AudioGraphElement for Player {
         "Player"
     }
 
-    fn uuid(&self) -> uuid::Uuid {
-        unimplemented!()
+    fn get_index(&self) -> usize {
+        0
     }
+
+    fn set_index(&mut self, index: usize) {}
 }
 
 fn main() {
@@ -149,7 +145,7 @@ fn main() {
     system.connect(dupe_filter, delay_filter, 1, 0);
     system.connect(delay_filter, gain_filter, 0, 0);
     // Do not connect those in the graph to avoid cycles
-    system.connect_feedback(gain_filter, sum_filter, 0, 1);
+    system.connect(gain_filter, sum_filter, 0, 1);
 
     // Single system source
     system.add_source(source1);

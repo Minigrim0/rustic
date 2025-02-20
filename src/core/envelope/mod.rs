@@ -7,5 +7,7 @@ pub trait Shape: std::fmt::Display {
     fn get_at(&self, time: f32) -> f32;
 }
 
-pub use envelope::*;
-pub use segment::*;
+pub mod prelude {
+    pub use super::envelope::*;
+    pub use super::segment::*;
+}

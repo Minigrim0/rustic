@@ -1,4 +1,4 @@
-use crate::envelope::{Envelope, Segment};
+use crate::core::envelope::prelude::*;
 
 /// The different types of generator shapes.
 pub enum GENERATORS {
@@ -100,7 +100,16 @@ impl Generator {
     }
 }
 
-pub mod saw_tooth;
-pub mod sine_wave;
-pub mod square_wave;
-pub mod white_noise;
+mod saw_tooth;
+mod sine_wave;
+pub mod sources;
+mod square_wave;
+mod white_noise;
+
+pub mod prelude {
+    pub use super::saw_tooth::SawTooth;
+    pub use super::sine_wave::SineWave;
+    pub use super::square_wave::SquareWave;
+    pub use super::white_noise::WhiteNoise;
+    pub use super::{ToneGenerator, GENERATORS};
+}

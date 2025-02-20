@@ -1,8 +1,7 @@
-use log::info;
 use std::default::Default;
 
 use super::segment::Segment;
-use crate::generator::{Generator, ToneGenerator};
+use crate::core::generator::{Generator, ToneGenerator};
 
 // ADSR
 // This is a simple ADSR envelope generator that can be used to control the amplitude of a sound over time.

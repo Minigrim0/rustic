@@ -1,5 +1,4 @@
-use super::{AudioGraphElement, Filter, SafeFilter, SafeSink};
-use uuid::Uuid;
+use crate::core::graph::{AudioGraphElement, Entry, Filter};
 
 use log::trace;
 
@@ -12,66 +11,34 @@ use super::{FilterMetadata, Metadata};
 #[cfg_attr(feature = "meta2", derive(derive::MetaData))]
 pub struct GainFilter {
     sources: [f32; 1],
-    desc: [Option<(SafeFilter, usize)>; 1],
-    sinks: [Option<(SafeSink, usize)>; 1],
     factor: f32,
-    uuid: Uuid,
+    index: usize,
 }
 
 impl GainFilter {
     pub fn new(factor: f32) -> Self {
         Self {
             sources: [0.0],
-            desc: [None],
-            sinks: [None],
             factor,
-            uuid: Uuid::new_v4(),
+            index: 0,
         }
     }
+}
 
-    /// Set the sink of the filter
-    pub fn with_connection(mut self, position: usize, to: SafeFilter, to_port: usize) -> Self {
-        self.desc[position] = Some((to, to_port));
-        self
-    }
-
-    /// Set the sink of the filter
-    pub fn with_sink(mut self, position: usize, sink: SafeSink, sink_port: usize) -> Self {
-        self.sinks[position] = Some((sink, sink_port));
-        self
+impl Entry for GainFilter {
+    fn push(&mut self, value: f32, port: usize) {
+        self.sources[port] = value;
     }
 }
 
 impl Filter for GainFilter {
-    fn push(&mut self, value: f32, port: usize) {
-        self.sources[port] = value;
-    }
-
     /// Transforms the input value by multiplying it by the factor and sends it to the sink.
     /// If multiple sources are connected to the filter, the output will be the sum of all
     /// the sources multiplied by the factor.
-    fn transform(&mut self) {
+    fn transform(&mut self) -> Vec<f32> {
         let output: f32 = self.sources.map(|f| f * self.factor).iter().sum();
         trace!("Gain filter running {} -> {}", self.sources[0], output);
-
-        self.desc.iter().for_each(|f| {
-            if let Some(filter) = f {
-                filter.0.borrow_mut().push(output, filter.1);
-            }
-        });
-        self.sinks.iter().for_each(|s| {
-            if let Some(sink) = s {
-                sink.0.borrow_mut().push(output, sink.1);
-            }
-        });
-    }
-
-    fn connect(&mut self, out_port: usize, sink: SafeFilter, in_port: usize) {
-        self.desc[out_port] = Some((sink, in_port));
-    }
-
-    fn add_sink(&mut self, out_port: usize, sink: SafeSink, in_port: usize) {
-        self.sinks[out_port] = Some((sink, in_port));
+        vec![output]
     }
 }
 
@@ -80,8 +47,12 @@ impl AudioGraphElement for GainFilter {
         "Gain Filter"
     }
 
-    fn uuid(&self) -> uuid::Uuid {
-        self.uuid
+    fn get_index(&self) -> usize {
+        self.index
+    }
+
+    fn set_index(&mut self, index: usize) {
+        self.index = index;
     }
 }
 

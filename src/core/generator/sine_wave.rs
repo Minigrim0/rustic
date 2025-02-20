@@ -1,4 +1,4 @@
-use crate::generator::ToneGenerator;
+use super::ToneGenerator;
 use std::f32::consts::PI;
 
 #[derive(Debug)]
