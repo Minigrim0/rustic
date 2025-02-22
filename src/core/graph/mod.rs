@@ -1,4 +1,5 @@
 use std::fmt;
+use dyn_clone::DynClone;
 
 /// An element in the Audio pipeline
 /// Has a name and uuid. Is able to connect to other elements
@@ -11,7 +12,7 @@ pub trait AudioGraphElement {
 }
 
 /// A trait that allows an element to be pushed to
-pub trait Entry: AudioGraphElement {
+pub trait Entry: AudioGraphElement + DynClone {
     /// Pushes a value into this element (sink or filter)
     fn push(&mut self, value: f32, port: usize);
 }

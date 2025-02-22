@@ -28,7 +28,7 @@ impl Player {
             .with_decay(0.1, 0.9, None)
             .with_release(2.0, 0.0, None);
 
-        let initial_note = Note::new(TONES_FREQ[NOTES::C as usize][4], 0.0, 0.2)
+        let initial_note = Note::new(TONES_FREQ[NOTES::C as usize][4], 0.0, 0.8)
             .with_generator(GENERATORS::SINE)
             .with_envelope(&envelope);
         let second_note = Note::new(TONES_FREQ[NOTES::D as usize][4], 0.0, 0.0)
@@ -82,7 +82,7 @@ fn main() {
     let sum_filter: Box<dyn Filter> = Box::from(CombinatorFilter::<2, 1>::new());
 
     // Delay of half a second
-    let delay_filter: Box<dyn Filter> = Box::from(DelayFilter::new((0.1 * sample_rate) as usize));
+    let delay_filter: Box<dyn Filter> = Box::from(DelayFilter::new((1.5 * sample_rate) as usize));
 
     // Diminish gain in feedback loop
     let gain_filter: Box<dyn Filter> = Box::from(GainFilter::new(0.9));
