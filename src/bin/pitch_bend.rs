@@ -1,12 +1,12 @@
 use rustic::core::{note::Note, score::Score};
-use rustic::envelope::{Envelope, Segment};
-use rustic::generator::GENERATORS;
+use rustic::core::envelope::prelude::{Envelope, Segment};
+use rustic::core::generator::GENERATORS;
 
 #[cfg(feature = "plotting")]
 use rustic::plotting::plot_data;
 
 fn main() {
-    let scale = 0.2; // Master volume
+    let scale = 0.5; // Master volume
     let sample_rate = 44100; // Sample rate
 
     let envelope = Envelope::new()

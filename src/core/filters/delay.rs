@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::fmt;
 
 use log::trace;
 
@@ -8,6 +9,7 @@ use crate::core::graph::{AudioGraphElement, Entry, Filter};
 use super::{FilterMetadata, Metadata};
 
 /// Delays it input for x samples
+#[derive(Clone)]
 pub struct DelayFilter {
     sources: [f32; 1],
     delay_for: usize,
@@ -32,6 +34,18 @@ impl Entry for DelayFilter {
     }
 }
 
+impl fmt::Display for DelayFilter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Delay Filter - {} samples", self.delay_for)
+    }
+}
+
+impl fmt::Debug for DelayFilter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "DelayFilter {{ delay_for: {}, index: {} }}", self.delay_for, self.index)
+    }
+}
+
 impl Filter for DelayFilter {
     fn transform(&mut self) -> Vec<f32> {
         let input = self.sources[0];
@@ -41,6 +55,11 @@ impl Filter for DelayFilter {
 
         self.buffer.push_back(input);
         vec![output]
+    }
+
+
+    fn postponable(&self) -> bool {
+        true
     }
 }
 

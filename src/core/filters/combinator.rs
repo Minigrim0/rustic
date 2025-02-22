@@ -1,4 +1,5 @@
 use crate::core::graph::{AudioGraphElement, Entry, Filter};
+use std::fmt;
 
 use log::{error, trace};
 
@@ -7,6 +8,7 @@ use super::{FilterMetadata, Metadata};
 
 /// A filter that take input from two sources and combines them into a single
 /// output by adding them together.
+#[derive(Clone, Debug)]
 pub struct CombinatorFilter<const INPUTS: usize, const OUTPUTS: usize> {
     sources: [f32; INPUTS],
     weights: [f32; INPUTS],
@@ -32,6 +34,12 @@ impl<const INPUTS: usize, const OUTPUTS: usize> Entry for CombinatorFilter<INPUT
     }
 }
 
+impl<const INPUTS: usize, const OUTPUTS: usize> fmt::Display for CombinatorFilter<INPUTS, OUTPUTS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Combinator Filter")
+    }
+}
+
 impl<const INPUTS: usize, const OUTPUTS: usize> Filter for CombinatorFilter<INPUTS, OUTPUTS> {
     fn transform(&mut self) -> Vec<f32> {
         let output = self
@@ -49,6 +57,11 @@ impl<const INPUTS: usize, const OUTPUTS: usize> Filter for CombinatorFilter<INPU
         );
 
         Vec::from([output; OUTPUTS])
+    }
+
+
+    fn postponable(&self) -> bool {
+        false
     }
 }
 

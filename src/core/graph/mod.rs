@@ -1,5 +1,4 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::fmt;
 
 /// An element in the Audio pipeline
 /// Has a name and uuid. Is able to connect to other elements
@@ -24,26 +23,24 @@ pub trait Source: AudioGraphElement {
 
 pub trait Sink: Entry + AudioGraphElement {
     /// Gets the values of the sink
+    fn consume(&mut self, amount: usize) -> Vec<f32>;
     fn get_values(&self) -> Vec<f32>;
     fn as_entry(self) -> Box<dyn Entry>;
 }
 
 /// A filter that can process data. Data should be pushed to the filter's input by either the preceding filter or a source.
-pub trait Filter: Entry + AudioGraphElement {
+pub trait Filter: Entry + AudioGraphElement + fmt::Display + fmt::Debug {
     /// Applies the filter's transformation to the input
     /// Returns a tuple of the output and the indices of the elements that the filter is connected to
     fn transform(&mut self) -> Vec<f32>;
+    fn postponable(&self) -> bool;
 }
 
-// Safe Graph resources
-pub type SafeSource = Rc<RefCell<Box<dyn Source>>>;
-pub type SafeFilter = Rc<RefCell<Box<dyn Filter>>>;
-pub type SafeSink = Rc<RefCell<Box<dyn Sink>>>;
-pub type SafeEntry = Rc<RefCell<Box<dyn Entry>>>;
-
-/// A Layer that contains safe filters
-type FilterLayer = Vec<SafeFilter>;
-
 mod system;
+mod sink;
+mod source;
+
+pub use sink::SimpleSink;
+pub use source::{SimpleSource, simple_source};
 
 pub use system::System;

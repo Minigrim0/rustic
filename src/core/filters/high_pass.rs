@@ -1,9 +1,12 @@
+use std::fmt;
+
 use crate::core::graph::{AudioGraphElement, Entry, Filter};
 
 #[cfg(feature = "meta")]
 use super::{FilterMetadata, Metadata};
 
 /// High-pass filter using a first-order IIR filter
+#[derive(Clone, Debug)]
 pub struct HighPassFilter {
     sources: [f32; 1],
     cutoff_frequency: f32,
@@ -28,6 +31,12 @@ impl Entry for HighPassFilter {
     }
 }
 
+impl fmt::Display for HighPassFilter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "High Pass Filter - {}Hz", self.cutoff_frequency)
+    }
+}
+
 impl Filter for HighPassFilter {
     fn transform(&mut self) -> Vec<f32> {
         let input = self.sources[0];
@@ -35,6 +44,10 @@ impl Filter for HighPassFilter {
         let output = alpha * input + alpha * self.previous_output;
         self.previous_output = output;
         vec![output]
+    }
+
+    fn postponable(&self) -> bool {
+        false
     }
 }
 

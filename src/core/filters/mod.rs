@@ -20,7 +20,6 @@ mod combinator;
 mod delay;
 mod high_pass;
 mod low_pass;
-mod sink;
 mod structural;
 
 pub use amplifier::*;
@@ -28,5 +27,4 @@ pub use combinator::*;
 pub use delay::*;
 pub use high_pass::*;
 pub use low_pass::*;
-pub use sink::*;
 pub use structural::*;

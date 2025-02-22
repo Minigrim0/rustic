@@ -83,6 +83,7 @@ impl Note {
             GENERATORS::SINE => Box::from(SineWave::new(self.frequency, 1.0)),
             GENERATORS::SQUARE => Box::from(SquareWave::new(self.frequency, 1.0)),
             GENERATORS::NOISE => Box::from(WhiteNoise::new(1.0)),
+            GENERATORS::NULL => Box::from(NullGenerator::new())
         };
 
         self.generator.set_tone_generator(new_tone_generator);

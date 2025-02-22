@@ -4,12 +4,13 @@ use crate::core::graph::{AudioGraphElement, Entry, Sink};
 use super::{FilterMetadata, Metadata};
 
 /// Low-pass filter using a first-order IIR filter
-pub struct AudioSink {
+#[derive(Clone)]
+pub struct SimpleSink {
     values: Vec<f32>,
     index: usize,
 }
 
-impl AudioSink {
+impl SimpleSink {
     pub fn new() -> Self {
         Self {
             values: Vec::new(),
@@ -18,14 +19,18 @@ impl AudioSink {
     }
 }
 
-impl Entry for AudioSink {
+impl Entry for SimpleSink {
     fn push(&mut self, value: f32, _port: usize) {
         // trace!("{}", value);
         self.values.push(value);
     }
 }
 
-impl Sink for AudioSink {
+impl Sink for SimpleSink {
+    fn consume(&mut self, amount: usize) -> Vec<f32> {
+        self.values.drain(0..amount).collect()
+    }
+
     fn get_values(&self) -> Vec<f32> {
         self.values.clone()
     }
@@ -35,7 +40,7 @@ impl Sink for AudioSink {
     }
 }
 
-impl AudioGraphElement for AudioSink {
+impl AudioGraphElement for SimpleSink {
     fn get_name(&self) -> &str {
         "Audio Sink"
     }
@@ -47,4 +52,8 @@ impl AudioGraphElement for AudioSink {
     fn set_index(&mut self, index: usize) {
         self.index = index;
     }
+}
+
+pub fn simple_sink() -> Box<dyn Sink> {
+    Box::new(SimpleSink::new())
 }
