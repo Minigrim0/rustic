@@ -6,6 +6,7 @@ pub enum GENERATORS {
     SAW,
     SQUARE,
     NOISE,
+    NULL,
 }
 
 /// A trait that implements a tone generator.
@@ -102,14 +103,15 @@ impl Generator {
 
 mod saw_tooth;
 mod sine_wave;
-pub mod sources;
 mod square_wave;
 mod white_noise;
+mod null_generator;
 
 pub mod prelude {
     pub use super::saw_tooth::SawTooth;
     pub use super::sine_wave::SineWave;
     pub use super::square_wave::SquareWave;
     pub use super::white_noise::WhiteNoise;
+    pub use super::null_generator::NullGenerator;
     pub use super::{ToneGenerator, GENERATORS};
 }
