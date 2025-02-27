@@ -44,14 +44,14 @@ impl Ord for Note {
 impl Note {
     /// Creates a new note instance with the given parameters. The default generator is a Sine generator.
     pub fn new(frequency: f32, start_time: f32, duration: f32) -> Self {
-        let env: Envelope = Envelope::constant();
+        let env: ADSREnvelope = ADSREnvelope::constant();
         let tone_generator: Box<dyn ToneGenerator> = Box::from(SineWave::new(frequency, 1.0));
 
         Self {
             frequency,
             start_time,
             duration,
-            generator: Box::from(env.attach(tone_generator)),
+            generator: Box::from(env.attach_amplitude(tone_generator)),
         }
     }
 
@@ -113,7 +113,7 @@ impl Note {
     /// let note = Note::new(440.0, 0.0, 1.0)
     ///     .with_envelope(&Envelope::constant());
     /// ```
-    pub fn with_envelope(mut self, envelope: &Envelope) -> Self {
+    pub fn with_envelope(mut self, envelope: &ADSREnvelope) -> Self {
         self.generator.set_ampl_envelope(envelope.clone());
         self
     }
