@@ -1,5 +1,5 @@
 use rustic::core::{note::Note, score::Score};
-use rustic::core::envelope::prelude::{Envelope, Segment};
+use rustic::core::envelope::prelude::{ADSREnvelope, Segment};
 use rustic::core::generator::GENERATORS;
 
 #[cfg(feature = "plotting")]
@@ -9,7 +9,7 @@ fn main() {
     let scale = 0.5; // Master volume
     let sample_rate = 44100; // Sample rate
 
-    let envelope = Envelope::new()
+    let envelope = ADSREnvelope::new()
         .with_attack(0.5, scale * 1.0, Some((0.0, 1.0)))
         .with_decay(0.1, scale * 0.8, None)
         .with_release(2.0, scale * 0.0, Some((0.0, 0.0)));

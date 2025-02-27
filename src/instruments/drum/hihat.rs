@@ -1,15 +1,29 @@
+use crate::core::envelope::prelude::BezierEnvelope;
 use crate::core::generator::prelude::*;
-use crate::core::filters::CombinatorFilter;
+use crate::core::filters::{CombinatorFilter, GainFilter, ResonantBandpassFilter};
 use crate::core::graph::simple_source;
-use crate::core::graph::{Source, System};
+use crate::core::graph::System;
 use crate::core::graph::SimpleSink;
+use crate::instruments::Instrument;
+use crate::core::envelope::Envelope;
+
+#[cfg(debug_assertions)]
+use std::fs::File;
+#[cfg(debug_assertions)]
+use std::io::Write;
+
+use log::{info, warn};
 
 /// A HiHat instrument.
 /// It consists of six square wave sources connected to a combinator filter. The result is then passed through a resonant bandpass filter,
 /// before being shaped by an envelope generator.
 pub struct HiHat {
     graph: System<6, 1>,
-    output: f32,
+    playing: bool,
+    time: f32,
+    amplitude_envelope: Box<dyn Envelope>,
+    #[cfg(debug_assertions)]
+    output_buffer: File
 }
 
 impl HiHat {
@@ -34,18 +48,78 @@ impl HiHat {
                 system.connect_source(index, combinator_index, index);
             });
 
+        let gain_normalization = system.add_filter(Box::from(GainFilter::new(1.0 / 6.0)));  // Normalize the output to prevent overflows
+
+        let resonant_bandpass = system.add_filter(Box::from(ResonantBandpassFilter::new(10000.0 + 400.0, 20.0, 44100.0)));
+
+        system.connect(combinator_index, gain_normalization, 0, 0);
+        system.connect(gain_normalization, resonant_bandpass, 0, 0);
+
+        // system.connect(combinator_index, resonant_bandpass, 0, 0);
+
         let sink: SimpleSink = SimpleSink::new();
         system.set_sink(0, Box::from(sink));
-        system.connect_sink(combinator_index, 0, 0);
+        system.connect_sink(resonant_bandpass, 0, 0);
 
         system.compute().map_err(|_| "Failed to compute".to_string())?;
+
+        match crate::fs::build_path("HiHat", "hihat.viz") {
+            Ok(path) => if let Err(e) = system.save_to_file(&path) {
+                warn!("Failed to save visualization: {}", e);
+            }
+            Err(_) => warn!("Failed to build path to save hihat graph"),
+        }
+
+        let amplitude_envelope = Box::new(BezierEnvelope::new(4.0, 0.0, 0.5, (0.0, 0.0)));
+
+        #[cfg(debug_assertions)]
+        let output_path = crate::fs::build_path("HiHat", "hihat_output.txt").unwrap();
+
         Ok(Self {
             graph: system,
-            output: 0.0,
+            playing: false,
+            amplitude_envelope,
+            time: 0.0,
+            #[cfg(debug_assertions)]
+            output_buffer: File::create(output_path).unwrap(),
         })
     }
+}
 
-    pub fn play(&mut self) {
-        self.graph.run();
+impl Instrument for HiHat {
+    fn start_note(&mut self, _note: u8, _velocity: f32) {
+        info!("Starting HiHat note");
+        self.playing = true;
+        self.time = 0.0;
+    }
+
+    fn stop_note(&mut self, _note: u8) {
+        info!("Stopping HiHat note");
+        self.playing = false;
+    }
+
+    fn get_output(&mut self) -> f32 {
+        let value = *self.graph.get_sink(0).unwrap().consume(1).first().unwrap_or(&0.0);
+        #[cfg(debug_assertions)]
+        {
+            // Check if the output buffer is empty
+            if self.output_buffer.metadata().unwrap().len() > 0 {
+                if let Err(e) = self.output_buffer.write(format!(" {}", value).as_bytes()) {
+                    warn!("Failed to write to output buffer: {}", e);
+                }
+            } else {
+                if let Err(e) = self.output_buffer.write(format!("{}", value).as_bytes()) {
+                    warn!("Failed to write to output buffer: {}", e);
+                }
+            }
+        }
+        value * self.amplitude_envelope.at(self.time)
+    }
+
+    fn tick(&mut self) {
+        if self.playing {
+            self.graph.run();
+            self.time += 1.0 / 44100.0;
+        }
     }
 }

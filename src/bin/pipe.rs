@@ -6,7 +6,7 @@ use log::{info,trace, error};
 use rodio::buffer::SamplesBuffer;
 use rodio::{OutputStream, Sink};
 
-use rustic::core::envelope::prelude::Envelope;
+use rustic::core::envelope::prelude::ADSREnvelope;
 use rustic::core::filters::{
     CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter,
 };
@@ -23,7 +23,7 @@ struct Player {
 
 impl Player {
     fn new() -> Self {
-        let envelope = Envelope::new()
+        let envelope = ADSREnvelope::new()
             .with_attack(0.25, 1.0, None)
             .with_decay(0.1, 0.9, None)
             .with_release(2.0, 0.0, None);

@@ -2,6 +2,8 @@ pub mod core;
 pub mod inputs;
 pub mod instruments;
 
+mod fs;
+
 #[cfg(feature = "plotting")]
 pub mod plotting;
 

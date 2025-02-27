@@ -1,4 +1,4 @@
-use rustic::core::envelope::prelude::{Envelope, Segment};
+use rustic::core::envelope::prelude::{ADSREnvelope, Segment};
 use rustic::core::generator::GENERATORS;
 use rustic::core::tones::{NOTES, TONES_FREQ};
 use rustic::core::{note::Note, score::Score};
@@ -11,7 +11,7 @@ fn main() {
     let sample_rate = 44100; // Sample rate
 
     let envelope = {
-        let mut env = Envelope::new();
+        let mut env = ADSREnvelope::new();
         env.set_attack(0.2, scale * 1.0, Some((0.2, 0.0)));
         env.set_decay(0.05, scale * 0.8, None);
         env.set_release(0.75, scale * 0.0, Some((0.5, 0.0)));
@@ -19,7 +19,7 @@ fn main() {
     };
 
     let drum_envelope = {
-        let mut env = Envelope::new();
+        let mut env = ADSREnvelope::new();
         env.set_attack(0.04, scale * 1.0, Some((0.0, 1.0)));
         env.set_decay(0.0, scale * 1.0, None);
         env.set_release(0.26, scale * 0.0, Some((0.0, 0.0)));

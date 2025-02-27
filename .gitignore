@@ -1,2 +1,4 @@
 /target
 output/*
+resources/
+.dist/
