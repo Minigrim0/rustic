@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use super::ToneGenerator;
 
 #[derive(Debug)]
@@ -20,11 +22,6 @@ impl SquareWave {
 impl ToneGenerator for SquareWave {
     fn tick(&mut self, elapsed_time: f32) -> f32 {
         self.timer += elapsed_time;
-
-        self.amplitude
-            * (2.0
-                * (2.0 * (self.timer * self.frequency).floor()
-                    - (2.0 * self.timer * self.frequency).floor())
-                + 1.0)
+        (2.0 * PI * self.frequency * self.timer).sin().signum() * self.amplitude
     }
 }

@@ -18,14 +18,14 @@ pub trait ToneGenerator: std::fmt::Debug {
 
 #[derive(Debug)]
 pub struct Generator {
-    envelope: Envelope,   // An envelope for the note amplitude
+    envelope: ADSREnvelope,   // An envelope for the note amplitude
     pitch_curve: Segment, // An evelope for the note pitch
     tone_generator: Box<dyn ToneGenerator>,
     pub last: (bool, bool, f32), // note on ? - note off ? - last_value
 }
 
 impl Generator {
-    pub fn new(envelope: Envelope, tone_generator: Box<dyn ToneGenerator>) -> Generator {
+    pub fn new(envelope: ADSREnvelope, tone_generator: Box<dyn ToneGenerator>) -> Generator {
         Self {
             envelope,
             pitch_curve: Segment::default(), // Segment default is a constant segment
@@ -92,7 +92,7 @@ impl Generator {
         self.pitch_curve = pitch_curve
     }
 
-    pub fn set_ampl_envelope(&mut self, ampl_envelope: Envelope) {
+    pub fn set_ampl_envelope(&mut self, ampl_envelope: ADSREnvelope) {
         self.envelope = ampl_envelope
     }
 
