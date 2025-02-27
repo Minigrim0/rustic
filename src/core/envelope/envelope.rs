@@ -1,18 +1,18 @@
-use std::default::Default;
+use std::{default::Default, fmt};
 
-use super::segment::Segment;
+use super::{segment::Segment, Envelope};
 use crate::core::generator::{Generator, ToneGenerator};
 
 // ADSR
 // This is a simple ADSR envelope generator that can be used to control the amplitude of a sound over time.
 #[derive(Debug, Clone)]
-pub struct Envelope {
+pub struct ADSREnvelope {
     pub attack: Segment,
     pub decay: Segment,
     pub release: Segment,
 }
 
-impl Envelope {
+impl ADSREnvelope {
     /// Creates a new Envelope with
     pub fn new() -> Self {
         Self {
@@ -47,10 +47,12 @@ impl Envelope {
         }
     }
 
-    pub fn attach(&self, generator: Box<dyn ToneGenerator>) -> Generator {
+    /// Creates a generator from a tone generator and the envelope (cloned)
+    pub fn attach_amplitude(&self, generator: Box<dyn ToneGenerator>) -> Generator {
         Generator::new(self.clone(), generator)
     }
 
+    /// Returns the sustain value of the envelope
     pub fn sustain(&self) -> f32 {
         self.decay.end_value()
     }
@@ -77,5 +79,25 @@ impl Envelope {
         // TODO: Check release is correct
         self.release = Segment::new(self.decay.end_value(), to, duration, 0.0, control);
         true
+    }
+}
+
+impl fmt::Display for ADSREnvelope {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ADSR: Attack: {}, Decay: {}, Sustain: {}, Release: {}", self.attack, self.decay, self.sustain(), self.release)
+    }
+}
+
+impl Envelope for ADSREnvelope {
+    fn at(&self, time: f32) -> f32 {
+        if self.attack.covers(time) {
+            self.attack.at(time)
+        } else if self.decay.covers(time) {
+            self.decay.at(time)
+        } else if self.release.covers(time) {
+            self.release.at(time)
+        } else {
+            0.0
+        }
     }
 }
