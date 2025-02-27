@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def spectrogram(signal: list, sample_rate: int, NFFT: int = None):
+def spectrogram(signal: list, sample_rate: int, NFFT: int = None, title=None):
     NFFT = min(
         1024 if NFFT is None else NFFT,
         len(signal)
@@ -22,6 +22,9 @@ def spectrogram(signal: list, sample_rate: int, NFFT: int = None):
     ax2.set_xlabel('Time (s)')
     ax2.set_ylabel('Frequency (Hz)')
     # ax2.set_xlim(0, 20)
+
+    if title:
+        fig.suptitle(title)
 
     plt.show()
 

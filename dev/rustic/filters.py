@@ -24,9 +24,9 @@ def resonant_bandpass(data: np.ndarray, f_center: float, Q: float, fs: float):
     """
 
     period = 1 / fs
-    bandwidth = f_center / Q;
+    bandwidth = f_center / Q
 
-    R = np.exp(-np.pi * bandwidth * period);
+    R = np.exp(-np.pi * bandwidth * period)
 
     B = [1, 0, -R]
     A = [1, -2 * R * np.cos(2 * np.pi * f_center * period), R ** 2]
