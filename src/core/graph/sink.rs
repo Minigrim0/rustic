@@ -28,6 +28,7 @@ impl Entry for SimpleSink {
 
 impl Sink for SimpleSink {
     fn consume(&mut self, amount: usize) -> Vec<f32> {
+        let amount = std::cmp::min(amount, self.values.len());
         self.values.drain(0..amount).collect()
     }
 
