@@ -1,15 +1,19 @@
+use crate::Note;
+
 mod drum;
+mod keyboard;
 
 pub mod prelude {
     pub use super::drum::*;
+    pub use super::keyboard::*;
 }
 
 pub trait Instrument {
     /// Starts playing the given note
-    fn start_note(&mut self, note: u8, velocity: f32);
+    fn start_note(&mut self, note: Note, velocity: f32);
 
     /// Stops playing the given note
-    fn stop_note(&mut self, note: u8);
+    fn stop_note(&mut self, note: Note);
 
     /// Returns the current output of the instrument
     fn get_output(&mut self) -> f32;

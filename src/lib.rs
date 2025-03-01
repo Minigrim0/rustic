@@ -2,6 +2,9 @@ pub mod core;
 pub mod inputs;
 pub mod instruments;
 
+use core::tones::NOTES;
+use crate::core::generator::{ToneGenerator, VariableFrequency, Bendable};
+
 mod fs;
 
 #[cfg(feature = "plotting")]
@@ -26,3 +29,11 @@ pub mod metadata {
         ]
     }
 }
+
+
+pub trait KeyboardGenerator: ToneGenerator + VariableFrequency + Bendable + Send + Sync {}
+
+
+/// A note with its octave
+#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
+pub struct Note(pub NOTES, pub u8);

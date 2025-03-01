@@ -1,4 +1,4 @@
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 pub enum NOTES {
     C = 0,
     CS = 1,

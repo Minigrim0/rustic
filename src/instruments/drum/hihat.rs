@@ -6,6 +6,7 @@ use crate::core::graph::System;
 use crate::core::graph::SimpleSink;
 use crate::instruments::Instrument;
 use crate::core::envelope::Envelope;
+use crate::Note;
 
 #[cfg(debug_assertions)]
 use std::fs::File;
@@ -87,13 +88,13 @@ impl HiHat {
 }
 
 impl Instrument for HiHat {
-    fn start_note(&mut self, _note: u8, _velocity: f32) {
+    fn start_note(&mut self, _note: Note, _velocity: f32) {
         info!("Starting HiHat note");
         self.playing = true;
         self.time = 0.0;
     }
 
-    fn stop_note(&mut self, _note: u8) {
+    fn stop_note(&mut self, _note: Note) {
         info!("Stopping HiHat note");
         self.playing = false;
     }

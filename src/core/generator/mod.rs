@@ -1,4 +1,5 @@
 use crate::core::envelope::prelude::*;
+use crate::core::envelope::Envelope;
 
 /// The different types of generator shapes.
 pub enum GENERATORS {
@@ -9,11 +10,27 @@ pub enum GENERATORS {
     NULL,
 }
 
+pub enum FrequencyTransition {
+    DIRECT,  // Immediate switch (useful for polyphonic instruments with limited generators)
+    ENVELOPE(Box<dyn Envelope>),
+    LINEAR(f32)  // Linear transition of the given duration
+}
+
 /// A trait that implements a tone generator.
 pub trait ToneGenerator: std::fmt::Debug {
     /// Ticks the generator and returns the current amplitude.
     /// The amplitude is in the range of -1.0 to 1.0.
     fn tick(&mut self, elapsed_time: f32) -> f32;
+}
+
+/// Allows an generator to bend its frequency following an envelope
+pub trait Bendable {
+    fn set_pitch_bend(&mut self, pitch_curve: Box<dyn Envelope>);
+}
+
+/// Allows a generator to change its frequency
+pub trait VariableFrequency {
+    fn change_frequency(&mut self, frequency: f32, transistion: FrequencyTransition);
 }
 
 #[derive(Debug)]

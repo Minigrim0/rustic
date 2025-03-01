@@ -1,4 +1,7 @@
-use super::ToneGenerator;
+use super::{ToneGenerator, VariableFrequency, Bendable, FrequencyTransition};
+use crate::core::envelope::Envelope;
+use crate::KeyboardGenerator;
+
 use std::f32::consts::PI;
 
 #[derive(Debug)]
@@ -24,3 +27,19 @@ impl ToneGenerator for SineWave {
         self.amplitude * (2.0 * PI * self.frequency * self.timer).sin()
     }
 }
+
+
+impl VariableFrequency for SineWave {
+    /// TODO: Implement frequency transition
+    fn change_frequency(&mut self, frequency: f32, _transistion: FrequencyTransition) {
+        self.frequency = frequency;
+    }
+}
+
+impl Bendable for SineWave {
+    fn set_pitch_bend(&mut self, _pitch_curve: Box<dyn Envelope>) {
+        todo!()
+    }
+}
+
+impl KeyboardGenerator for SineWave {}
