@@ -1,18 +1,17 @@
-use chrono::Duration;
 use rodio::buffer::SamplesBuffer;
 use rodio::{OutputStream, Sink};
 use std::collections::HashMap;
 use std::{thread, time};
 
+use evdev::EventType;
+use log::{error, info, warn};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
-use log::{info, error, warn};
-use evdev::EventType;
 
-use rustic::Note;
 use rustic::core::tones::NOTES;
-use rustic::instruments::{prelude::Keyboard, Instrument};
 use rustic::inputs::keyboard::*;
+use rustic::instruments::{prelude::Keyboard, Instrument};
+use rustic::Note;
 
 fn main() {
     colog::init();
@@ -22,7 +21,7 @@ fn main() {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
 
-    let keyboard: Keyboard::<4> = Keyboard::new();
+    let keyboard: Keyboard<4> = Keyboard::new();
     let keyboard = Arc::new(Mutex::new(keyboard));
     let keyboard_2 = keyboard.clone();
 
@@ -31,7 +30,7 @@ fn main() {
             device
         } else {
             error!("No keyboard found for playing");
-            return
+            return;
         };
 
         let mapping = HashMap::from([
@@ -60,20 +59,15 @@ fn main() {
                                     Ok(mut keyboard) => {
                                         if event.value() == 1 {
                                             info!("Starting note: {:?}", note);
-                                            keyboard.start_note(
-                                                note,
-                                                1.0,
-                                            );
+                                            keyboard.start_note(note, 1.0);
                                         } else {
                                             info!("Stopping note: {:?}", note);
-                                            keyboard.stop_note(
-                                                note,
-                                            );
+                                            keyboard.stop_note(note);
                                         }
-                                    },
+                                    }
                                     Err(_) => {
                                         warn!("Failed to borrow keyboard");
-                                        continue
+                                        continue;
                                     }
                                 };
                             } else {
@@ -107,7 +101,7 @@ fn main() {
                 }
                 Err(_) => {
                     warn!("Failed to borrow keyboard");
-                    continue
+                    continue;
                 }
             };
         }
@@ -118,6 +112,9 @@ fn main() {
             sample_rate as u32,
             values.clone(),
         ));
-        info!("Added 50ms in {}ms", Instant::now().duration_since(start_time).as_millis());
+        info!(
+            "Added 50ms in {}ms",
+            Instant::now().duration_since(start_time).as_millis()
+        );
     }
 }

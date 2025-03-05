@@ -5,6 +5,7 @@ use log::error;
 
 use rustic::instruments::prelude::HiHat;
 use rustic::instruments::Instrument;
+use rustic::Note;
 
 fn main() {
     colog::init();
@@ -23,11 +24,11 @@ fn main() {
     let sink = Sink::try_new(&stream_handle).unwrap();
 
     let mut values = vec![];
-    hihat.start_note(0, 0.0);
+    hihat.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
     for _ in 0..5 {
         values.clear();
 
-        hihat.start_note(0, 0.0);
+        hihat.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
 
         for _ in 0..sample_rate as usize {
             hihat.tick();

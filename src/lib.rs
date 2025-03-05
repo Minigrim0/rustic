@@ -1,9 +1,17 @@
+mod app;
 pub mod core;
 pub mod inputs;
 pub mod instruments;
 
+const APP_ID: (&str, &str, &str) = ("rustic", "minigrim0", "xyz");
+
+pub mod prelude {
+    pub use super::app::*;
+    pub use super::core;
+}
+
+use crate::core::generator::{Bendable, ToneGenerator, VariableFrequency};
 use core::tones::NOTES;
-use crate::core::generator::{ToneGenerator, VariableFrequency, Bendable};
 
 mod fs;
 
@@ -30,9 +38,7 @@ pub mod metadata {
     }
 }
 
-
 pub trait KeyboardGenerator: ToneGenerator + VariableFrequency + Bendable + Send + Sync {}
-
 
 /// A note with its octave
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]

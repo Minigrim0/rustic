@@ -1,27 +1,12 @@
-use clap::Parser;
 use evdev::EventType;
 use log::info;
 use std::io;
 
-use rustic::core::cli::Cli;
-use rustic::core::App;
 use rustic::inputs;
+use rustic::prelude::App;
 
 fn main() -> io::Result<()> {
-    let args = Cli::parse();
-    let app = if let Some(path) = args.config {
-        App::from_file(&path)
-    } else {
-        App::default()
-    };
-
-    if args.dump_config {
-        match toml::to_string(&app.config) {
-            Ok(s) => println!("{}", s),
-            Err(e) => println!("Unable to dump config: {}", e.to_string()),
-        }
-        return Ok(());
-    }
+    let app: App = rustic::prelude::init_app();
 
     let mapping = inputs::keyboard::get_mapping();
 

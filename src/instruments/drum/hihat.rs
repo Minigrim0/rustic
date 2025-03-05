@@ -1,11 +1,11 @@
 use crate::core::envelope::prelude::BezierEnvelope;
-use crate::core::generator::prelude::*;
-use crate::core::filters::{CombinatorFilter, GainFilter, ResonantBandpassFilter};
-use crate::core::graph::simple_source;
-use crate::core::graph::System;
-use crate::core::graph::SimpleSink;
-use crate::instruments::Instrument;
 use crate::core::envelope::Envelope;
+use crate::core::filters::{CombinatorFilter, GainFilter, ResonantBandpassFilter};
+use crate::core::generator::prelude::*;
+use crate::core::graph::simple_source;
+use crate::core::graph::SimpleSink;
+use crate::core::graph::System;
+use crate::instruments::Instrument;
 use crate::Note;
 
 #[cfg(debug_assertions)]
@@ -24,7 +24,7 @@ pub struct HiHat {
     time: f32,
     amplitude_envelope: Box<dyn Envelope>,
     #[cfg(debug_assertions)]
-    output_buffer: File
+    output_buffer: File,
 }
 
 impl HiHat {
@@ -41,17 +41,18 @@ impl HiHat {
         let mut system = System::<6, 1>::new();
         let combinator: CombinatorFilter<6, 1> = CombinatorFilter::new();
         let combinator_index = system.add_filter(Box::from(combinator));
-        sources
-            .into_iter()
-            .enumerate()
-            .for_each(|(index, source)| {
-                system.set_source(index, source);
-                system.connect_source(index, combinator_index, index);
-            });
+        sources.into_iter().enumerate().for_each(|(index, source)| {
+            system.set_source(index, source);
+            system.connect_source(index, combinator_index, index);
+        });
 
-        let gain_normalization = system.add_filter(Box::from(GainFilter::new(1.0 / 6.0)));  // Normalize the output to prevent overflows
+        let gain_normalization = system.add_filter(Box::from(GainFilter::new(1.0 / 6.0))); // Normalize the output to prevent overflows
 
-        let resonant_bandpass = system.add_filter(Box::from(ResonantBandpassFilter::new(10000.0 + 400.0, 20.0, 44100.0)));
+        let resonant_bandpass = system.add_filter(Box::from(ResonantBandpassFilter::new(
+            10000.0 + 400.0,
+            20.0,
+            44100.0,
+        )));
 
         system.connect(combinator_index, gain_normalization, 0, 0);
         system.connect(gain_normalization, resonant_bandpass, 0, 0);
@@ -62,11 +63,15 @@ impl HiHat {
         system.set_sink(0, Box::from(sink));
         system.connect_sink(resonant_bandpass, 0, 0);
 
-        system.compute().map_err(|_| "Failed to compute".to_string())?;
+        system
+            .compute()
+            .map_err(|_| "Failed to compute".to_string())?;
 
-        match crate::fs::build_path("HiHat", "hihat.viz") {
-            Ok(path) => if let Err(e) = system.save_to_file(&path) {
-                warn!("Failed to save visualization: {}", e);
+        match crate::fs::debug_dir("HiHat", "hihat.viz") {
+            Ok(path) => {
+                if let Err(e) = system.save_to_file(&path) {
+                    warn!("Failed to save visualization: {}", e);
+                }
             }
             Err(_) => warn!("Failed to build path to save hihat graph"),
         }
@@ -74,7 +79,7 @@ impl HiHat {
         let amplitude_envelope = Box::new(BezierEnvelope::new(4.0, 0.0, 0.5, (0.0, 0.0)));
 
         #[cfg(debug_assertions)]
-        let output_path = crate::fs::build_path("HiHat", "hihat_output.txt").unwrap();
+        let output_path = crate::fs::debug_dir("HiHat", "hihat_output.txt").unwrap();
 
         Ok(Self {
             graph: system,
@@ -100,7 +105,13 @@ impl Instrument for HiHat {
     }
 
     fn get_output(&mut self) -> f32 {
-        let value = *self.graph.get_sink(0).unwrap().consume(1).first().unwrap_or(&0.0);
+        let value = *self
+            .graph
+            .get_sink(0)
+            .unwrap()
+            .consume(1)
+            .first()
+            .unwrap_or(&0.0);
         #[cfg(debug_assertions)]
         {
             // Check if the output buffer is empty

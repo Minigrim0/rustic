@@ -6,12 +6,12 @@
 //! cargo run --bin rustic -- --dump-config
 //! ```
 
-use rustic::core::App;
+use rustic::prelude::App;
 
 fn main() {
     colog::init();
 
-    let app = App::new();
+    let app: App = rustic::prelude::init_app();
     println!("{:?}", app);
     app.run();
 }
