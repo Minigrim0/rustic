@@ -1,5 +1,5 @@
-use std::{f32::consts::PI, fmt};
 use biquad::{Biquad, Coefficients, DirectForm1, ToHertz, Type};
+use std::{f32::consts::PI, fmt};
 
 use crate::core::graph::{AudioGraphElement, Entry, Filter};
 
@@ -9,12 +9,11 @@ use super::{FilterMetadata, Metadata};
 /// Applies a bandpass filter to the input signal
 /// source: https://en.wikipedia.org/wiki/Digital_biquad_filter
 /// This structure implements the Direct form 2 from the above link.
-#[cfg_attr(feature = "meta2", derive(derive::MetaData))]
 #[derive(Clone, Debug)]
 pub struct ResonantBandpassFilter {
     source: f32,
     index: usize,
-    buffer: [f32; 2],  // Coefficients for the filter.
+    buffer: [f32; 2], // Coefficients for the filter.
     coefficients: [f32; 6],
 }
 
@@ -23,7 +22,6 @@ impl fmt::Display for ResonantBandpassFilter {
         write!(f, "Resonant bandpass filter")
     }
 }
-
 
 impl ResonantBandpassFilter {
     /// Resonant bandpass filter using a biquad design.
@@ -35,15 +33,16 @@ impl ResonantBandpassFilter {
     ///         Quality factor for resonance.
     ///     sample_frequency: f32
     ///         Sampling frequency in Hz.
-    pub fn new(center_frequency: f32, quality: f32, sample_frequency: f32) -> Self {
-        let r = (-PI * (center_frequency / quality) * (1.0 / sample_frequency)).exp();
+    pub fn new(center_frequency: f32, bandwidth: f32, sample_frequency: f32) -> Self {
+        // magnitude of the roots
+        let r = (-bandwidth).exp().sqrt();
         let coefficients = [
             1.0,
             -2.0 * r * ((2.0 * PI * center_frequency) / sample_frequency).cos(),
             r.powi(2),
             1.0,
             0.0,
-            -r
+            -r,
         ];
 
         Self {
@@ -63,8 +62,12 @@ impl Entry for ResonantBandpassFilter {
 
 impl Filter for ResonantBandpassFilter {
     fn transform(&mut self) -> Vec<f32> {
-        let w = self.source - self.coefficients[1] * self.buffer[0] - self.coefficients[2] * self.buffer[1];
-        let output = self.coefficients[3] * w + self.coefficients[4] * self.buffer[0] + self.coefficients[5] * self.buffer[1];
+        let w = self.source
+            - self.coefficients[1] * self.buffer[0]
+            - self.coefficients[2] * self.buffer[1];
+        let output = self.coefficients[3] * w
+            + self.coefficients[4] * self.buffer[0]
+            + self.coefficients[5] * self.buffer[1];
 
         self.buffer[1] = self.buffer[0];
         self.buffer[0] = w;
@@ -76,7 +79,6 @@ impl Filter for ResonantBandpassFilter {
         false
     }
 }
-
 
 impl AudioGraphElement for ResonantBandpassFilter {
     fn get_name(&self) -> &str {

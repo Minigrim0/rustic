@@ -1,21 +1,27 @@
-use proc_macro::{TokenStream, TokenTree};
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{parse_macro_input, DeriveInput};
 
-fn parse_tree(tree: TokenStream, index: usize) {
-    tree.into_iter().for_each(|t| match t {
-        TokenTree::Ident(i) => println!("{}) Ident: {}", index, i),
-        TokenTree::Punct(p) => println!("{}) Punct: {}", index, p),
-        TokenTree::Literal(l) => println!("{}) Literal: {}", index, l),
-        TokenTree::Group(g) => parse_tree(g.stream(), index + 1),
-    });
+fn filter_attributes(attrs: &[syn::Attribute], exclude: &[&str]) -> Vec<syn::Attribute> {
+    attrs
+        .iter()
+        .filter(|attr| !exclude.iter().any(|&name| attr.path().is_ident(name)))
+        .cloned()
+        .collect() // Return the filtered list of attributes
 }
 
-#[proc_macro_derive(MetaData)]
+#[proc_macro_attribute]
+pub fn source(attr: TokenStream, item: TokenStream) -> TokenStream {
+    println!("Source: {:?} - {:?}", attr, item);
+    TokenStream::from(quote! {})
+}
+
+#[proc_macro_derive(FilterMetaData)]
 pub fn derive_metadata(item: TokenStream) -> TokenStream {
-    item.into_iter().for_each(|f| match f {
-        TokenTree::Group(g) => parse_tree(g.stream(), 1),
-        TokenTree::Ident(i) => println!("Ident: {}", i),
-        TokenTree::Punct(p) => println!("Punct: {}", p),
-        TokenTree::Literal(l) => println!("Literal: {}", l),
-    });
-    "fn _answer() -> () {  }".parse().unwrap()
+    let input = parse_macro_input!(item as DeriveInput);
+    println!("{:?}", input);
+
+    let cleaned_code = filter_attributes(&input.attrs, &["source"]);
+
+    TokenStream::from(quote! {})
 }

@@ -1,5 +1,5 @@
-use std::fmt;
 use crate::core::graph::{AudioGraphElement, Entry, Filter};
+use std::fmt;
 
 use log::trace;
 
@@ -9,7 +9,7 @@ use super::{FilterMetadata, Metadata};
 /// A filter that returns the input value multiplied by a constant factor.
 /// Note: a factor < 1.0 will attenuate the input signal, while a factor > 1.0
 /// will amplify it.
-#[cfg_attr(feature = "meta2", derive(derive::MetaData))]
+// #[cfg_attr(feature = "meta2", derive(derive::MetaData))]
 #[derive(Clone, Debug)]
 pub struct GainFilter {
     sources: [f32; 1],
@@ -32,7 +32,6 @@ impl Entry for GainFilter {
         self.sources[port] = value;
     }
 }
-
 
 impl fmt::Display for GainFilter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

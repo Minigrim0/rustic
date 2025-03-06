@@ -23,7 +23,7 @@ pub mod tests;
 
 #[cfg(feature = "meta")]
 pub mod metadata {
-    use super::filters::{self, FilterMetadata, Metadata};
+    use super::core::filters::{self, FilterMetadata, Metadata};
 
     // Todo: this function must be moved to a more correct place
     pub fn filter_metadata() -> Vec<FilterMetadata> {
