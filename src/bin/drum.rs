@@ -3,7 +3,7 @@ use rodio::{OutputStream, Sink};
 
 use log::error;
 
-use rustic::instruments::prelude::HiHat;
+use rustic::instruments::prelude::{HiHat, Kick};
 use rustic::instruments::Instrument;
 use rustic::Note;
 
@@ -20,20 +20,26 @@ fn main() {
         }
     };
 
+    let mut kick = Kick::new();
+
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
 
     let mut values = vec![];
-    hihat.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
-    for _ in 0..5 {
+    for _ in 0..10 {
         values.clear();
 
         hihat.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
+        kick.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
 
-        for _ in 0..sample_rate as usize {
+        for _ in 0..(sample_rate as usize / 2) {
             hihat.tick();
-            values.push(hihat.get_output());
+            kick.tick();
+            values.push(kick.get_output());
         }
+
+        hihat.stop_note(Note(rustic::core::tones::NOTES::A, 0));
+        kick.stop_note(Note(rustic::core::tones::NOTES::A, 0));
 
         sink.append(SamplesBuffer::new(
             1 as u16,

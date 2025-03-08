@@ -11,9 +11,9 @@ pub enum GENERATORS {
 }
 
 pub enum FrequencyTransition {
-    DIRECT,  // Immediate switch (useful for polyphonic instruments with limited generators)
+    DIRECT, // Immediate switch (useful for polyphonic instruments with limited generators)
     ENVELOPE(Box<dyn Envelope>),
-    LINEAR(f32)  // Linear transition of the given duration
+    LINEAR(f32), // Linear transition of the given duration
 }
 
 /// A trait that implements a tone generator.
@@ -25,7 +25,7 @@ pub trait ToneGenerator: std::fmt::Debug {
 
 /// Allows an generator to bend its frequency following an envelope
 pub trait Bendable {
-    fn set_pitch_bend(&mut self, pitch_curve: Box<dyn Envelope>);
+    fn set_pitch_bend(&mut self, pitch: f32);
 }
 
 /// Allows a generator to change its frequency
@@ -33,10 +33,14 @@ pub trait VariableFrequency {
     fn change_frequency(&mut self, frequency: f32, transistion: FrequencyTransition);
 }
 
+pub trait BendableGenerator: ToneGenerator + Bendable {}
+pub trait VariableGenerator: ToneGenerator + VariableFrequency {}
+pub trait VariableBendableGenerator: ToneGenerator + VariableFrequency + Bendable {}
+
 #[derive(Debug)]
 pub struct Generator {
-    envelope: ADSREnvelope,   // An envelope for the note amplitude
-    pitch_curve: Segment, // An evelope for the note pitch
+    envelope: ADSREnvelope, // An envelope for the note amplitude
+    pitch_curve: Segment,   // An evelope for the note pitch
     tone_generator: Box<dyn ToneGenerator>,
     pub last: (bool, bool, f32), // note on ? - note off ? - last_value
 }
@@ -118,17 +122,17 @@ impl Generator {
     }
 }
 
+mod null_generator;
 mod saw_tooth;
 mod sine_wave;
 mod square_wave;
 mod white_noise;
-mod null_generator;
 
 pub mod prelude {
+    pub use super::null_generator::NullGenerator;
     pub use super::saw_tooth::SawTooth;
     pub use super::sine_wave::SineWave;
     pub use super::square_wave::SquareWave;
     pub use super::white_noise::WhiteNoise;
-    pub use super::null_generator::NullGenerator;
     pub use super::{ToneGenerator, GENERATORS};
 }
