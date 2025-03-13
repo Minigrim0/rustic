@@ -1905,6 +1905,7 @@ dependencies = [
  "log",
  "petgraph",
  "plotters",
+ "plotters-backend",
  "pretty_assertions",
  "rand",
  "rodio",
