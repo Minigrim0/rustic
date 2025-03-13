@@ -14,7 +14,7 @@ fn main() {
         let mut env = ADSREnvelope::new();
         env.set_attack(0.2, scale * 1.0, Some((0.2, 0.0)));
         env.set_decay(0.05, scale * 0.8, None);
-        env.set_release(0.75, scale * 0.0, Some((0.5, 0.0)));
+        env.set_release(2.0, scale * 0.0, Some((0.5, 0.0)));
         env
     };
 
@@ -26,7 +26,7 @@ fn main() {
         env
     };
 
-    let pitch_bend = Segment::new(1.0, 0.5, 0.3, 0.0, Some((2.0, 0.2)));
+    let pitch_bend = Segment::new(1.0, 0.0, 0.3, 0.0, Some((2.0, 0.2)));
 
     let notes = {
         let mut notes = vec![
@@ -227,23 +227,6 @@ fn main() {
                     .with_generator(GENERATORS::SINE)
                     .with_pitch_bend(&pitch_bend)
                     .with_envelope(&drum_envelope),
-            );
-            notes.push(
-                Note::new(TONES_FREQ[NOTES::A as usize][2], i as f32 + 0.5, 0.1)
-                    .with_generator(GENERATORS::NOISE)
-                    .with_pitch_bend(&pitch_bend)
-                    .with_envelope(&drum_envelope),
-            );
-
-            notes.push(
-                Note::new(
-                    TONES_FREQ[NOTES::A as usize][2],
-                    i as f32 + 0.5 + 2.0 * (0.5 / 3.0),
-                    0.1,
-                )
-                .with_generator(GENERATORS::NOISE)
-                .with_pitch_bend(&pitch_bend)
-                .with_envelope(&drum_envelope),
             );
         }
 

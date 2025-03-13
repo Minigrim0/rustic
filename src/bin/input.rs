@@ -6,9 +6,9 @@ use rustic::inputs;
 use rustic::prelude::App;
 
 fn main() -> io::Result<()> {
-    let app: App = rustic::prelude::init_app();
+    let app: App = App::init();
 
-    let mapping = inputs::keyboard::get_mapping();
+    let mapping = app.get_key_mapping();
 
     match inputs::keyboard::find_keyboard() {
         Some(mut keyboard) => loop {
