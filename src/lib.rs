@@ -2,12 +2,14 @@ mod app;
 pub mod core;
 pub mod inputs;
 pub mod instruments;
+mod score;
 
 const APP_ID: (&str, &str, &str) = ("rustic", "minigrim0", "xyz");
 
 pub mod prelude {
     pub use super::app::*;
     pub use super::core;
+    pub use super::score::*;
 }
 
 use crate::core::generator::{Bendable, ToneGenerator, VariableFrequency};
@@ -15,7 +17,7 @@ use core::tones::NOTES;
 
 mod fs;
 
-#[cfg(feature = "plotting")]
+// #[cfg(feature = "plotting")]
 pub mod plotting;
 
 #[cfg(test)]
