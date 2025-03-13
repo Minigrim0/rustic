@@ -17,7 +17,7 @@ use core::tones::NOTES;
 
 mod fs;
 
-// #[cfg(feature = "plotting")]
+#[cfg(feature = "plotting")]
 pub mod plotting;
 
 #[cfg(test)]
