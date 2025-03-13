@@ -21,12 +21,12 @@ impl Kick {
             generator: Box::from(SineWave::new(120.0, 0.3)),
             amplitude_envelope: {
                 let mut env = ADSREnvelope::new();
-                env.set_attack(0.04, 1.0, Some((0.0, 1.0)));
-                env.set_decay(0.0, 1.0, None);
-                env.set_release(0.26, 0.0, Some((0.0, 0.0)));
+                env.set_attack(0.01, 1.0, Some((0.0, 1.0)));
+                env.set_decay(0.0, 0.8, None);
+                env.set_release(0.5, 0.0, Some((0.0, 0.0)));
                 Box::from(env)
             },
-            pitch_curve: Box::from(BezierEnvelope::new(1.0, 0.5, 0.3, (2.0, 0.2))),
+            pitch_curve: Box::from(BezierEnvelope::new(2.0, 0.1, 0.3, (2.0, 0.2))),
             current_tick: 0,
             playing: false,
             output: 0.0,

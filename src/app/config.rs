@@ -4,6 +4,8 @@ use std::{default::Default, path::PathBuf};
 
 use crate::{fs::app_root_dir, inputs::InputConfig};
 
+use super::system::SystemConfig;
+
 #[derive(Debug, Deserialize, Serialize)]
 /// Application Filesystem configuration
 pub struct FSConfig {
@@ -35,5 +37,6 @@ impl Default for FSConfig {
 pub struct AppConfig {
     pub input: InputConfig,
     pub fs: FSConfig,
+    pub system: SystemConfig,
     // pub sound_system: SoundSystemConfig,
 }
