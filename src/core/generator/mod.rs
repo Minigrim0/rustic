@@ -39,8 +39,8 @@ pub trait VariableBendableGenerator: ToneGenerator + VariableFrequency + Bendabl
 
 #[derive(Debug)]
 pub struct Generator {
-    envelope: ADSREnvelope, // An envelope for the note amplitude
-    pitch_curve: Segment,   // An evelope for the note pitch
+    pub envelope: ADSREnvelope, // An envelope for the note amplitude
+    pitch_curve: Segment,       // An evelope for the note pitch
     tone_generator: Box<dyn ToneGenerator>,
     pub last: (bool, bool, f32), // note on ? - note off ? - last_value
 }

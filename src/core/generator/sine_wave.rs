@@ -2,7 +2,7 @@ use super::{
     Bendable, BendableGenerator, FrequencyTransition, ToneGenerator, VariableBendableGenerator,
     VariableFrequency, VariableGenerator,
 };
-use crate::core::envelope::Envelope;
+
 use crate::KeyboardGenerator;
 
 use std::f32::consts::PI;

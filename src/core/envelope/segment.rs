@@ -71,29 +71,33 @@ impl Segment {
         self.to.1
     }
 
-    // Returns the envelope value at the given point in time
+    /// Returns the envelope value at the given point in absolute time
+    /// If the given timestamp is before the segment, the returned
+    /// value will be the `from` value of the segment. If the timestamp
+    /// is after the segment, the returned value will be the `to` value
+    /// of the segment
     pub fn at(&self, time: f32) -> f32 {
         let (x0, y0) = self.from;
         let (x1, y1) = self.to;
 
-        // Normalize time to the segment
-        let t = (time - x0) / (self.to.0 - x0);
+        // Normalise time over the segment
+        let time = (time - x0) / (x1 - x0);
 
-        if t < 0.0 {
+        if time < 0.0 {
             warn!("Asking for time before the segment starts");
             return y0;
-        } else if t > 1.0 {
+        } else if time > 1.0 {
             warn!("Asking for time after the segment ends");
             return y1;
         }
 
         if let Some(control) = self.control {
             // Bezier
-            (1.0 - t) * ((1.0 - t) * self.from.1 + t * control.1)
-                + t * ((1.0 - t) * control.1 + t * self.to.1)
+            (1.0 - time) * ((1.0 - time) * self.from.1 + time * control.1)
+                + time * ((1.0 - time) * control.1 + time * self.to.1)
         } else {
             // Simple linear interp
-            ((y0 * (x1 - t)) + (y1 * (t - x0))) / (x1 - x0)
+            y0 - ((y0 - y1) * time)
         }
     }
 }

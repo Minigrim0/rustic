@@ -84,7 +84,14 @@ impl ADSREnvelope {
 
 impl fmt::Display for ADSREnvelope {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ADSR: Attack: {}, Decay: {}, Sustain: {}, Release: {}", self.attack, self.decay, self.sustain(), self.release)
+        write!(
+            f,
+            "ADSR: Attack: {}, Decay: {}, Sustain: {}, Release: {}",
+            self.attack,
+            self.decay,
+            self.sustain(),
+            self.release
+        )
     }
 }
 

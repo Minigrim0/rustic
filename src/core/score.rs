@@ -3,12 +3,13 @@ use std::collections::BinaryHeap;
 use rodio::buffer::SamplesBuffer;
 use rodio::{OutputStream, Sink};
 
-use log::info;
+use log::{error, info};
 
 use super::note::Note;
 
+use crate::core::envelope::Envelope;
 #[cfg(feature = "plotting")]
-use crate::plotting::plot_data;
+use crate::plotting::Plot;
 
 pub struct Score {
     notes: BinaryHeap<Note>,
@@ -41,6 +42,52 @@ impl Score {
 
         #[cfg(feature = "plotting")]
         let mut plotting_vals = vec![];
+
+        #[cfg(feature = "plotting")]
+        let duration = 1.1;
+
+        #[cfg(feature = "plotting")]
+        let mut plot = Plot::new(
+            format!("Score {} (SR={}Hz)", self.name, self.sample_rate).as_str(),
+            (0.0, duration),
+            (-1.1, 1.1),
+            format!(".dist/score_{}_{}.png", self.name, self.sample_rate).as_str(),
+        );
+
+        #[cfg(feature = "plotting")]
+        for note in self.notes.iter() {
+            let attack_values = (0..44100)
+                .enumerate()
+                .map(|(i, v)| {
+                    let timestamp = i as f32 / 44100.0;
+                    (
+                        timestamp,
+                        if note.generator.envelope.attack.covers(timestamp) {
+                            note.generator.envelope.at(v as f32 / 44100.0)
+                        } else {
+                            0.0
+                        },
+                    )
+                })
+                .collect::<Vec<(f32, f32)>>();
+            let decay_values = (0..44100)
+                .enumerate()
+                .map(|(i, v)| {
+                    let timestamp = i as f32 / 44100.0;
+                    (
+                        timestamp,
+                        if note.generator.envelope.decay.covers(timestamp) {
+                            note.generator.envelope.at(v as f32 / 44100.0)
+                        } else {
+                            0.0
+                        },
+                    )
+                })
+                .collect::<Vec<(f32, f32)>>();
+
+            plot.plot(attack_values, "Attack", (255, 0, 0));
+            plot.plot(decay_values, "Decay", (0, 255, 0));
+        }
 
         'builder: loop {
             self.current_sample += 1;
@@ -107,15 +154,9 @@ impl Score {
 
         #[cfg(feature = "plotting")]
         {
-            let duration = plotting_vals.len() as f32 / self.sample_rate as f32 + 0.1;
-            if let Err(e) = plot_data(
-                plotting_vals,
-                format!("Score {} (SR={}Hz)", self.name, self.sample_rate).as_str(),
-                (0.0, duration),
-                (-1.1, 1.1),
-                format!("score_{}_{}.png", self.name, self.sample_rate).as_str(),
-            ) {
-                println!("Error: {}", e.to_string());
+            plot.plot(plotting_vals, "One note", (0, 0, 0));
+            if let Err(e) = plot.render() {
+                error!("Error while plottig: {}", e)
             }
         }
 
