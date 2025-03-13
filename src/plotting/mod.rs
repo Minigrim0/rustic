@@ -1,37 +1,73 @@
-use plotters::prelude::*;
+use plotters::{coord::Shift, prelude::*};
 
-pub fn plot_data(
-    data: Vec<(f32, f32)>,
-    title: &str,
-    x_scale: (f32, f32),
-    y_scale: (f32, f32),
-    filename: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let out_path = "output/".to_owned() + filename;
-    let root = BitMapBackend::new(&out_path, (1920, 1080)).into_drawing_area();
-    root.fill(&WHITE)?;
+mod line;
+mod serie;
 
-    let mut chart = ChartBuilder::on(&root)
-        .caption(title, ("sans-serif", 50).into_font())
-        .margin(5)
-        .x_label_area_size(30)
-        .y_label_area_size(30)
-        .build_cartesian_2d(x_scale.0..x_scale.1, y_scale.0..y_scale.1)?;
+use line::Line;
+use serie::PlotSerie;
 
-    chart.configure_mesh().draw()?;
+pub struct Plot {
+    pub title: String,
+    pub scale: ((f32, f32), (f32, f32)),
+    pub path: String,
+    pub series: Vec<PlotSerie>,
+    pub lines: Vec<Line>,
+}
 
-    chart
-        .draw_series(LineSeries::new(data, &BLACK))?
-        .label("stuff")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLACK));
+impl Plot {
+    pub fn new(title: &str, x_scale: (f32, f32), y_scale: (f32, f32), filename: &str) -> Self {
+        Self {
+            title: title.to_string(),
+            scale: (x_scale, y_scale),
+            path: filename.to_string(),
+            series: vec![],
+            lines: vec![],
+        }
+    }
 
-    chart
-        .configure_series_labels()
-        .background_style(&WHITE.mix(0.8))
-        .border_style(&BLACK)
-        .draw()?;
+    pub fn plot<S: AsRef<str>>(&mut self, data: Vec<(f32, f32)>, label: S, color: (u8, u8, u8)) {
+        self.series.push(PlotSerie::new(label, data, color));
+    }
 
-    root.present()?;
+    pub fn render(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let root: DrawingArea<BitMapBackend<'_>, Shift> =
+            BitMapBackend::new(&self.path, (1920, 1080)).into_drawing_area();
+        root.fill(&WHITE)?;
 
-    Ok(())
+        let mut chart = ChartBuilder::on(&root)
+            .caption(&self.title, ("sans-serif", 50).into_font())
+            .margin(5)
+            .x_label_area_size(30)
+            .y_label_area_size(30)
+            .build_cartesian_2d(
+                self.scale.0 .0..self.scale.0 .1,
+                self.scale.1 .0..self.scale.1 .1,
+            )?;
+
+        chart.configure_mesh().draw()?;
+
+        for serie in self.series.iter() {
+            chart
+                .draw_series(LineSeries::new(serie.data.clone(), &serie.color))?
+                .label(&serie.name)
+                .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &serie.color));
+        }
+
+        chart
+            .configure_series_labels()
+            .background_style(&WHITE.mix(0.8))
+            .border_style(&BLACK)
+            .draw()?;
+
+        // for line in self.lines.iter() {
+        //     root.draw(&PathElement::new(
+        //         vec![line.from, line.to],
+        //         Into::<ShapeStyle>::into(&line.color).filled(),
+        //     ))
+        // }
+
+        root.present()?;
+
+        Ok(())
+    }
 }
