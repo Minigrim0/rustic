@@ -3,13 +3,16 @@ use std::collections::BinaryHeap;
 use rodio::buffer::SamplesBuffer;
 use rodio::{OutputStream, Sink};
 
-use log::{error, info};
+use log::info;
 
 use super::note::Note;
 
+#[cfg(feature = "plotting")]
 use crate::core::envelope::Envelope;
 #[cfg(feature = "plotting")]
 use crate::plotting::Plot;
+#[cfg(feature = "plotting")]
+use log::error;
 
 pub struct Score {
     notes: BinaryHeap<Note>,
@@ -114,6 +117,8 @@ impl Score {
                 ));
                 #[cfg(feature = "plotting")]
                 plotting_vals.append(&mut vals);
+                #[cfg(not(feature = "plotting"))]
+                vals.clear();
             }
 
             current_notes.retain(|n| !n.is_completed(current_time));
@@ -152,13 +157,13 @@ impl Score {
             ));
         }
 
-        #[cfg(feature = "plotting")]
-        {
-            plot.plot(plotting_vals, "One note", (0, 0, 0));
-            if let Err(e) = plot.render() {
-                error!("Error while plottig: {}", e)
-            }
-        }
+        // #[cfg(feature = "plotting")]
+        // {
+        //     plot.plot(plotting_vals, "One note", (0, 0, 0));
+        //     if let Err(e) = plot.render() {
+        //         error!("Error while plottig: {}", e)
+        //     }
+        // }
 
         sink.sleep_until_end();
     }

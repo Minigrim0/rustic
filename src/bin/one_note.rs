@@ -7,8 +7,8 @@ use rustic::prelude::App;
 
 fn main() {
     let app = App::init();
-    let scale = 0.2;
-    let sample_rate = 44100;
+    let scale = app.config.system.master_volume;
+    let sample_rate = app.config.system.sample_rate;
 
     let envelope = {
         let mut env = ADSREnvelope::new();
