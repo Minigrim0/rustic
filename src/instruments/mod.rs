@@ -8,6 +8,8 @@ pub mod prelude {
     pub use super::keyboard::*;
 }
 
+/// The `Instrument` trait unifies different instruments structure,
+/// allowing to play complex graphs using a simple interface.
 pub trait Instrument {
     /// Starts playing the given note
     fn start_note(&mut self, note: Note, velocity: f32);

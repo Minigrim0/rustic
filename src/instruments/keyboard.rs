@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
+use crate::core::generator::prelude::SineWave;
 use crate::core::generator::FrequencyTransition;
 use crate::core::tones::TONES_FREQ;
-use crate::KeyboardGenerator;
-use crate::core::generator::prelude::SineWave;
 use crate::instruments::Instrument;
+use crate::KeyboardGenerator;
 use crate::Note;
 
 // #[derive(Send, Sync)]
@@ -24,7 +24,7 @@ impl<const VOICES: usize> Keyboard<VOICES> {
         Self {
             generators,
             note_indices: HashMap::new(),
-            output: 0.0
+            output: 0.0,
         }
     }
 
@@ -36,15 +36,21 @@ impl<const VOICES: usize> Keyboard<VOICES> {
 impl<const VOICES: usize> Instrument for Keyboard<VOICES> {
     /// Starts playing the given note
     fn start_note(&mut self, note: Note, _velocity: f32) {
-        let generator_position = self.generators.iter().position(|(_, is_playing)| !is_playing);
+        let generator_position = self
+            .generators
+            .iter()
+            .position(|(_, is_playing)| !is_playing);
         if let Some(position) = generator_position {
             // If there is a free generator, we use it
-            self.generators[position].0.change_frequency(TONES_FREQ[note.0 as usize][note.1 as usize], FrequencyTransition::DIRECT);
+            self.generators[position].0.change_frequency(
+                TONES_FREQ[note.0 as usize][note.1 as usize],
+                FrequencyTransition::DIRECT,
+            );
             self.generators[position].1 = true;
             self.note_indices.insert(note, position);
         } else {
             // If there is no free generator, we do not play the note
-            return
+            return;
         }
     }
 
@@ -62,9 +68,16 @@ impl<const VOICES: usize> Instrument for Keyboard<VOICES> {
 
     /// Advances the instrument by one tick
     fn tick(&mut self) {
-        self.output = self.generators
+        self.output = self
+            .generators
             .iter_mut()
-            .map(|(generator, is_playing)| if *is_playing { generator.tick(1.0 / 44100.0) } else { 0.0 })
+            .map(|(generator, is_playing)| {
+                if *is_playing {
+                    generator.tick(1.0 / 44100.0)
+                } else {
+                    0.0
+                }
+            })
             .sum()
     }
 }
