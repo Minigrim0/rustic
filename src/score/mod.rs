@@ -1,4 +1,3 @@
-mod chord;
 mod measure;
 mod notes;
 mod score;

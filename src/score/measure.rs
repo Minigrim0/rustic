@@ -11,7 +11,7 @@ pub struct Measure {
 impl Measure {
     pub fn new(signature: &TimeSignature) -> Self {
         Self {
-            notes: Vec::from_iter((0..signature.0).map(|_| Note::Pause)),
+            notes: Vec::from_iter((0..signature.0).map(|_| Note::new_pause(1).unwrap())),
         }
     }
 }

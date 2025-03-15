@@ -1,17 +1,17 @@
 //! Pipe and Filter Architecture test
 //!! Run with `cargo run --bin pipe | uv too run pipeplot` to plot the output
 
-use log::{info,trace, error};
+use log::{error, info, trace};
 
 use rodio::buffer::SamplesBuffer;
 use rodio::{OutputStream, Sink};
 
 use rustic::core::envelope::prelude::ADSREnvelope;
-use rustic::core::filters::{
-    CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter,
-};
+use rustic::core::filters::{CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, Tremolo};
 use rustic::core::generator::GENERATORS;
-use rustic::core::graph::{AudioGraphElement, Filter, Sink as SystemSink, Source, System, SimpleSink};
+use rustic::core::graph::{
+    AudioGraphElement, Filter, SimpleSink, Sink as SystemSink, Source, System,
+};
 use rustic::core::note::Note;
 use rustic::core::tones::{NOTES, TONES_FREQ};
 
@@ -24,17 +24,17 @@ struct Player {
 impl Player {
     fn new() -> Self {
         let envelope = ADSREnvelope::new()
-            .with_attack(0.25, 1.0, None)
+            .with_attack(2.0, 1.0, None)
             .with_decay(0.1, 0.9, None)
-            .with_release(2.0, 0.0, None);
+            .with_release(20.0, 0.0, None);
 
-        let initial_note = Note::new(TONES_FREQ[NOTES::C as usize][4], 0.0, 0.8)
+        let initial_note = Note::new(TONES_FREQ[NOTES::C as usize][4], 0.0, 1.5)
             .with_generator(GENERATORS::SINE)
             .with_envelope(&envelope);
-        let second_note = Note::new(TONES_FREQ[NOTES::D as usize][4], 0.0, 0.0)
+        let second_note = Note::new(TONES_FREQ[NOTES::D as usize][3], 2.0, 1.5)
             .with_generator(GENERATORS::SINE)
             .with_envelope(&envelope);
-        let third_note = Note::new(TONES_FREQ[NOTES::FS as usize][4], 0.0, 0.0)
+        let third_note = Note::new(TONES_FREQ[NOTES::FS as usize][5], 4.0, 1.5)
             .with_generator(GENERATORS::SINE)
             .with_envelope(&envelope);
 
@@ -82,10 +82,13 @@ fn main() {
     let sum_filter: Box<dyn Filter> = Box::from(CombinatorFilter::<2, 1>::new());
 
     // Delay of half a second
-    let delay_filter: Box<dyn Filter> = Box::from(DelayFilter::new((1.5 * sample_rate) as usize));
+    let delay_filter: Box<dyn Filter> = Box::from(DelayFilter::new((0.5 * sample_rate) as usize));
 
     // Diminish gain in feedback loop
-    let gain_filter: Box<dyn Filter> = Box::from(GainFilter::new(0.9));
+    let gain_filter: Box<dyn Filter> = Box::from(GainFilter::new(0.99));
+
+    // Add a tremolo
+    let final_tremolo: Box<dyn Filter> = Box::from(Tremolo::new(5.0, 0.4, 0.6));
 
     let system_sink: Box<dyn SystemSink> = Box::from(SimpleSink::new());
 
@@ -94,6 +97,7 @@ fn main() {
     let dupe_filter = system.add_filter(dupe_filter);
     let delay_filter = system.add_filter(delay_filter);
     let gain_filter = system.add_filter(gain_filter);
+    let final_tremolo = system.add_filter(final_tremolo);
 
     system.set_source(0, source);
     system.set_sink(0, system_sink);
@@ -101,11 +105,11 @@ fn main() {
     system.connect(sum_filter, dupe_filter, 0, 0);
     system.connect(dupe_filter, delay_filter, 1, 0);
     system.connect(delay_filter, gain_filter, 0, 0);
-
-    // Do not connect those in the graph to avoid cycles
     system.connect(gain_filter, sum_filter, 0, 1);
 
-    system.connect_sink(dupe_filter, 0, 0);
+    system.connect(dupe_filter, final_tremolo, 0, 0);
+
+    system.connect_sink(final_tremolo, 0, 0);
     system.connect_source(0, sum_filter, 0);
 
     if let Err(_) = system.compute() {
@@ -133,7 +137,10 @@ fn main() {
         sink.append(SamplesBuffer::new(
             1 as u16,
             sample_rate as u32,
-            values.iter().map(|n| *n * master_volume).collect::<Vec<f32>>(),
+            values
+                .iter()
+                .map(|n| *n * master_volume)
+                .collect::<Vec<f32>>(),
         ));
         while sink.len() > 5 * sample_rate as usize {}
     }
