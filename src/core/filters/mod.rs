@@ -2,6 +2,7 @@
 mod meta;
 
 mod amplifier;
+mod clipper;
 mod combinator;
 mod delay;
 mod high_pass;
@@ -11,6 +12,7 @@ mod structural;
 mod tremolo;
 
 pub use amplifier::*;
+pub use clipper::*;
 pub use combinator::*;
 pub use delay::*;
 pub use high_pass::*;

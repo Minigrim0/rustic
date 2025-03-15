@@ -7,7 +7,9 @@ use rodio::buffer::SamplesBuffer;
 use rodio::{OutputStream, Sink};
 
 use rustic::core::envelope::prelude::ADSREnvelope;
-use rustic::core::filters::{CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, Tremolo};
+use rustic::core::filters::{
+    Clipper, CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, Tremolo,
+};
 use rustic::core::generator::GENERATORS;
 use rustic::core::graph::{
     AudioGraphElement, Filter, SimpleSink, Sink as SystemSink, Source, System,
@@ -24,17 +26,17 @@ struct Player {
 impl Player {
     fn new() -> Self {
         let envelope = ADSREnvelope::new()
-            .with_attack(2.0, 1.0, None)
-            .with_decay(0.1, 0.9, None)
+            .with_attack(0.1, 1.0, None)
+            .with_decay(0.0, 1.0, None)
             .with_release(20.0, 0.0, None);
 
-        let initial_note = Note::new(TONES_FREQ[NOTES::C as usize][4], 0.0, 1.5)
+        let initial_note = Note::new(TONES_FREQ[NOTES::C as usize][4], 0.0, 0.2)
             .with_generator(GENERATORS::SINE)
             .with_envelope(&envelope);
-        let second_note = Note::new(TONES_FREQ[NOTES::D as usize][3], 2.0, 1.5)
+        let second_note = Note::new(TONES_FREQ[NOTES::D as usize][3], 2.0, 0.2)
             .with_generator(GENERATORS::SINE)
             .with_envelope(&envelope);
-        let third_note = Note::new(TONES_FREQ[NOTES::FS as usize][5], 4.0, 1.5)
+        let third_note = Note::new(TONES_FREQ[NOTES::FS as usize][5], 4.0, 0.2)
             .with_generator(GENERATORS::SINE)
             .with_envelope(&envelope);
 
@@ -89,6 +91,7 @@ fn main() {
 
     // Add a tremolo
     let final_tremolo: Box<dyn Filter> = Box::from(Tremolo::new(5.0, 0.4, 0.6));
+    let clipper: Box<dyn Filter> = Box::from(Clipper::new(0.75));
 
     let system_sink: Box<dyn SystemSink> = Box::from(SimpleSink::new());
 
@@ -97,19 +100,20 @@ fn main() {
     let dupe_filter = system.add_filter(dupe_filter);
     let delay_filter = system.add_filter(delay_filter);
     let gain_filter = system.add_filter(gain_filter);
-    let final_tremolo = system.add_filter(final_tremolo);
+    // let final_tremolo = system.add_filter(final_tremolo);
+    let clipper = system.add_filter(clipper);
 
     system.set_source(0, source);
     system.set_sink(0, system_sink);
 
     system.connect(sum_filter, dupe_filter, 0, 0);
-    system.connect(dupe_filter, delay_filter, 1, 0);
+    // system.connect(dupe_filter, delay_filter, 1, 0);
     system.connect(delay_filter, gain_filter, 0, 0);
     system.connect(gain_filter, sum_filter, 0, 1);
 
-    system.connect(dupe_filter, final_tremolo, 0, 0);
+    system.connect(dupe_filter, clipper, 0, 0);
 
-    system.connect_sink(final_tremolo, 0, 0);
+    system.connect_sink(clipper, 0, 0);
     system.connect_source(0, sum_filter, 0);
 
     if let Err(_) = system.compute() {
