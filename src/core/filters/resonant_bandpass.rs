@@ -1,4 +1,4 @@
-use biquad::{Biquad, Coefficients, DirectForm1, ToHertz, Type};
+use biquad::{Biquad, Coefficients, DirectForm2Transposed};
 use std::{f32::consts::PI, fmt};
 
 use crate::core::graph::{AudioGraphElement, Entry, Filter};
@@ -13,8 +13,7 @@ use super::{FilterMetadata, Metadata};
 pub struct ResonantBandpassFilter {
     source: f32,
     index: usize,
-    buffer: [f32; 2], // Coefficients for the filter.
-    coefficients: [f32; 6],
+    filter: DirectForm2Transposed<f32>,
 }
 
 impl fmt::Display for ResonantBandpassFilter {
@@ -26,30 +25,28 @@ impl fmt::Display for ResonantBandpassFilter {
 impl ResonantBandpassFilter {
     /// Resonant bandpass filter using a biquad design.
     /// Implemented from http://musicweb.ucsd.edu/~trsmyth/filters/Bi_quadratic_Resonant_Filte.html
-    /// Parameters:
-    ///     center_frequency: f32
-    ///         Center frequency in Hz.
-    ///     quality: f32
-    ///         Quality factor for resonance.
-    ///     sample_frequency: f32
-    ///         Sampling frequency in Hz.
-    pub fn new(center_frequency: f32, bandwidth: f32, sample_frequency: f32) -> Self {
+    pub fn new(center_frequency: f32, quality: f32, sample_frequency: f32) -> Self {
         // magnitude of the roots
-        let r = (-bandwidth).exp().sqrt();
-        let coefficients = [
-            1.0,
-            -2.0 * r * ((2.0 * PI * center_frequency) / sample_frequency).cos(),
-            r.powi(2),
-            1.0,
-            0.0,
-            -r,
-        ];
+
+        let period = 1.0 / sample_frequency;
+        let bandwidth = center_frequency / quality;
+
+        let r = (-PI * bandwidth * period).exp();
+
+        let coeffs: Coefficients<f32> = Coefficients {
+            a1: -2.0 * r * (2.0 * PI * center_frequency * period).cos(),
+            a2: r.powi(2),
+            b0: 1.0,
+            b1: 0.0,
+            b2: -r,
+        };
+        // let filter = DirectForm1::<f32>::new(coeffs);
+        let filter = DirectForm2Transposed::<f32>::new(coeffs);
 
         Self {
             source: 0.0,
             index: 0,
-            buffer: [0.0; 2],
-            coefficients,
+            filter,
         }
     }
 }
@@ -62,16 +59,7 @@ impl Entry for ResonantBandpassFilter {
 
 impl Filter for ResonantBandpassFilter {
     fn transform(&mut self) -> Vec<f32> {
-        let w = self.source
-            - self.coefficients[1] * self.buffer[0]
-            - self.coefficients[2] * self.buffer[1];
-        let output = self.coefficients[3] * w
-            + self.coefficients[4] * self.buffer[0]
-            + self.coefficients[5] * self.buffer[1];
-
-        self.buffer[1] = self.buffer[0];
-        self.buffer[0] = w;
-
+        let output = self.filter.run(self.source) / 8.0;
         vec![output]
     }
 

@@ -1,6 +1,6 @@
 use crate::core::envelope::prelude::BezierEnvelope;
 use crate::core::envelope::Envelope;
-use crate::core::filters::{CombinatorFilter, GainFilter, ResonantBandpassFilter};
+use crate::core::filters::{CombinatorFilter, GainFilter, MovingAverage, ResonantBandpassFilter};
 use crate::core::generator::prelude::*;
 use crate::core::graph::simple_source;
 use crate::core::graph::SimpleSink;
@@ -49,19 +49,20 @@ impl HiHat {
         let gain_normalization = system.add_filter(Box::from(GainFilter::new(1.0 / 6.0))); // Normalize the output to prevent overflows
 
         let resonant_bandpass = system.add_filter(Box::from(ResonantBandpassFilter::new(
-            10000.0 + 400.0,
+            (10000.0 + 400.0) / 2.0,
             20.0,
             44100.0,
         )));
 
+        let moving_avg = system.add_filter(Box::from(MovingAverage::<10>::new()));
+
         system.connect(combinator_index, gain_normalization, 0, 0);
         system.connect(gain_normalization, resonant_bandpass, 0, 0);
-
-        // system.connect(combinator_index, resonant_bandpass, 0, 0);
+        system.connect(resonant_bandpass, moving_avg, 0, 0);
 
         let sink: SimpleSink = SimpleSink::new();
         system.set_sink(0, Box::from(sink));
-        system.connect_sink(resonant_bandpass, 0, 0);
+        system.connect_sink(moving_avg, 0, 0);
 
         system
             .compute()

@@ -31,23 +31,24 @@ fn main() {
     for i in 0..20 {
         values.clear();
 
-        kick.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
-        hihat.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
+        if i % 2 == 0 {
+            kick.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
+        } else {
+            hihat.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
+        }
 
         for _ in 0..(app.config.system.sample_rate as usize / 2) {
             kick.tick();
-            if i % 2 == 0 {
-                values.push(kick.get_output());
-                values.push(0.0);
+            hihat.tick();
 
-                complete_value_list.push(kick.get_output());
-                complete_value_list.push(0.0);
-            } else {
-                values.push(0.0);
-                values.push(kick.get_output());
-                complete_value_list.push(0.0);
-                complete_value_list.push(kick.get_output())
-            }
+            let hihat_output = hihat.get_output();
+            let full = hihat_output + kick.get_output();
+
+            values.push(full);
+            values.push(full);
+
+            complete_value_list.push(full);
+            complete_value_list.push(full);
         }
 
         kick.stop_note(Note(rustic::core::tones::NOTES::A, 0));
@@ -94,9 +95,9 @@ fn main() {
             })
             .collect();
 
-        let mut plot = Plot::new("Simple Drum", (-0.1, 1.0), (-1.1, 1.1), "drum.png")?;
-        plot.plot(left_ear, "left ear");
-        plot.plt(right_ear, "right_ear");
+        let mut plot = Plot::new("Simple Drum", (-0.1, 1.0), (-0.8, 0.8), "drum.png");
+        plot.plot(left_ear, "left ear", (255, 0, 0));
+        plot.plot(right_ear, "right_ear", (0, 255, 0));
         plot.render();
     }
 

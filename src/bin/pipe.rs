@@ -91,7 +91,7 @@ fn main() {
 
     // Add a tremolo
     let final_tremolo: Box<dyn Filter> = Box::from(Tremolo::new(5.0, 0.4, 0.6));
-    let clipper: Box<dyn Filter> = Box::from(Clipper::new(0.75));
+    // let clipper: Box<dyn Filter> = Box::from(Clipper::new(0.75));
 
     let system_sink: Box<dyn SystemSink> = Box::from(SimpleSink::new());
 
@@ -100,20 +100,20 @@ fn main() {
     let dupe_filter = system.add_filter(dupe_filter);
     let delay_filter = system.add_filter(delay_filter);
     let gain_filter = system.add_filter(gain_filter);
-    // let final_tremolo = system.add_filter(final_tremolo);
-    let clipper = system.add_filter(clipper);
+    let final_tremolo = system.add_filter(final_tremolo);
+    // let clipper = system.add_filter(clipper);
 
     system.set_source(0, source);
     system.set_sink(0, system_sink);
 
     system.connect(sum_filter, dupe_filter, 0, 0);
-    // system.connect(dupe_filter, delay_filter, 1, 0);
+    system.connect(dupe_filter, delay_filter, 1, 0);
     system.connect(delay_filter, gain_filter, 0, 0);
     system.connect(gain_filter, sum_filter, 0, 1);
 
-    system.connect(dupe_filter, clipper, 0, 0);
+    system.connect(dupe_filter, final_tremolo, 0, 0);
 
-    system.connect_sink(clipper, 0, 0);
+    system.connect_sink(final_tremolo, 0, 0);
     system.connect_source(0, sum_filter, 0);
 
     if let Err(_) = system.compute() {

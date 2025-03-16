@@ -1,8 +1,8 @@
-use log::{error, info};
+use log::info;
 use std::time::Instant;
 
-use rustic::generator::sine_wave::SineWave;
-use rustic::generator::{Envelope, ToneGenerator};
+use rustic::core::envelope::prelude::ADSREnvelope;
+use rustic::core::generator::{prelude::SineWave, ToneGenerator};
 
 #[cfg(feature = "plotting")]
 use rustic::plotting::plot_data;
@@ -12,8 +12,8 @@ fn main() {
     let sine_440: Box<dyn ToneGenerator> = Box::from(SineWave::new(440.0, 1.0));
     let sine_20: Box<dyn ToneGenerator> = Box::from(SineWave::new(20.0, 1.0));
 
-    let mut envelope = Envelope::new();
-    let mut envelope2 = Envelope::new();
+    let mut envelope = ADSREnvelope::new();
+    let mut envelope2 = ADSREnvelope::new();
 
     envelope.set_attack(0.2, 1.0, Some((0.0, 1.0)));
     envelope.set_decay(0.2, 0.6, Some((0.0, 0.6)));
@@ -23,8 +23,8 @@ fn main() {
     envelope2.set_decay(0.3, 0.8, Some((0.0, 0.6)));
     envelope2.set_release(0.4, 0.0, Some((0.4, 0.6)));
 
-    let mut generator = envelope.attach(sine_440);
-    let mut generator2 = envelope2.attach(sine_20);
+    let mut generator = envelope.attach_amplitude(sine_440);
+    let mut generator2 = envelope2.attach_amplitude(sine_20);
 
     let mut results: Vec<(f32, f32)> = Vec::new();
     let mut results2: Vec<(f32, f32)> = Vec::new();
@@ -38,8 +38,8 @@ fn main() {
     for sample in 0..(duration * sample_rate) as i32 {
         let current_time = sample as f32 / sample_rate;
 
-        let val = generator.get_at(current_time, 0.02, 0.5);
-        let val2 = generator2.get_at(current_time, 0.02, 0.5);
+        let val = generator.tick(sample, sample_rate as i32, 0.02, 0.5);
+        let val2 = generator2.tick(sample, sample_rate as i32, 0.02, 0.5);
 
         results.push((current_time, val));
         results2.push((current_time, val2));
@@ -52,6 +52,8 @@ fn main() {
 
     #[cfg(feature = "plotting")]
     {
+        use log::error;
+
         if let Err(e) = plot_data(
             results,
             "sine_440",
