@@ -7,8 +7,8 @@ use rodio::buffer::SamplesBuffer;
 use rodio::{OutputStream, Sink};
 
 use rustic::core::envelope::prelude::ADSREnvelope;
-use rustic::core::filters::{
-    Clipper, CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, Tremolo,
+use rustic::core::filters::prelude::{
+    CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, Tremolo,
 };
 use rustic::core::generator::GENERATORS;
 use rustic::core::graph::{

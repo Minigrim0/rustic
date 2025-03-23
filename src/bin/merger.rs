@@ -1,7 +1,10 @@
-use std::path::PathBuf;
 use log::error;
+use std::path::PathBuf;
 
-use rustic::core::{filters::{CombinatorFilter, GainFilter}, graph::System};
+use rustic::core::{
+    filters::prelude::{CombinatorFilter, GainFilter},
+    graph::System,
+};
 
 pub fn main() {
     colog::init();

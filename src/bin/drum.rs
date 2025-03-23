@@ -3,7 +3,7 @@ use rodio::{OutputStream, Sink};
 
 use log::error;
 
-use rustic::instruments::prelude::{HiHat, Kick};
+use rustic::instruments::prelude::{HiHat, Kick, Snare};
 use rustic::instruments::Instrument;
 use rustic::prelude::App;
 use rustic::Note;
@@ -22,27 +22,31 @@ fn main() {
     };
 
     let mut kick = Kick::new();
+    let mut snare = Snare::new();
 
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
 
     let mut values = vec![];
     let mut complete_value_list = vec![];
-    for i in 0..20 {
+    for i in 0..40 {
         values.clear();
 
-        if i % 2 == 0 {
+        if i % 4 == 1 {
             kick.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
+        } else if i % 4 == 3 {
+            snare.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
         } else {
             hihat.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
         }
 
-        for _ in 0..(app.config.system.sample_rate as usize / 2) {
+        for _ in 0..(app.config.system.sample_rate as usize / 4) {
             kick.tick();
             hihat.tick();
+            snare.tick();
 
             let hihat_output = hihat.get_output();
-            let full = hihat_output + kick.get_output();
+            let full = hihat_output + kick.get_output() + snare.get_output();
 
             values.push(full);
             values.push(full);
