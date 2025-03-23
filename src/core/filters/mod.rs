@@ -5,20 +5,20 @@ mod amplifier;
 mod clipper;
 mod combinator;
 mod delay;
-mod high_pass;
-mod low_pass;
 mod moving_average;
+pub mod pass;
 mod resonant_bandpass;
 mod structural;
 mod tremolo;
 
-pub use amplifier::*;
-pub use clipper::*;
-pub use combinator::*;
-pub use delay::*;
-pub use high_pass::*;
-pub use low_pass::*;
-pub use moving_average::*;
-pub use resonant_bandpass::*;
-pub use structural::*;
-pub use tremolo::*;
+pub mod prelude {
+    pub use super::amplifier::*;
+    pub use super::clipper::*;
+    pub use super::combinator::*;
+    pub use super::delay::*;
+    pub use super::moving_average::*;
+    pub use super::pass::*;
+    pub use super::resonant_bandpass::*;
+    pub use super::structural::*;
+    pub use super::tremolo::*;
+}

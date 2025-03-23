@@ -1,14 +1,12 @@
-use crate::core::envelope::prelude::ADSREnvelope;
-use crate::core::envelope::prelude::BezierEnvelope;
+use crate::core::envelope::prelude::{ADSREnvelope, BezierEnvelope};
 use crate::core::envelope::Envelope;
-use crate::core::generator::prelude::SineWave;
-use crate::core::generator::prelude::WhiteNoise;
+use crate::core::generator::prelude::{SineWave, ToneGenerator, WhiteNoise};
 use crate::core::generator::BendableGenerator;
-use crate::core::generator::ToneGenerator;
 use crate::instruments::Instrument;
 use crate::Note;
 
-pub struct Kick {
+/// A snare for the drum kit
+pub struct Snare {
     generators: (Box<dyn ToneGenerator>, Box<dyn BendableGenerator>),
     envelopes: (Box<dyn Envelope>, Box<dyn Envelope>),
     pitch_curve: Box<dyn Envelope>,
@@ -17,18 +15,18 @@ pub struct Kick {
     output: f32,
 }
 
-impl Kick {
+impl Snare {
     pub fn new() -> Self {
         Self {
             generators: (
-                Box::from(WhiteNoise::new(0.02)),
-                Box::from(SineWave::new(58.0, 1.0)),
+                Box::from(WhiteNoise::new(0.2)),
+                Box::from(SineWave::new(200.0, 1.0)),
             ),
             envelopes: (
                 Box::from(
                     ADSREnvelope::new()
                         .with_attack(0.001, 1.0, Some((0.0, 1.0)))
-                        .with_decay(0.1, 0.0, None)
+                        .with_decay(0.3, 0.0, None)
                         .with_release(0.0, 0.0, Some((0.0, 0.0))),
                 ),
                 {
@@ -48,7 +46,7 @@ impl Kick {
     }
 }
 
-impl Instrument for Kick {
+impl Instrument for Snare {
     fn start_note(&mut self, _note: Note, _velocity: f32) {
         self.current_tick = 0;
         self.playing = true;

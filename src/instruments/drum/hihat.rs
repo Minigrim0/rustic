@@ -1,6 +1,6 @@
 use crate::core::envelope::prelude::BezierEnvelope;
 use crate::core::envelope::Envelope;
-use crate::core::filters::{CombinatorFilter, GainFilter, MovingAverage, ResonantBandpassFilter};
+use crate::core::filters::prelude::{CombinatorFilter, GainFilter, ResonantBandpassFilter};
 use crate::core::generator::prelude::*;
 use crate::core::graph::simple_source;
 use crate::core::graph::SimpleSink;
@@ -46,23 +46,20 @@ impl HiHat {
             system.connect_source(index, combinator_index, index);
         });
 
-        let gain_normalization = system.add_filter(Box::from(GainFilter::new(1.0 / 6.0))); // Normalize the output to prevent overflows
+        let gain_normalization = system.add_filter(Box::from(GainFilter::new(1.0 / 12.0))); // Normalize the output to prevent overflows
 
-        let resonant_bandpass = system.add_filter(Box::from(ResonantBandpassFilter::new(
-            (10000.0 + 400.0) / 2.0,
+        let bandpass = system.add_filter(Box::from(ResonantBandpassFilter::new(
+            (10.0e3 + 400.0) / 2.0,
             20.0,
             44100.0,
         )));
 
-        let moving_avg = system.add_filter(Box::from(MovingAverage::<10>::new()));
-
         system.connect(combinator_index, gain_normalization, 0, 0);
-        system.connect(gain_normalization, resonant_bandpass, 0, 0);
-        system.connect(resonant_bandpass, moving_avg, 0, 0);
+        system.connect(gain_normalization, bandpass, 0, 0);
 
         let sink: SimpleSink = SimpleSink::new();
         system.set_sink(0, Box::from(sink));
-        system.connect_sink(moving_avg, 0, 0);
+        system.connect_sink(bandpass, 0, 0);
 
         system
             .compute()
@@ -77,7 +74,7 @@ impl HiHat {
             Err(_) => warn!("Failed to build path to save hihat graph"),
         }
 
-        let amplitude_envelope = Box::new(BezierEnvelope::new(4.0, 0.0, 0.5, (0.0, 0.0)));
+        let amplitude_envelope = Box::new(BezierEnvelope::new(4.0, 0.0, 0.2, (0.0, 0.0)));
 
         #[cfg(debug_assertions)]
         let output_path = crate::fs::debug_dir("HiHat", "hihat_output.txt").unwrap();

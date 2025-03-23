@@ -1,5 +1,4 @@
-use biquad::{Biquad, Coefficients, DirectForm2Transposed};
-use std::{f32::consts::PI, fmt};
+use std::{f64::consts::PI, fmt};
 
 use crate::core::graph::{AudioGraphElement, Entry, Filter};
 
@@ -13,7 +12,9 @@ use super::{FilterMetadata, Metadata};
 pub struct ResonantBandpassFilter {
     source: f32,
     index: usize,
-    filter: DirectForm2Transposed<f32>,
+    b: [f64; 3],  // b0, b1, b2
+    a: [f64; 3],  // a0, a1, a2
+    zs: [f64; 2], // Delay elements z1, z2 for the filter
 }
 
 impl fmt::Display for ResonantBandpassFilter {
@@ -31,22 +32,21 @@ impl ResonantBandpassFilter {
         let period = 1.0 / sample_frequency;
         let bandwidth = center_frequency / quality;
 
-        let r = (-PI * bandwidth * period).exp();
+        let r: f64 = (-PI * bandwidth as f64 * period as f64).exp();
 
-        let coeffs: Coefficients<f32> = Coefficients {
-            a1: -2.0 * r * (2.0 * PI * center_frequency * period).cos(),
-            a2: r.powi(2),
-            b0: 1.0,
-            b1: 0.0,
-            b2: -r,
-        };
-        // let filter = DirectForm1::<f32>::new(coeffs);
-        let filter = DirectForm2Transposed::<f32>::new(coeffs);
+        let b: [f64; 3] = [1.0, 0.0, -r];
+        let a: [f64; 3] = [
+            1.0,
+            -2.0 * r * (2.0 * PI * center_frequency as f64 * period as f64).cos(),
+            r * r,
+        ];
 
         Self {
             source: 0.0,
             index: 0,
-            filter,
+            b,
+            a,
+            zs: [0.0; 2],
         }
     }
 }
@@ -59,8 +59,11 @@ impl Entry for ResonantBandpassFilter {
 
 impl Filter for ResonantBandpassFilter {
     fn transform(&mut self) -> Vec<f32> {
-        let output = self.filter.run(self.source) / 8.0;
-        vec![output]
+        let output = self.b[0] * self.source as f64 + self.zs[0];
+        self.zs[0] = self.b[2] * self.source as f64 - self.a[1] * output + self.zs[1];
+        self.zs[1] = -self.a[2] * output;
+
+        vec![output as f32]
     }
 
     fn postponable(&self) -> bool {
