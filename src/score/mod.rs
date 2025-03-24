@@ -1,8 +1,4 @@
 mod measure;
 mod notes;
-mod score;
+pub mod score;
 mod staff;
-
-pub mod prelude {
-    pub use super::score::*;
-}
