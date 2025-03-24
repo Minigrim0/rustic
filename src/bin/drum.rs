@@ -36,7 +36,7 @@ fn main() {
             kick.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
         } else if i % 4 == 3 {
             snare.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
-        } else {
+        } else if i < 39 {
             hihat.start_note(Note(rustic::core::tones::NOTES::A, 0), 0.0);
         }
 

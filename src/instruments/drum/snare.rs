@@ -19,8 +19,8 @@ impl Snare {
     pub fn new() -> Self {
         Self {
             generators: (
-                Box::from(WhiteNoise::new(0.2)),
-                Box::from(SineWave::new(200.0, 1.0)),
+                Box::from(WhiteNoise::new(0.5)),
+                Box::from(SineWave::new(200.0, 0.5)),
             ),
             envelopes: (
                 Box::from(
@@ -38,7 +38,7 @@ impl Snare {
                     )
                 },
             ),
-            pitch_curve: Box::from(BezierEnvelope::new(1.4, 0.1, 0.3, (2.0, 0.2))),
+            pitch_curve: Box::from(BezierEnvelope::new(1.2, 1.0, 0.3, (0.0, 1.0))),
             current_tick: 0,
             playing: false,
             output: 0.0,
