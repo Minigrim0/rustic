@@ -3967,6 +3967,7 @@ dependencies = [
  "rand 0.8.5",
  "rodio",
  "rustic-derive",
+ "rustic-meta",
  "serde",
  "termion",
  "threadpool",
@@ -3994,7 +3995,16 @@ dependencies = [
  "convert_case 0.8.0",
  "proc-macro2",
  "quote",
+ "rustic-meta",
  "syn 2.0.100",
+]
+
+[[package]]
+name = "rustic-meta"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]
