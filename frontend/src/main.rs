@@ -1,11 +1,12 @@
 mod attributes;
+mod render;
 mod state;
-mod vertex;
+mod utils;
 mod widgets;
 mod window;
 
-pub trait ToVertices {
-    fn vertices(&self) -> (Vec<vertex::Vertex>, Vec<u16>);
+pub trait Renderable {
+    fn vertices(&self) -> (Vec<render::vertex::Vertex>, Vec<u16>);
 }
 
 use window::run;

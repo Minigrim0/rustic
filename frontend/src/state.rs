@@ -89,7 +89,7 @@ impl<'a> State<'a> {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
-                buffers: &[super::vertex::Vertex::desc()],
+                buffers: &[crate::render::vertex::Vertex::desc()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -123,18 +123,18 @@ impl<'a> State<'a> {
 
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(super::vertex::VERTICES),
+            contents: bytemuck::cast_slice(crate::render::vertex::VERTICES),
             usage: wgpu::BufferUsages::VERTEX,
         });
 
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(super::vertex::INDICES),
+            contents: bytemuck::cast_slice(crate::render::vertex::INDICES),
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        let num_vertices = super::vertex::VERTICES.len() as u32;
-        let num_indices = super::vertex::INDICES.len() as u32;
+        let num_vertices = crate::render::vertex::VERTICES.len() as u32;
+        let num_indices = crate::render::vertex::INDICES.len() as u32;
 
         Self {
             surface,

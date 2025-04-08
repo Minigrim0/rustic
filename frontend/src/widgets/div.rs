@@ -1,4 +1,4 @@
-use crate::{attributes::prelude::*, vertex::Vertex};
+use crate::{attributes::prelude::*, render::vertex::Vertex};
 
 #[derive(Default)]
 pub struct Divider {
@@ -18,8 +18,8 @@ impl Divider {
     }
 }
 
-impl crate::ToVertices for Divider {
-    fn vertices(&self) -> (Vec<crate::vertex::Vertex>, Vec<u16>) {
+impl crate::Renderable for Divider {
+    fn vertices(&self) -> (Vec<Vertex>, Vec<u16>) {
         (
             vec![
                 Vertex::new(

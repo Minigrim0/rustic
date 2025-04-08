@@ -2,7 +2,7 @@
 This project aims to generate music using rust and the `rodio` crate.
 
 ## Frontend
-A frontend application is available under the `app` folder. This application is created using the tauri framework, with a Vue.js frontend.
+A frontend application is available under the `frontend` folder. This is a simple webgl application that allows to create audio pipelines for the instruments.
 
 It aims to provide a simple user interface to create audio pipelines for the instruments.
 
