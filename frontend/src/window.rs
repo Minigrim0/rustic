@@ -1,8 +1,9 @@
+use winit::dpi::PhysicalSize;
+use winit::window::{Fullscreen, WindowBuilder};
 use winit::{
     event::*,
     event_loop::EventLoop,
     keyboard::{KeyCode, PhysicalKey},
-    window::WindowBuilder,
 };
 
 use super::state::State;
@@ -10,16 +11,30 @@ use super::state::State;
 pub async fn run() {
     env_logger::init();
     let event_loop = EventLoop::new().unwrap();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
+    let size = PhysicalSize::new(800, 600);
+    // let monitor = event_loop.primary_monitor().unwrap();
+    // let video_mode = monitor.video_modes().next();
+    // let size = video_mode
+    //     .clone()
+    //     .map_or(PhysicalSize::new(800, 600), |vm| vm.size());
+    let window = WindowBuilder::new()
+        .with_visible(true)
+        .with_title("Rustic")
+        .with_inner_size(size)
+        .build(&event_loop)
+        .unwrap();
 
-    let mut state = State::new(&window).await;
+    let mut state = State::new();
+    let mut renderer = super::render::Renderer::new(&window, size).await;
+    state.set_scene(crate::scenes::prelude::get_main_scene());
     let mut surface_configured = false;
 
+    let window = &window;
     if let Err(e) = event_loop.run(move |event, control_flow| match event {
         Event::WindowEvent {
             ref event,
             window_id,
-        } if window_id == state.window().id() => {
+        } if window_id == window.id() => {
             if !state.input(event) {
                 match event {
                     WindowEvent::CloseRequested
@@ -35,34 +50,16 @@ pub async fn run() {
                     WindowEvent::Resized(physical_size) => {
                         log::info!("physical_size: {physical_size:?}");
                         surface_configured = true;
-                        state.resize(*physical_size);
+                        renderer.resize(*physical_size);
                     }
                     WindowEvent::RedrawRequested => {
-                        state.window().request_redraw();
-
                         if !surface_configured {
                             return;
                         }
 
                         state.update();
-                        match state.render() {
-                            Ok(_) => {}
-
-                            // Reconfigure the surface if it's lost or outdated
-                            Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                                state.resize(state.size)
-                            }
-                            // The system is out of memory, we should probably quit
-                            Err(wgpu::SurfaceError::OutOfMemory | wgpu::SurfaceError::Other) => {
-                                log::error!("OutOfMemory");
-                                control_flow.exit();
-                            }
-
-                            // This happens when the a frame takes too long to present
-                            Err(wgpu::SurfaceError::Timeout) => {
-                                log::warn!("Surface timeout")
-                            }
-                        }
+                        renderer.render(state.scene());
+                        window.request_redraw();
                     }
                     _ => {}
                 }

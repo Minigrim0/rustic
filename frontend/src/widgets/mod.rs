@@ -1,7 +1,7 @@
 mod div;
-mod scene;
+mod text;
 
 pub mod prelude {
     pub use super::div::*;
-    pub use super::scene::*;
+    pub use super::text::*;
 }

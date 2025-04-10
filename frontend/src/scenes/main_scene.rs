@@ -1,0 +1,13 @@
+use super::Scene;
+
+use crate::{attributes::prelude::Color, widgets::prelude::*};
+
+pub fn get_main_scene() -> Scene {
+    let mut scene = Scene::new();
+
+    let mut div = Divider::new(&[0.2, 0.2], &[0.3, 0.3]);
+    div.set_color(Color::new(255, 255, 255));
+    scene.add_element(Box::from(div));
+
+    scene
+}

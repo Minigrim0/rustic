@@ -1,4 +1,4 @@
-use crate::{attributes::prelude::*, render::vertex::Vertex};
+use crate::{attributes::prelude::*, render::quadbuffer::QuadBufferBuilder};
 
 #[derive(Default)]
 pub struct Divider {
@@ -16,42 +16,19 @@ impl Divider {
             ..Default::default()
         }
     }
+
+    pub fn set_color(&mut self, color: Color) {
+        self.color = color;
+    }
 }
 
 impl crate::Renderable for Divider {
-    fn vertices(&self) -> (Vec<Vertex>, Vec<u16>) {
-        (
-            vec![
-                Vertex::new(
-                    [self.position[0], self.position[1], self._z_index],
-                    self.color.as_array(),
-                ),
-                Vertex::new(
-                    [
-                        self.position[0],
-                        self.position[1] + self.size[1],
-                        self._z_index,
-                    ],
-                    self.color.as_array(),
-                ),
-                Vertex::new(
-                    [
-                        self.position[0] + self.size[0],
-                        self.position[1] + self.size[1],
-                        self._z_index,
-                    ],
-                    self.color.as_array(),
-                ),
-                Vertex::new(
-                    [
-                        self.position[0] + self.size[0],
-                        self.position[1],
-                        self._z_index,
-                    ],
-                    self.color.as_array(),
-                ),
-            ],
-            vec![3, 1, 0, 3, 2, 1],
+    fn render(&self, builder: QuadBufferBuilder) -> QuadBufferBuilder {
+        builder.push_quad(
+            self.position[0],
+            self.position[1],
+            self.position[0] + self.size[0],
+            self.position[1] + self.size[1],
         )
     }
 }

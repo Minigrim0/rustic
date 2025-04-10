@@ -1,12 +1,15 @@
 mod attributes;
 mod render;
+mod scenes;
 mod state;
 mod utils;
 mod widgets;
 mod window;
 
+use render::quadbuffer::QuadBufferBuilder;
+
 pub trait Renderable {
-    fn vertices(&self) -> (Vec<render::vertex::Vertex>, Vec<u16>);
+    fn render(&self, builder: QuadBufferBuilder) -> QuadBufferBuilder;
 }
 
 use window::run;
