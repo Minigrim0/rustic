@@ -2,3 +2,6 @@
 output/*
 resources/
 .dist/
+
+# Example score
+score.toml
