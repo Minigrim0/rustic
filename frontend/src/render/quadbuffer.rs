@@ -1,3 +1,5 @@
+use crate::attributes::prelude::Color;
+
 use super::{staging::StagingBuffer, vertex::Vertex};
 
 pub struct QuadBufferBuilder {
@@ -15,12 +17,19 @@ impl QuadBufferBuilder {
         }
     }
 
-    pub fn push_quad(mut self, min_x: f32, min_y: f32, max_x: f32, max_y: f32) -> Self {
+    pub fn push_quad(
+        mut self,
+        min_x: f32,
+        min_y: f32,
+        max_x: f32,
+        max_y: f32,
+        color: Color,
+    ) -> Self {
         self.vertex_data.extend(&[
-            Vertex::new((min_x, min_y)),
-            Vertex::new((max_x, min_y)),
-            Vertex::new((max_x, max_y)),
-            Vertex::new((min_x, max_y)),
+            Vertex::new((min_x, min_y), color),
+            Vertex::new((max_x, min_y), color),
+            Vertex::new((max_x, max_y), color),
+            Vertex::new((min_x, max_y), color),
         ]);
         self.index_data.extend(&[
             self.current_quad * 4 + 0,

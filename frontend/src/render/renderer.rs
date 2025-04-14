@@ -1,3 +1,4 @@
+use wgpu::ShaderModule;
 use wgpu_glyph::{Section, Text, ab_glyph};
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -87,13 +88,17 @@ impl<'a> Renderer<'a> {
             push_constant_ranges: &[],
         });
 
+        let shader: ShaderModule = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("../../res/shaders/shader.wgsl").into()),
+        });
+
         let pipeline = create_render_pipeline(
             &device,
             &pipeline_layout,
             config.format,
             &[super::vertex::Vertex::DESC],
-            wgpu::include_wgsl!("../../res/shaders/textured.vert.wgsl"),
-            wgpu::include_wgsl!("../../res/shaders/textured.frag.wgsl"),
+            shader,
         );
 
         let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
@@ -191,7 +196,7 @@ impl<'a> Renderer<'a> {
                         color: cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0),
                         text: "Hello, World!".to_string(),
                         size: 12.0,
-                        visible: true,
+                        _visible: true,
                         focused: false,
                         centered: true,
                     },
@@ -255,24 +260,20 @@ fn create_render_pipeline(
     layout: &wgpu::PipelineLayout,
     color_format: wgpu::TextureFormat,
     vertex_layouts: &[wgpu::VertexBufferLayout],
-    vs_src: wgpu::ShaderModuleDescriptor,
-    fs_src: wgpu::ShaderModuleDescriptor,
+    shaders: ShaderModule,
 ) -> wgpu::RenderPipeline {
-    let vs_module = device.create_shader_module(vs_src);
-    let fs_module = device.create_shader_module(fs_src);
-
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: Some("Render Pipeline"),
         layout: Some(layout),
         vertex: wgpu::VertexState {
-            module: &vs_module,
-            entry_point: Some("main"),
+            module: &shaders,
+            entry_point: Some("vs_main"),
             buffers: &vertex_layouts,
             compilation_options: Default::default(),
         },
         fragment: Some(wgpu::FragmentState {
-            module: &fs_module,
-            entry_point: Some("main"),
+            module: &shaders,
+            entry_point: Some("fs_main"),
             targets: &[Some(wgpu::ColorTargetState {
                 format: color_format,
                 blend: Some(wgpu::BlendState {

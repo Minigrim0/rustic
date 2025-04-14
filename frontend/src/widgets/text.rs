@@ -5,7 +5,7 @@ pub struct Text {
     pub color: cgmath::Vector4<f32>,
     pub text: String,
     pub size: f32,
-    pub visible: bool,
+    pub _visible: bool,
     pub focused: bool,
     pub centered: bool,
 }

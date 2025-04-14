@@ -1,5 +1,4 @@
 use winit::event::WindowEvent;
-use winit::window::Window;
 
 use super::scenes::Scene;
 

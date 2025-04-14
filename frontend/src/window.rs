@@ -1,5 +1,6 @@
 use winit::dpi::PhysicalSize;
-use winit::window::{Fullscreen, WindowBuilder};
+// use winit::window::Fullscreen;
+use winit::window::WindowBuilder;
 use winit::{
     event::*,
     event_loop::EventLoop,

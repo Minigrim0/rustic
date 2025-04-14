@@ -29,6 +29,7 @@ impl crate::Renderable for Divider {
             self.position[1],
             self.position[0] + self.size[0],
             self.position[1] + self.size[1],
+            self.color,
         )
     }
 }
