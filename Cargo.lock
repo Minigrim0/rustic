@@ -2276,6 +2276,7 @@ dependencies = [
  "rustic-meta",
  "serde",
  "termion",
+ "thiserror 2.0.12",
  "threadpool",
  "toml",
 ]
