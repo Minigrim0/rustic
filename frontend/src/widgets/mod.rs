@@ -1,7 +1,5 @@
-mod div;
-mod text;
+mod button;
 
 pub mod prelude {
-    pub use super::div::*;
-    pub use super::text::*;
+    pub use super::button::*;
 }

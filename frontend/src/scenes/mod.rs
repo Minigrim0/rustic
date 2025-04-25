@@ -1,34 +1,30 @@
-mod main_scene;
+mod top_menu;
 
-pub mod prelude {
-    pub use super::main_scene::get_main_scene;
-}
+use sdl2::render::{Canvas, TextureCreator};
+use sdl2::video::{Window, WindowContext};
+pub use top_menu::TopMenu;
 
-use crate::Renderable;
-use crate::render::quadbuffer::QuadBufferBuilder;
+use crate::manager::{FontManager, TextureManager};
 
-/// A scene is a collection of renderable elements.
-#[derive(Default)]
-pub struct Scene {
-    pub elements: Vec<Box<dyn Renderable>>,
-}
+pub trait Scene {
+    fn load<'b>(
+        &mut self,
+        resource_manager: &mut TextureManager<'b, WindowContext>,
+        font_manager: &mut FontManager,
+        texture_creator: &'b TextureCreator<WindowContext>,
+    );
 
-impl Scene {
-    pub fn new() -> Self {
-        Scene {
-            elements: Vec::new(),
-        }
-    }
+    /// Updates the scene depending on the amount of time (ms) elapsed
+    fn update(&mut self, delta_time: u32);
 
-    pub fn add_element(&mut self, element: Box<dyn Renderable>) {
-        self.elements.push(element);
-    }
+    /// Draws the scene on the screen
+    fn draw(
+        &self,
+        canvas: &mut Canvas<Window>,
+        area: sdl2::rect::Rect,
+        font_manager: &mut FontManager,
+        texture_manager: &mut TextureManager<WindowContext>,
+    );
 
-    pub fn get_vertices(&self) -> QuadBufferBuilder {
-        let mut quad_buffer = QuadBufferBuilder::new();
-        for element in &self.elements {
-            quad_buffer = element.render(quad_buffer);
-        }
-        quad_buffer
-    }
+    fn handle_events(&mut self, event: sdl2::event::Event);
 }
