@@ -14,4 +14,33 @@ This architecture is used to create a pipeline of filters that process the audio
 The frontend application aims at providing a simple way to create these pipelines.
 
 ## Event-Driven
-The event-dirven architecture aims at triggering the creation of audio from keyboard events. This is done using the evdev crate, which allows to listen to keyboard events. These events will, depending on the context (provided by the `Application` structure, trigger an instrument to start playing a certain note.
+The event-driven architecture aims at triggering the creation of audio from keyboard events. This is done using the evdev crate, which allows to listen to keyboard events. These events will, depending on the context (provided by the `Application` structure, trigger an instrument to start playing a certain note.
+
+# Development
+
+## Pre-commit Hooks
+
+This project includes pre-commit hooks to ensure code quality. The hooks check code formatting and run tests before allowing commits.
+
+### Installation
+
+#### Linux/macOS
+```bash
+./hooks/install.sh
+```
+
+#### Windows
+```cmd
+hooks\install.bat
+```
+
+See `hooks/README.md` for more information.
+
+## Documentation
+
+Project documentation is automatically built and published to GitHub Pages when a new release is created. The documentation is generated using `cargo doc` and can be accessed at:
+```
+https://[username].github.io/rustic/
+```
+
+See `.github/README.md` for more information about the GitHub Actions workflows.
