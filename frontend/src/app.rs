@@ -80,7 +80,7 @@ impl App {
                 }
             }
 
-            self.rustic_app.run(vec![]);
+            self.rustic_app.tick(vec![]);
             canvas.present();
         }
     }
