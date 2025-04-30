@@ -1,8 +1,17 @@
-mod top_menu;
+mod home;
+mod live;
+mod menu;
+mod score;
+mod settings;
 
 use sdl2::render::{Canvas, TextureCreator};
 use sdl2::video::{Window, WindowContext};
-pub use top_menu::TopMenu;
+
+pub use home::HomeScene;
+pub use live::LiveScene;
+pub use menu::MenuScene;
+pub use score::ScoreScene;
+pub use settings::SettingsScene;
 
 use crate::manager::{FontManager, TextureManager};
 
@@ -26,5 +35,5 @@ pub trait Scene {
         texture_manager: &mut TextureManager<WindowContext>,
     );
 
-    fn handle_events(&mut self, event: sdl2::event::Event);
+    fn handle_events(&mut self, event: &sdl2::event::Event);
 }

@@ -1,10 +1,17 @@
 use sdl2::render::TextureCreator;
 use sdl2::video::WindowContext;
 
+/// The actual application logic.
 mod app;
+/// Resources managers for fonts and textures.
 mod manager;
+/// A trait for widgets that can be rendered and interacted with.
 mod render;
+/// Scenes are a collection of widgets & input handlers
 mod scenes;
+/// Translates user inputs to app commands
+mod translator;
+/// Widgets for the user interface (buttons, ...)
 mod widgets;
 
 use app::App;

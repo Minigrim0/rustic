@@ -14,30 +14,39 @@ use sdl2::{
 use crate::manager::FontDetails;
 use crate::manager::{FontManager, TextureManager};
 
-pub struct ButtonBuilder {
+pub struct TextBuilder {
     text: String,
     position: Rect,
     font: Option<FontDetails>,
     color: Color,
 }
 
-impl ButtonBuilder {
-    pub fn new<S: AsRef<str>>(text: S) -> Self {
-        ButtonBuilder {
-            text: text.as_ref().to_string(),
+impl Default for TextBuilder {
+    fn default() -> Self {
+        TextBuilder {
+            text: String::new(),
             position: Rect::new(0, 0, 0, 0),
             font: None,
             color: Color::WHITE,
         }
     }
+}
 
-    /// Sets the position & size of the button from the given rect.
+impl TextBuilder {
+    pub fn new(text: &str) -> Self {
+        TextBuilder {
+            text: text.to_string(),
+            ..Default::default()
+        }
+    }
+
+    /// Sets the position & size of the text from the given rect.
     pub fn rposition(mut self, position: Rect) -> Self {
         self.position = position;
         self
     }
 
-    /// Sets the position of the button
+    /// Sets the position of the text
     pub fn position(mut self, position: (i32, i32)) -> Self {
         self.position = Rect::new(
             position.0,
@@ -48,19 +57,19 @@ impl ButtonBuilder {
         self
     }
 
-    /// Sets the size of the button
+    /// Sets the size of the text
     pub fn size(mut self, size: (u32, u32)) -> Self {
         self.position = Rect::new(self.position.x, self.position.y, size.0, size.1);
         self
     }
 
-    /// Sets the font of the button
+    /// Sets the font of the text
     pub fn font(mut self, font: FontDetails) -> Self {
         self.font = Some(font);
         self
     }
 
-    /// Sets the color of the text of the button
+    /// Sets the color of the text
     pub fn color(mut self, color: Color) -> Self {
         self.color = color;
         self
@@ -71,7 +80,7 @@ impl ButtonBuilder {
         font_manager: &mut FontManager,
         texture_manager: &mut TextureManager<'a, WindowContext>,
         texture_creator: &'a TextureCreator<WindowContext>,
-    ) -> Button {
+    ) -> Text {
         let font = font_manager.load(&self.font.as_ref().unwrap()).unwrap();
 
         let mut font_bold_details = self.font.as_ref().unwrap().clone();
@@ -97,91 +106,45 @@ impl ButtonBuilder {
             error!("Failed to save button texture: {}", e);
         }
 
-        Button {
+        Text {
             text: self.text,
-            _bold: bold_font_id,
             position: self.position,
-            ..Default::default()
+            color: self.color,
         }
     }
 }
 
-pub struct Button {
+// TODO: Add uuid for the text to be saved in the manager with.
+// The uuid will not change when the text is updated.
+pub struct Text {
     text: String,
-    _bold: String,
     position: Rect,
-    hovered: bool,
-    selected: bool,
+    color: Color,
 }
 
-impl Default for Button {
-    fn default() -> Button {
-        Button {
-            text: String::default(),
-            _bold: String::default(),
+impl Default for Text {
+    fn default() -> Self {
+        Text {
+            text: String::new(),
             position: Rect::new(0, 0, 0, 0),
-            hovered: false,
-            selected: false,
+            color: Color::WHITE,
         }
     }
 }
 
-impl Button {
+impl Text {
     pub fn render(
         &self,
         canvas: &mut Canvas<Window>,
         texture_manager: &mut TextureManager<'_, WindowContext>,
     ) {
-        canvas.set_draw_color(Color::RGB(240, 240, 240));
-        if let Err(e) = canvas.draw_line(
-            (self.position.x, self.position.y),
-            (self.position.x, self.position.y + self.position.h),
-        ) {
-            error!("Unable to draw rect: {}", e);
-        }
-        if let Err(e) = canvas.draw_line(
-            (self.position.x + self.position.w, self.position.y),
-            (
-                self.position.x + self.position.w,
-                self.position.y + self.position.h,
-            ),
-        ) {
-            error!("Unable to draw rect: {}", e);
-        }
+        // Render the text using the texture
+        let texture = texture_manager.load(self.text.as_str()).unwrap();
 
-        let texture = if self.hovered {
-            texture_manager.load(&self._bold.as_str()).unwrap()
-        } else {
-            texture_manager.load(&self.text.as_str()).unwrap()
-        };
-
-        // Render the button using the texture
         let TextureQuery { width, height, .. } = texture.query();
         let position = Rect::new(self.position.x, self.position.y, width, height);
         canvas
             .copy(&texture, None, position.centered_on(self.position.center()))
             .unwrap();
-    }
-
-    /// Updates the button, returns true if the event has been handled
-    /// and should not be propagated.
-    pub fn update(&mut self, event: &Event) -> bool {
-        match event {
-            Event::MouseMotion { x, y, .. } => {
-                self.hovered = self.position.contains_point((*x, *y));
-                false
-            }
-            Event::MouseButtonDown {
-                mouse_btn, x, y, ..
-            } => {
-                if self.position.contains_point((*x, *y)) && mouse_btn == &MouseButton::Left {
-                    // TODO: Handle click
-                    true
-                } else {
-                    false
-                }
-            }
-            _ => false,
-        }
     }
 }
