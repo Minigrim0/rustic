@@ -1,6 +1,4 @@
 use log::error;
-use sdl2::event::Event;
-use sdl2::mouse::MouseButton;
 use sdl2::ttf::FontStyle;
 use std::rc::Rc;
 
@@ -47,7 +45,7 @@ impl TextBuilder {
     }
 
     /// Sets the position of the text
-    pub fn position(mut self, position: (i32, i32)) -> Self {
+    pub fn _position(mut self, position: (i32, i32)) -> Self {
         self.position = Rect::new(
             position.0,
             position.1,
@@ -58,7 +56,7 @@ impl TextBuilder {
     }
 
     /// Sets the size of the text
-    pub fn size(mut self, size: (u32, u32)) -> Self {
+    pub fn _size(mut self, size: (u32, u32)) -> Self {
         self.position = Rect::new(self.position.x, self.position.y, size.0, size.1);
         self
     }
@@ -109,7 +107,7 @@ impl TextBuilder {
         Text {
             text: self.text,
             position: self.position,
-            color: self.color,
+            _color: self.color,
         }
     }
 }
@@ -119,7 +117,7 @@ impl TextBuilder {
 pub struct Text {
     text: String,
     position: Rect,
-    color: Color,
+    _color: Color,
 }
 
 impl Default for Text {
@@ -127,7 +125,7 @@ impl Default for Text {
         Text {
             text: String::new(),
             position: Rect::new(0, 0, 0, 0),
-            color: Color::WHITE,
+            _color: Color::WHITE,
         }
     }
 }

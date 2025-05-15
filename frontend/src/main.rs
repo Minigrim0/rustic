@@ -5,8 +5,6 @@ use sdl2::video::WindowContext;
 mod app;
 /// Resources managers for fonts and textures.
 mod manager;
-/// A trait for widgets that can be rendered and interacted with.
-mod render;
 /// Scenes are a collection of widgets & input handlers
 mod scenes;
 /// Translates user inputs to app commands
@@ -18,6 +16,7 @@ use app::App;
 use manager::{FontManager, TextureManager};
 
 pub fn main() -> Result<(), String> {
+    colog::init();
     let context: sdl2::Sdl = sdl2::init()?;
     let video = context.video()?;
     let window = video

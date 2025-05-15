@@ -1,13 +1,8 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use log::error;
 use sdl2::{
-    pixels::Color,
-    rect::Rect,
-    render::{TextureCreator, TextureQuery},
-    ttf::FontStyle,
-    video::WindowContext,
+    pixels::Color, rect::Rect, render::TextureCreator, ttf::FontStyle, video::WindowContext,
 };
 
 use crate::{
@@ -21,7 +16,7 @@ pub struct MenuScene {
     fonts: HashMap<&'static str, FontDetails>,
     title: Text,
     tabs_buttons: Vec<Button>,
-    selected_tab: Option<u8>,
+    _selected_tab: Option<u8>,
 }
 
 impl MenuScene {
@@ -37,7 +32,7 @@ impl MenuScene {
             )]),
             title: Text::default(),
             tabs_buttons: Vec::new(),
-            selected_tab: None, // None means we are on the home scene
+            _selected_tab: None, // None means we are on the home scene
         }
     }
 }
@@ -87,7 +82,7 @@ impl super::Scene for MenuScene {
         &self,
         canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
         _area: sdl2::rect::Rect,
-        font_manager: &mut FontManager,
+        _font_manager: &mut FontManager,
         texture_manager: &mut TextureManager<WindowContext>,
     ) {
         self.title.render(canvas, texture_manager);

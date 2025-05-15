@@ -38,7 +38,7 @@ impl ButtonBuilder {
     }
 
     /// Sets the position of the button
-    pub fn position(mut self, position: (i32, i32)) -> Self {
+    pub fn _position(mut self, position: (i32, i32)) -> Self {
         self.position = Rect::new(
             position.0,
             position.1,
@@ -49,7 +49,7 @@ impl ButtonBuilder {
     }
 
     /// Sets the size of the button
-    pub fn size(mut self, size: (u32, u32)) -> Self {
+    pub fn _size(mut self, size: (u32, u32)) -> Self {
         self.position = Rect::new(self.position.x, self.position.y, size.0, size.1);
         self
     }
@@ -111,7 +111,7 @@ pub struct Button {
     _bold: String,
     position: Rect,
     hovered: bool,
-    selected: bool,
+    _selected: bool,
 }
 
 impl Default for Button {
@@ -121,7 +121,7 @@ impl Default for Button {
             _bold: String::default(),
             position: Rect::new(0, 0, 0, 0),
             hovered: false,
-            selected: false,
+            _selected: false,
         }
     }
 }
