@@ -1,4 +1,4 @@
-use rustic::inputs::commands::Commands;
+use rustic::prelude::Commands;
 use sdl2::{event::Event, render::TextureCreator, ttf::FontStyle, video::WindowContext};
 
 use crate::manager::{FontDetails, FontManager, TextureManager};
