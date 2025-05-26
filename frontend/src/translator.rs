@@ -1,5 +1,5 @@
 use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
+use sdl2::keyboard::{Keycode, Mod};
 
 use rustic::prelude::Commands;
 
@@ -8,6 +8,7 @@ pub fn event_to_command(event: &Event) -> Option<Commands> {
         Event::KeyDown {
             keycode,
             repeat: false,
+            keymod: Mod::NOMOD,
             ..
         } => match keycode {
             Some(Keycode::NUM_1) => Some(Commands::NoteStart(0, 0, 1.0)),
@@ -35,6 +36,8 @@ pub fn event_to_command(event: &Event) -> Option<Commands> {
             Some(Keycode::P) => Some(Commands::NoteStart(9, 1, 1.0)),
             Some(Keycode::LEFTBRACKET) => Some(Commands::NoteStart(10, 1, 1.0)),
             Some(Keycode::RIGHTBRACKET) => Some(Commands::NoteStart(11, 1, 1.0)),
+            Some(Keycode::Z) => Some(Commands::OctaveUp(0)),
+            Some(Keycode::X) => Some(Commands::OctaveUp(1)),
             _ => None,
         },
         Event::KeyUp {
@@ -67,6 +70,16 @@ pub fn event_to_command(event: &Event) -> Option<Commands> {
             Some(Keycode::P) => Some(Commands::NoteStop(9, 1)),
             Some(Keycode::LEFTBRACKET) => Some(Commands::NoteStop(10, 1)),
             Some(Keycode::RIGHTBRACKET) => Some(Commands::NoteStop(11, 1)),
+            _ => None,
+        },
+        Event::KeyDown {
+            keycode,
+            repeat: false,
+            keymod: Mod::LSHIFTMOD,
+            ..
+        } => match keycode {
+            Some(Keycode::Z) => Some(Commands::OctaveDown(0)),
+            Some(Keycode::X) => Some(Commands::OctaveDown(1)),
             _ => None,
         },
         _ => None,
