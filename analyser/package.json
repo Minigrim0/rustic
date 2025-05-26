@@ -1,0 +1,27 @@
+{
+  "name": "rustic-sample-analyser",
+  "version": "0.1.0",
+  "description": "Audio sample analyzer with Tauri interface",
+  "author": "Rustic Developer",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "start:web": "trunk serve",
+    "build:web": "trunk build",
+    "test": "wasm-pack test --headless --firefox"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0-beta",
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0-beta",
+    "@tauri-apps/plugin-fs": "^2.3.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

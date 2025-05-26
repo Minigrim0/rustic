@@ -4,7 +4,11 @@ use std::path::Path;
 use plotters::prelude::*;
 
 pub fn plot_freq(data: &Vec<(u32, f32)>, output: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::new(output, (640, 480)).into_drawing_area();
+    let width = 640;
+    let height = 480;
+
+    let mut buffer = vec![0u8; (width * height * 3) as usize]; // RGB format
+    let root = BitMapBackend::with_buffer(&mut buffer, (width, height)).into_drawing_area();
 
     root.fill(&WHITE)?;
 

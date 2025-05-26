@@ -6,3 +6,4 @@ resources/
 # Example score
 score.toml
 test.toml
+.DS_Store

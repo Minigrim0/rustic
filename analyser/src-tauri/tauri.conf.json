@@ -1,0 +1,35 @@
+{
+  "productName": "rustic-analyser",
+  "identifier": "xyz.minigrim0.rustic-analyser",
+  "version": "0.1.0",
+  "build": {
+    "beforeBuildCommand": "trunk build",
+    "beforeDevCommand": "trunk serve",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "security": {
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "write-files",
+          "description": "Ability for the analyser to write files to /tmp",
+          "windows": ["*"],
+          "permissions": ["fs:write-all"]
+        }
+      ]
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 600,
+        "resizable": true,
+        "title": "Rustic Analyser",
+        "width": 800
+      }
+    ]
+  },
+  "bundle": {},
+  "plugins": {}
+}

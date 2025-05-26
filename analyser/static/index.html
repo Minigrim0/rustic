@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rustic Sample Analyser</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <meta name="description" content="Analyze audio samples and their frequency components">
+</head>
+<body>
+    <div id="app">
+        <!-- Yew app will be mounted here -->
+        <div class="loading">
+            <h1>Loading Sample Analyser...</h1>
+            <p>Please wait while the application initializes.</p>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Import and initialize the WASM app
+        import init from '/analyser.js';
+        
+        async function start() {
+            try {
+                await init();
+            } catch (e) {
+                console.error("Error initializing WebAssembly app:", e);
+                document.getElementById('app').innerHTML = `
+                    <div class="error-message">
+                        <h1>Error Loading Application</h1>
+                        <p>There was a problem loading the Sample Analyser.</p>
+                        <p>Technical details: ${e.message || 'Unknown error'}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        start();
+    </script>
+</body>
+</html>
