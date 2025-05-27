@@ -1,3 +1,9 @@
 [workspace]
-members = ["analyser", "rustic-derive", "rustic", "rustic-meta", "frontend"]
+members = [
+    "rustic-analyser/src-tauri",
+    "rustic-derive",
+    "rustic",
+    "rustic-meta",
+    "frontend",
+]
 resolver = "2"
