@@ -1,5 +1,5 @@
 use log::info;
-use rustfft::{FftPlanner, num_complex::Complex};
+use rustfft::{num_complex::Complex, FftPlanner};
 use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
 

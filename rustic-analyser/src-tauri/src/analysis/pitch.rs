@@ -78,7 +78,7 @@ pub fn frequency_to_note(frequency: f32) -> String {
 
     // Format the note with octave and cents deviation
     format!(
-        "{}{:+}{:+.0}¢",
+        "{}{:}{:+.0}¢",
         NOTE_NAMES[note_index as usize], octave, cents
     )
 }
