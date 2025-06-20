@@ -9,13 +9,19 @@ use log::info;
 use rustic::prelude::Commands;
 
 mod mapping;
+mod tabs;
+
 use mapping::KeyMapper;
+use tabs::{GraphEditorTab, LivePlayingTab, ScoreEditorTab, Tab};
 
 /// Main application state that integrates with egui
 pub struct RusticApp {
     // Tab state
     current_tab: usize,
     tabs: Vec<&'static str>,
+    live_playing_tab: LivePlayingTab,
+    score_editor_tab: ScoreEditorTab,
+    graph_editor_tab: GraphEditorTab,
 
     // Rustic audio engine communication
     app_sender: Sender<Commands>,
@@ -50,6 +56,9 @@ impl RusticApp {
         RusticApp {
             current_tab: 0,
             tabs: vec!["Live Playing", "Score Editor", "Graph Editor"],
+            live_playing_tab: LivePlayingTab::new(),
+            score_editor_tab: ScoreEditorTab::new(),
+            graph_editor_tab: GraphEditorTab::new(),
 
             app_sender: frontend_sender.clone(),
             app_receiver: frontend_receiver,
@@ -66,6 +75,11 @@ impl RusticApp {
     fn process_keyboard_input(&mut self) {
         // Only process keyboard input if the app is focused
         if !self.focused {
+            return;
+        }
+
+        // Only process keyboard input if we're on the Live Playing tab
+        if self.current_tab != 0 {
             return;
         }
 
@@ -133,19 +147,22 @@ impl App for RusticApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             match self.current_tab {
                 0 => {
-                    // Live Playing Tab (Empty placeholder)
-                    ui.heading("Live Playing");
-                    ui.label("Empty tab placeholder for Live Playing");
+                    // Live Playing Tab
+                    self.live_playing_tab.ui(ui, &self.app_sender);
+
+                    // Check if the tab is enabled for keyboard input
+                    // (This is for informational purposes - actual enabling/disabling happens in the tab UI)
+                    if !self.focused {
+                        ui.label("Window not focused - keyboard input disabled");
+                    }
                 }
                 1 => {
-                    // Score Editor Tab (Empty placeholder)
-                    ui.heading("Score Editor");
-                    ui.label("Empty tab placeholder for Score Editor");
+                    // Score Editor Tab
+                    self.score_editor_tab.ui(ui, &self.app_sender);
                 }
                 2 => {
-                    // Graph Editor Tab (Empty placeholder)
-                    ui.heading("Graph Editor");
-                    ui.label("Empty tab placeholder for Graph Editor");
+                    // Graph Editor Tab
+                    self.graph_editor_tab.ui(ui, &self.app_sender);
                 }
                 _ => {
                     // Fallback
