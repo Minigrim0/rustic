@@ -12,7 +12,7 @@ mod mapping;
 mod tabs;
 
 use mapping::KeyMapper;
-use tabs::{GraphEditorTab, LivePlayingTab, ScoreEditorTab, Tab};
+use tabs::{GraphEditorTab, LivePlayingTab, ScoreEditorTab, SettingsTab, Tab};
 
 /// Main application state that integrates with egui
 pub struct RusticApp {
@@ -22,6 +22,7 @@ pub struct RusticApp {
     live_playing_tab: LivePlayingTab,
     score_editor_tab: ScoreEditorTab,
     graph_editor_tab: GraphEditorTab,
+    settings_tab: SettingsTab,
 
     // Rustic audio engine communication
     app_sender: Sender<Commands>,
@@ -55,10 +56,11 @@ impl RusticApp {
         // Create and return the app
         RusticApp {
             current_tab: 0,
-            tabs: vec!["Live Playing", "Score Editor", "Graph Editor"],
+            tabs: vec!["Live Playing", "Score Editor", "Graph Editor", "Settings"],
             live_playing_tab: LivePlayingTab::new(),
             score_editor_tab: ScoreEditorTab::new(),
             graph_editor_tab: GraphEditorTab::new(),
+            settings_tab: SettingsTab::new(),
 
             app_sender: frontend_sender.clone(),
             app_receiver: frontend_receiver,
@@ -163,6 +165,10 @@ impl App for RusticApp {
                 2 => {
                     // Graph Editor Tab
                     self.graph_editor_tab.ui(ui, &self.app_sender);
+                }
+                3 => {
+                    // Settings Tab
+                    self.settings_tab.ui(ui, &self.app_sender);
                 }
                 _ => {
                     // Fallback

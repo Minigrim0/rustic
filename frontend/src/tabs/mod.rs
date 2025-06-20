@@ -1,10 +1,12 @@
 mod graph_editor;
 mod live_playing;
 mod score_editor;
+mod settings;
 
 pub use graph_editor::GraphEditorTab;
 pub use live_playing::LivePlayingTab;
 pub use score_editor::ScoreEditorTab;
+pub use settings::SettingsTab;
 
 use egui::Ui;
 use rustic::prelude::Commands;
@@ -19,4 +21,5 @@ pub trait Tab {
 // Re-export public fields
 pub mod exports {
     pub use super::live_playing::LivePlayingTab;
+    pub use super::settings::SettingsTab;
 }
