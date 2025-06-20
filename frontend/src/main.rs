@@ -12,6 +12,8 @@ mod translator;
 /// Widgets for the user interface (buttons, ...)
 mod widgets;
 
+mod mapping;
+
 use app::App;
 use manager::{FontManager, TextureManager};
 

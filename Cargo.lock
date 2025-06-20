@@ -1474,6 +1474,8 @@ dependencies = [
  "log",
  "rustic",
  "sdl2",
+ "serde",
+ "toml",
 ]
 
 [[package]]

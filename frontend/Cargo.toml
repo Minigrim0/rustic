@@ -8,3 +8,5 @@ colog = "1.3.0"
 log = "0.4"
 rustic = { path = "../rustic", features = ["meta"], default-features = false }
 sdl2 = { version = "0.37.0", features = ["image", "ttf"] }
+serde = "1.0.219"
+toml = "0.8.22"

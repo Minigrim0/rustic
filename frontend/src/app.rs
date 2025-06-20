@@ -6,10 +6,10 @@ use sdl2::{event::Event, render::Canvas};
 
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
-use std::thread::{self, JoinHandle};
-use std::time::{Duration, Instant};
+use std::thread::JoinHandle;
 
-use rustic::prelude::{Commands, RunMode};
+use super::mapping::KeyMapper;
+use rustic::prelude::Commands;
 
 use super::scenes::Scene;
 use crate::manager::{FontManager, TextureManager};
@@ -19,8 +19,8 @@ const MENU_SCENE: usize = 0;
 pub struct App {
     pub scenes: Vec<Box<dyn Scene>>,
     pub current_scene: usize,
-    pub app_sender: Sender<Commands>,
     pub _app_receiver: Receiver<Commands>,
+    pub mapping: KeyMapper,
     pub rustic_apphandle: JoinHandle<()>,
 
     /// If not none, the current command waits for a second input
@@ -75,8 +75,8 @@ impl App {
         Ok(App {
             scenes,
             current_scene: 0,
-            app_sender: frontend_sender,
             _app_receiver: frontend_receiver,
+            mapping: KeyMapper::new(frontend_sender),
             rustic_apphandle,
             multi_command: None,
         })
