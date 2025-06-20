@@ -1,56 +1,176 @@
-use sdl2::render::TextureCreator;
-use sdl2::video::WindowContext;
+use std::sync::mpsc;
+use std::sync::mpsc::{Receiver, Sender};
+use std::thread::JoinHandle;
 
-/// The actual application logic.
-mod app;
-/// Resources managers for fonts and textures.
-mod manager;
-/// Scenes are a collection of widgets & input handlers
-mod scenes;
-/// Translates user inputs to app commands
-mod translator;
-/// Widgets for the user interface (buttons, ...)
-mod widgets;
+use device_query::{DeviceQuery, DeviceState, Keycode};
+use eframe::{App, CreationContext, Frame, NativeOptions};
+use egui::{Context, Visuals};
+use log::info;
+use rustic::prelude::Commands;
 
 mod mapping;
+use mapping::KeyMapper;
 
-use app::App;
-use manager::{FontManager, TextureManager};
+/// Main application state that integrates with egui
+pub struct RusticApp {
+    // Tab state
+    current_tab: usize,
+    tabs: Vec<&'static str>,
 
-pub fn main() -> Result<(), String> {
-    colog::init();
-    let context: sdl2::Sdl = sdl2::init()?;
-    let video = context.video()?;
-    let window = video
-        .window("Rustic", 800, 600)
-        .position_centered()
-        .build()
-        .map_err(|e| format!("Failed to create window: {}", e))?;
+    // Rustic audio engine communication
+    app_sender: Sender<Commands>,
+    app_receiver: Receiver<Commands>,
+    rustic_apphandle: JoinHandle<()>,
 
-    let canvas: sdl2::render::Canvas<sdl2::video::Window> = window
-        .into_canvas()
-        .build()
-        .map_err(|e| format!("Failed to create canvas: {}", e))?;
+    // Input state
+    device_state: DeviceState,
+    pressed_keys: Vec<Keycode>,
+    focused: bool,
+    key_mapper: KeyMapper,
+}
 
-    let mut events: sdl2::EventPump = context.event_pump()?;
-    let texture_creator: TextureCreator<WindowContext> = canvas.texture_creator();
-    let font_context: sdl2::ttf::Sdl2TtfContext = sdl2::ttf::init().map_err(|e| e.to_string())?;
-    let mut font_manager = FontManager::new(&font_context);
-    let mut texture_manager = TextureManager::new(&texture_creator);
+impl RusticApp {
+    /// Create a new instance of the app
+    fn new(cc: &CreationContext) -> Self {
+        info!("Building application structure");
+        // Set up the default theme
+        let ctx = &cc.egui_ctx;
+        ctx.set_visuals(Visuals::dark());
 
-    let mut app = match App::new(&mut texture_manager, &mut font_manager, &texture_creator) {
-        Ok(app) => app,
-        Err(e) => {
-            return Err(format!("Error creating app: {}", e));
+        // Set up communication channels with the rustic audio engine
+        let (frontend_sender, backend_receiver): (Sender<Commands>, Receiver<Commands>) =
+            mpsc::channel();
+        let (backend_sender, frontend_receiver): (Sender<Commands>, Receiver<Commands>) =
+            mpsc::channel();
+
+        // Start the rustic audio engine
+        let rustic_apphandle = rustic::start_app(backend_sender, backend_receiver);
+
+        // Create and return the app
+        RusticApp {
+            current_tab: 0,
+            tabs: vec!["Live Playing", "Score Editor", "Graph Editor"],
+
+            app_sender: frontend_sender.clone(),
+            app_receiver: frontend_receiver,
+            rustic_apphandle,
+
+            device_state: DeviceState::new(),
+            pressed_keys: Vec::new(),
+            focused: true,
+            key_mapper: KeyMapper::new(frontend_sender),
         }
+    }
+
+    /// Process keyboard input and convert to Commands
+    fn process_keyboard_input(&mut self) {
+        // Only process keyboard input if the app is focused
+        if !self.focused {
+            return;
+        }
+
+        // Get the current pressed keys
+        let keys = self.device_state.get_keys();
+
+        // Process newly pressed keys (keys that are in the current set but weren't in the previous set)
+        for key in &keys {
+            if !self.pressed_keys.contains(key) {
+                // Convert key press to command and send it
+                let shift_pressed =
+                    keys.contains(&Keycode::LShift) || keys.contains(&Keycode::RShift);
+                if let Some(command) = self.key_mapper.map_key(key, false, shift_pressed) {
+                    log::debug!("Sending command from key press: {:?}", command);
+                    self.key_mapper.send_command(command);
+                }
+            }
+        }
+
+        // Process released keys (keys that were in the previous set but aren't in the current set)
+        for key in &self.pressed_keys {
+            if !keys.contains(key) {
+                // Convert key release to command and send it
+                if let Some(command) = self.key_mapper.map_key(key, true, false) {
+                    log::debug!("Sending command from key release: {:?}", command);
+                    self.key_mapper.send_command(command);
+                }
+            }
+        }
+
+        // Update the stored pressed keys
+        self.pressed_keys = keys;
+    }
+}
+
+impl App for RusticApp {
+    fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
+        // Process keyboard input
+        self.process_keyboard_input();
+
+        // Check if the window is focused
+        self.focused = ctx.input(|i| i.focused);
+
+        // Check for any messages from the rustic audio engine
+        if let Ok(command) = self.app_receiver.try_recv() {
+            log::debug!("Received command from rustic: {:?}", command);
+            // Handle commands from the rustic audio engine as needed
+        }
+
+        // Top panel with tabs
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                for (index, tab_name) in self.tabs.iter().enumerate() {
+                    if ui
+                        .selectable_label(self.current_tab == index, *tab_name)
+                        .clicked()
+                    {
+                        self.current_tab = index;
+                    }
+                }
+            });
+        });
+
+        // Main content area for the selected tab
+        egui::CentralPanel::default().show(ctx, |ui| {
+            match self.current_tab {
+                0 => {
+                    // Live Playing Tab (Empty placeholder)
+                    ui.heading("Live Playing");
+                    ui.label("Empty tab placeholder for Live Playing");
+                }
+                1 => {
+                    // Score Editor Tab (Empty placeholder)
+                    ui.heading("Score Editor");
+                    ui.label("Empty tab placeholder for Score Editor");
+                }
+                2 => {
+                    // Graph Editor Tab (Empty placeholder)
+                    ui.heading("Graph Editor");
+                    ui.label("Empty tab placeholder for Graph Editor");
+                }
+                _ => {
+                    // Fallback
+                    ui.heading("Unknown Tab");
+                }
+            }
+        });
+    }
+}
+
+fn main() -> Result<(), eframe::Error> {
+    // Initialize logger
+    colog::init();
+    log::info!("Starting Rustic frontend with egui");
+
+    // Set up the native options
+    let options = NativeOptions {
+        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([800.0, 600.0]),
+        ..Default::default()
     };
 
-    app.run(
-        canvas,
-        &context,
-        &mut texture_manager,
-        &mut font_manager,
-        &mut events,
-    );
-    Ok(())
+    // Run the app
+    eframe::run_native(
+        "Rustic",
+        options,
+        Box::new(|cc| Box::new(RusticApp::new(cc))),
+    )
 }
