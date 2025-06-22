@@ -1,8 +1,9 @@
-use egui::{Color32, Grid, RichText, Ui, Vec2};
+use egui::{Color32, RichText, Ui, Vec2};
 use rustic::prelude::Commands;
 use std::sync::mpsc::Sender;
 
 use super::Tab;
+use crate::widgets::{DataGrid, MessageType, SectionContainer, StatusMessage};
 
 /// Channel data for display in the live playing tab
 struct ChannelData {
@@ -111,8 +112,14 @@ impl LivePlayingTab {
                 for channel_idx in start_idx..end_idx {
                     let channel = &self.channels[channel_idx];
 
-                    // Channel card
-                    ui.group(|ui| {
+                    // Channel card using SectionContainer
+                    SectionContainer::new(&format!(
+                        "#{}: {}",
+                        channel.number, channel.instrument_name
+                    ))
+                    .show_title(false)
+                    .with_frame(true)
+                    .show(ui, |ui| {
                         ui.set_min_width(column_width);
                         ui.set_max_width(column_width);
 
@@ -154,31 +161,28 @@ impl LivePlayingTab {
 
                         ui.add_space(4.0);
 
-                        // Channel details in a grid
-                        Grid::new(format!("channel_grid_{}", channel_idx))
-                            .num_columns(2)
-                            .spacing([8.0, 4.0])
-                            .show(ui, |ui| {
-                                // Octave row
-                                ui.label("Octave:");
-                                ui.label(RichText::new(format!("{}", channel.octave)).strong());
-                                ui.end_row();
+                        // Channel details in a grid using DataGrid
+                        let octave_str = format!("{}", channel.octave);
+                        let volume_str = format!("{:.2}", channel.volume);
+                        let grid_data = vec![
+                            vec!["Octave:", octave_str.as_str()],
+                            vec!["Volume:", volume_str.as_str()],
+                            vec!["Linked:", if channel.is_linked { "Yes" } else { "No" }],
+                        ];
 
-                                // Volume row
-                                ui.label("Volume:");
-                                ui.label(RichText::new(format!("{:.2}", channel.volume)).strong());
-                                ui.end_row();
+                        // Apply custom colors for the "Linked" status
+                        let mut data_grid = DataGrid::new()
+                            .with_data(grid_data)
+                            .with_col_spacing(8.0)
+                            .with_row_spacing(4.0);
 
-                                // Linked status
-                                ui.label("Linked:");
-                                let linked_text = if channel.is_linked {
-                                    RichText::new("Yes").color(Color32::LIGHT_BLUE)
-                                } else {
-                                    RichText::new("No").color(Color32::GRAY)
-                                };
-                                ui.label(linked_text);
-                                ui.end_row();
-                            });
+                        if channel.is_linked {
+                            data_grid = data_grid.with_cell_color(2, 1, Color32::LIGHT_BLUE);
+                        } else {
+                            data_grid = data_grid.with_cell_color(2, 1, Color32::GRAY);
+                        }
+
+                        data_grid.show(ui);
 
                         // Visual indicator for active playing
                         if channel.is_playing {
@@ -225,13 +229,18 @@ impl Tab for LivePlayingTab {
 
                 ui.add_space(20.0);
 
-                // Display status
-                let status_text = if self.is_enabled {
-                    RichText::new("LIVE").color(Color32::LIGHT_GREEN).strong()
+                // Display status using StatusMessage
+                if self.is_enabled {
+                    StatusMessage::new("LIVE")
+                        .with_type(MessageType::Success)
+                        .with_background(true)
+                        .show(ui);
                 } else {
-                    RichText::new("DISABLED").color(Color32::LIGHT_RED).strong()
-                };
-                ui.label(status_text);
+                    StatusMessage::new("DISABLED")
+                        .with_type(MessageType::Error)
+                        .with_background(true)
+                        .show(ui);
+                }
 
                 // Keyboard shortcut hint
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -239,42 +248,29 @@ impl Tab for LivePlayingTab {
                 });
             });
 
-            // Information about keyboard controls
-            ui.collapsing("Keyboard Controls", |ui| {
-                Grid::new("keyboard_controls")
-                    .num_columns(2)
-                    .spacing([20.0, 8.0])
-                    .striped(true)
-                    .show(ui, |ui| {
-                        ui.label(RichText::new("Number Keys (1-0)").strong());
-                        ui.label("Play notes on row 1");
-                        ui.end_row();
+            // Information about keyboard controls using SectionContainer
+            SectionContainer::new("Keyboard Controls")
+                .collapsible(&mut true)
+                .show(ui, |ui| {
+                    // Use DataGrid for keyboard controls
+                    let control_data = vec![
+                        vec!["Number Keys (1-0)", "Play notes on row 1"],
+                        vec!["QWERTY Row", "Play notes on row 2"],
+                        vec!["Z / X", "Octave up for row 1 / 2"],
+                        vec!["Shift+Z / Shift+X", "Octave down for row 1 / 2"],
+                        vec!["Space", "Play loop"],
+                        vec!["R", "Start recording"],
+                        vec!["Esc", "Stop loop/recording"],
+                    ];
 
-                        ui.label(RichText::new("QWERTY Row").strong());
-                        ui.label("Play notes on row 2");
-                        ui.end_row();
-
-                        ui.label(RichText::new("Z / X").strong());
-                        ui.label("Octave up for row 1 / 2");
-                        ui.end_row();
-
-                        ui.label(RichText::new("Shift+Z / Shift+X").strong());
-                        ui.label("Octave down for row 1 / 2");
-                        ui.end_row();
-
-                        ui.label(RichText::new("Space").strong());
-                        ui.label("Play loop");
-                        ui.end_row();
-
-                        ui.label(RichText::new("R").strong());
-                        ui.label("Start recording");
-                        ui.end_row();
-
-                        ui.label(RichText::new("Esc").strong());
-                        ui.label("Stop loop/recording");
-                        ui.end_row();
-                    });
-            });
+                    DataGrid::new()
+                        .with_data(control_data)
+                        .with_striped(true)
+                        .with_col_spacing(20.0)
+                        .with_row_spacing(8.0)
+                        .with_min_col_widths(vec![150.0, 200.0])
+                        .show(ui);
+                });
 
             ui.add_space(8.0);
             ui.separator();
@@ -283,6 +279,7 @@ impl Tab for LivePlayingTab {
 
         // Only process keyboard events if the live mode is enabled
         if self.is_enabled {
+            // TODO: Implement proper keyboard event handling for note playing
             // Simulate some activity for demonstration purposes
             // In a real implementation, this would be connected to actual note events
 

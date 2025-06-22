@@ -4,15 +4,17 @@ use std::thread::JoinHandle;
 
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use eframe::{App, CreationContext, Frame, NativeOptions};
-use egui::{Context, Visuals};
+use egui::Context;
 use log::info;
 use rustic::prelude::Commands;
 
 mod mapping;
 mod tabs;
+mod widgets;
 
 use mapping::KeyMapper;
 use tabs::{GraphEditorTab, LivePlayingTab, ScoreEditorTab, SettingsTab, Tab};
+use widgets::{SectionContainer, ThemeChoice, apply_scaling, configure_theme};
 
 /// Main application state that integrates with egui
 pub struct RusticApp {
@@ -40,9 +42,9 @@ impl RusticApp {
     /// Create a new instance of the app
     fn new(cc: &CreationContext) -> Self {
         info!("Building application structure");
-        // Set up the default theme
+        // Set up the custom theme
         let ctx = &cc.egui_ctx;
-        ctx.set_visuals(Visuals::dark());
+        configure_theme(ThemeChoice::Dark, ctx);
 
         // Set up communication channels with the rustic audio engine
         let (frontend_sender, backend_receiver): (Sender<Commands>, Receiver<Commands>) =
@@ -133,48 +135,58 @@ impl App for RusticApp {
 
         // Top panel with tabs
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                for (index, tab_name) in self.tabs.iter().enumerate() {
-                    if ui
-                        .selectable_label(self.current_tab == index, *tab_name)
-                        .clicked()
-                    {
-                        self.current_tab = index;
-                    }
-                }
-            });
+            SectionContainer::new("Tabs")
+                .show_title(false)
+                .with_frame(false)
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        for (index, tab_name) in self.tabs.iter().enumerate() {
+                            if ui
+                                .selectable_label(self.current_tab == index, *tab_name)
+                                .clicked()
+                            {
+                                self.current_tab = index;
+                            }
+                        }
+                    });
+                });
         });
 
         // Main content area for the selected tab
         egui::CentralPanel::default().show(ctx, |ui| {
-            match self.current_tab {
-                0 => {
-                    // Live Playing Tab
-                    self.live_playing_tab.ui(ui, &self.app_sender);
+            SectionContainer::new("Content")
+                .show_title(false)
+                .with_frame(false)
+                .show(ui, |ui| {
+                    match self.current_tab {
+                        0 => {
+                            // Live Playing Tab
+                            self.live_playing_tab.ui(ui, &self.app_sender);
 
-                    // Check if the tab is enabled for keyboard input
-                    // (This is for informational purposes - actual enabling/disabling happens in the tab UI)
-                    if !self.focused {
-                        ui.label("Window not focused - keyboard input disabled");
+                            // Check if the tab is enabled for keyboard input
+                            // (This is for informational purposes - actual enabling/disabling happens in the tab UI)
+                            if !self.focused {
+                                ui.label("Window not focused - keyboard input disabled");
+                            }
+                        }
+                        1 => {
+                            // Score Editor Tab
+                            self.score_editor_tab.ui(ui, &self.app_sender);
+                        }
+                        2 => {
+                            // Graph Editor Tab
+                            self.graph_editor_tab.ui(ui, &self.app_sender);
+                        }
+                        3 => {
+                            // Settings Tab
+                            self.settings_tab.ui(ui, &self.app_sender);
+                        }
+                        _ => {
+                            // Fallback
+                            ui.heading("Unknown Tab");
+                        }
                     }
-                }
-                1 => {
-                    // Score Editor Tab
-                    self.score_editor_tab.ui(ui, &self.app_sender);
-                }
-                2 => {
-                    // Graph Editor Tab
-                    self.graph_editor_tab.ui(ui, &self.app_sender);
-                }
-                3 => {
-                    // Settings Tab
-                    self.settings_tab.ui(ui, &self.app_sender);
-                }
-                _ => {
-                    // Fallback
-                    ui.heading("Unknown Tab");
-                }
-            }
+                });
         });
     }
 }
@@ -186,7 +198,12 @@ fn main() -> Result<(), eframe::Error> {
 
     // Set up the native options
     let options = NativeOptions {
-        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([800.0, 600.0]),
+        viewport: eframe::egui::ViewportBuilder::default()
+            .with_inner_size([800.0, 600.0])
+            .with_min_inner_size([640.0, 480.0])
+            .with_title("Rustic Audio Workstation"),
+        follow_system_theme: false, // We'll handle theming ourselves
+        default_theme: eframe::Theme::Dark,
         ..Default::default()
     };
 

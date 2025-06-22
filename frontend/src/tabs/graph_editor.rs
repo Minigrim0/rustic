@@ -3,6 +3,7 @@ use rustic::prelude::Commands;
 use std::sync::mpsc::Sender;
 
 use super::Tab;
+use crate::widgets::{ButtonGroup, SectionContainer};
 
 /// The Graph Editor tab for visual node-graph instrument building
 pub struct GraphEditorTab {
@@ -133,62 +134,75 @@ impl GraphEditorTab {
 
     /// Draw the node palette
     fn draw_palette(&self, ui: &mut Ui) {
-        ui.group(|ui| {
-            ui.set_min_width(200.0);
-            ui.vertical(|ui| {
-                ui.heading("Node Palette");
-                ui.separator();
+        SectionContainer::new("Node Palette")
+            .with_frame(true)
+            .show(ui, |ui| {
+                ui.set_min_width(200.0);
 
                 // Generator nodes
-                ui.collapsing("Generators", |ui| {
-                    for name in &self.generator_templates {
-                        if ui.button(name).clicked() {
-                            // This would add a new node in a real implementation
-                            // Simplified for placeholder
+                SectionContainer::new("Generators")
+                    .collapsible(&mut true)
+                    .with_frame(false)
+                    .show(ui, |ui| {
+                        for name in &self.generator_templates {
+                            // TODO: Implement actual node creation functionality
+                            if ui.button(name).clicked() {
+                                // This would add a new node in a real implementation
+                            }
                         }
-                    }
-                });
+                    });
 
                 // Filter nodes
-                ui.collapsing("Filters", |ui| {
-                    for name in &self.filter_templates {
-                        if ui.button(name).clicked() {
-                            // This would add a new node in a real implementation
-                            // Simplified for placeholder
+                SectionContainer::new("Filters")
+                    .collapsible(&mut true)
+                    .with_frame(false)
+                    .show(ui, |ui| {
+                        for name in &self.filter_templates {
+                            // TODO: Implement actual node creation functionality
+                            if ui.button(name).clicked() {
+                                // This would add a new node in a real implementation
+                            }
                         }
-                    }
-                });
+                    });
 
                 // Sink nodes
-                ui.collapsing("Sinks", |ui| {
-                    for name in &self.sink_templates {
-                        if ui.button(name).clicked() {
-                            // This would add a new node in a real implementation
-                            // Simplified for placeholder
+                SectionContainer::new("Sinks")
+                    .collapsible(&mut true)
+                    .with_frame(false)
+                    .show(ui, |ui| {
+                        for name in &self.sink_templates {
+                            // TODO: Implement actual node creation functionality
+                            if ui.button(name).clicked() {
+                                // This would add a new node in a real implementation
+                            }
                         }
-                    }
-                });
+                    });
 
                 ui.separator();
 
                 // Controls section
-                ui.label("Canvas Controls:");
-                ui.label("• Drag nodes to move");
-                ui.label("• Connect nodes via ports");
-                ui.label("• Right-click for context menu");
+                SectionContainer::new("Canvas Controls")
+                    .with_frame(false)
+                    .show(ui, |ui| {
+                        ui.label("• Drag nodes to move");
+                        ui.label("• Connect nodes via ports");
+                        ui.label("• Right-click for context menu");
+                    });
 
-                if ui
-                    .button(if self.show_help {
+                // Help button
+                if ButtonGroup::new()
+                    .add_button(if self.show_help {
                         "Hide Help"
                     } else {
                         "Show Help"
                     })
-                    .clicked()
+                    .fill_width(true)
+                    .show(ui)
+                    .is_some()
                 {
-                    // Toggle help dialog in real implementation
+                    // TODO: Implement help toggle functionality
                 }
             });
-        });
     }
 
     /// Draw a node on the canvas
@@ -262,6 +276,8 @@ impl GraphEditorTab {
                 Color32::LIGHT_YELLOW,
             );
         }
+
+        // TODO: Implement proper drag-and-drop functionality for node parameters
 
         // Draw connection points based on node type
         if node.node_type != NodeType::Sink {
@@ -382,16 +398,22 @@ impl GraphEditorTab {
             ui.label("You can connect nodes to create complex audio instruments.");
 
             ui.separator();
-            ui.heading("Node Types");
-            ui.label(RichText::new("• Generators").color(Color32::from_rgb(100, 150, 200)));
-            ui.label("  Produce audio signals (sine waves, etc.)");
-            ui.label(RichText::new("• Filters").color(Color32::from_rgb(100, 200, 100)));
-            ui.label("  Process incoming audio (low pass, reverb, etc.)");
-            ui.label(RichText::new("• Sinks").color(Color32::from_rgb(200, 100, 100)));
-            ui.label("  Output destinations (speakers, files, etc.)");
+
+            SectionContainer::new("Node Types")
+                .with_frame(false)
+                .show(ui, |ui| {
+                    ui.label(RichText::new("• Generators").color(Color32::from_rgb(100, 150, 200)));
+                    ui.label("  Produce audio signals (sine waves, etc.)");
+                    ui.label(RichText::new("• Filters").color(Color32::from_rgb(100, 200, 100)));
+                    ui.label("  Process incoming audio (low pass, reverb, etc.)");
+                    ui.label(RichText::new("• Sinks").color(Color32::from_rgb(200, 100, 100)));
+                    ui.label("  Output destinations (speakers, files, etc.)");
+                });
 
             ui.separator();
             ui.label("Note: This is a placeholder implementation.");
+
+            // TODO: Implement actual node graph editing functionality
         });
     }
 }
@@ -405,22 +427,29 @@ impl Tab for GraphEditorTab {
 
         ui.separator();
 
-        ui.horizontal(|ui| {
-            // Node palette on the left
-            self.draw_palette(ui);
+        // Use SectionContainer for the main content area
+        SectionContainer::new("")
+            .show_title(false)
+            .with_frame(false)
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    // Node palette on the left
+                    self.draw_palette(ui);
 
-            // Canvas with nodes on the right
-            ui.vertical(|ui| {
-                let available_size = ui.available_size();
+                    // Canvas with nodes on the right
+                    ui.vertical(|ui| {
+                        let available_size = ui.available_size();
 
-                // Draw the canvas with a dark background
-                let frame = egui::Frame::canvas(ui.style()).fill(Color32::from_rgb(30, 30, 30));
+                        // Draw the canvas with a dark background
+                        let frame =
+                            egui::Frame::canvas(ui.style()).fill(Color32::from_rgb(30, 30, 30));
 
-                frame.show(ui, |ui| {
-                    ui.set_min_size(available_size);
-                    self.draw_canvas(ui);
+                        frame.show(ui, |ui| {
+                            ui.set_min_size(available_size);
+                            self.draw_canvas(ui);
+                        });
+                    });
                 });
             });
-        });
     }
 }

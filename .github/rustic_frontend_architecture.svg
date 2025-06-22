@@ -1,0 +1,52 @@
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Frontend Container -->
+  <rect x="20" y="20" width="560" height="280" fill="none" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="30" y="40" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">Rustic Frontend</text>
+  
+  <!-- Tab Headers -->
+  <rect x="40" y="60" width="100" height="40" fill="#e8f4f8" stroke="#666" stroke-width="1" rx="3"/>
+  <text x="50" y="80" font-family="Arial, sans-serif" font-size="12" fill="#333">Live</text>
+  <text x="50" y="94" font-family="Arial, sans-serif" font-size="12" fill="#333">Playing</text>
+  
+  <rect x="150" y="60" width="100" height="40" fill="#e8f4f8" stroke="#666" stroke-width="1" rx="3"/>
+  <text x="160" y="80" font-family="Arial, sans-serif" font-size="12" fill="#333">Score</text>
+  <text x="160" y="94" font-family="Arial, sans-serif" font-size="12" fill="#333">Editor</text>
+  
+  <rect x="260" y="60" width="100" height="40" fill="#e8f4f8" stroke="#666" stroke-width="1" rx="3"/>
+  <text x="270" y="80" font-family="Arial, sans-serif" font-size="12" fill="#333">Graph</text>
+  <text x="270" y="94" font-family="Arial, sans-serif" font-size="12" fill="#333">Editor</text>
+  
+  <rect x="370" y="60" width="100" height="40" fill="#e8f4f8" stroke="#666" stroke-width="1" rx="3"/>
+  <text x="380" y="80" font-family="Arial, sans-serif" font-size="12" fill="#333">Settings</text>
+  
+  <!-- Reusable Components -->
+  <rect x="40" y="120" width="430" height="40" fill="#f0f8e8" stroke="#666" stroke-width="1" rx="3"/>
+  <text x="50" y="135" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">Reusable Components</text>
+  <text x="50" y="150" font-family="Arial, sans-serif" font-size="11" fill="#666">ButtonGroup, DataGrid, LabeledCombo, etc.</text>
+  
+  <!-- Theme and Layout Systems -->
+  <rect x="40" y="180" width="200" height="40" fill="#f8f0e8" stroke="#666" stroke-width="1" rx="3"/>
+  <text x="50" y="195" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">Theme System</text>
+  
+  <rect x="270" y="180" width="200" height="40" fill="#f8f0e8" stroke="#666" stroke-width="1" rx="3"/>
+  <text x="280" y="195" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">Layout System</text>
+  
+  <!-- Command Translation -->
+  <rect x="40" y="240" width="430" height="40" fill="#ffe8e8" stroke="#666" stroke-width="1" rx="3"/>
+  <text x="50" y="255" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">Command Translation</text>
+  
+  <!-- Arrow -->
+  <line x1="300" y1="300" x2="300" y2="320" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Audio Engine -->
+  <rect x="20" y="330" width="560" height="40" fill="#e8e8f8" stroke="#333" stroke-width="2" rx="5"/>
+  <text x="30" y="350" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333">Rustic Audio Engine</text>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+     refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+    </marker>
+  </defs>
+</svg>

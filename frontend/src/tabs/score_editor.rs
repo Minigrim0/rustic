@@ -1,8 +1,9 @@
-use egui::{Color32, ComboBox, RichText, Stroke, Ui, Vec2};
+use egui::{Color32, RichText, Stroke, Ui, Vec2};
 use rustic::prelude::Commands;
 use std::sync::mpsc::Sender;
 
 use super::Tab;
+use crate::widgets::{ButtonGroup, DataGrid, LabeledCombo, SectionContainer};
 
 /// Note duration values
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -156,62 +157,77 @@ impl ScoreEditorTab {
     /// Draw the toolbar with editing controls
     fn draw_toolbar(&mut self, ui: &mut Ui) {
         ui.horizontal(|ui| {
-            ui.group(|ui| {
-                ui.label("Note Value:");
+            // Note value section
+            SectionContainer::new("Note Value")
+                .with_frame(true)
+                .show(ui, |ui| {
+                    // Display note values as buttons with musical symbols
+                    ui.horizontal(|ui| {
+                        for value in &[
+                            NoteValue::Whole,
+                            NoteValue::Half,
+                            NoteValue::Quarter,
+                            NoteValue::Eighth,
+                            NoteValue::Sixteenth,
+                        ] {
+                            let text = RichText::new(value.to_display_char()).size(24.0).color(
+                                if *value == self.selected_note_value {
+                                    Color32::LIGHT_BLUE
+                                } else {
+                                    Color32::WHITE
+                                },
+                            );
 
-                // Display note values as buttons with musical symbols
-                for value in &[
-                    NoteValue::Whole,
-                    NoteValue::Half,
-                    NoteValue::Quarter,
-                    NoteValue::Eighth,
-                    NoteValue::Sixteenth,
-                ] {
-                    let text = RichText::new(value.to_display_char()).size(24.0).color(
-                        if *value == self.selected_note_value {
-                            Color32::LIGHT_BLUE
-                        } else {
-                            Color32::WHITE
-                        },
+                            if ui.button(text).clicked() {
+                                self.selected_note_value = *value;
+                            }
+                        }
+                    });
+                });
+
+            ui.separator();
+
+            // Staff controls section
+            SectionContainer::new("Staff")
+                .with_frame(true)
+                .show(ui, |ui| {
+                    if let Some((button_index, _)) = ButtonGroup::new()
+                        .add_button("Add Treble Staff")
+                        .add_button("Add Bass Staff")
+                        .add_button("Remove Staff")
+                        .horizontal()
+                        .with_spacing(8.0)
+                        .show(ui)
+                    {
+                        match button_index {
+                            0 => self.add_staff(Clef::Treble),
+                            1 => self.add_staff(Clef::Bass),
+                            2 => {
+                                if !self.staves.is_empty() {
+                                    self.staves.pop();
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                });
+
+            ui.separator();
+
+            // View controls section
+            SectionContainer::new("View")
+                .with_frame(true)
+                .show(ui, |ui| {
+                    ui.checkbox(&mut self.show_grid, "Show Grid");
+
+                    ui.add(
+                        egui::Slider::new(&mut self.zoom_level, 0.5..=2.0)
+                            .text("Zoom")
+                            .fixed_decimals(1),
                     );
 
-                    if ui.button(text).clicked() {
-                        self.selected_note_value = *value;
-                    }
-                }
-            });
-
-            ui.separator();
-
-            ui.group(|ui| {
-                ui.label("Staff:");
-
-                if ui.button("Add Treble Staff").clicked() {
-                    self.add_staff(Clef::Treble);
-                }
-
-                if ui.button("Add Bass Staff").clicked() {
-                    self.add_staff(Clef::Bass);
-                }
-
-                if ui.button("Remove Staff").clicked() && !self.staves.is_empty() {
-                    self.staves.pop();
-                }
-            });
-
-            ui.separator();
-
-            ui.group(|ui| {
-                ui.label("View:");
-
-                ui.checkbox(&mut self.show_grid, "Show Grid");
-
-                ui.add(
-                    egui::Slider::new(&mut self.zoom_level, 0.5..=2.0)
-                        .text("Zoom")
-                        .fixed_decimals(1),
-                );
-            });
+                    // TODO: Implement proper zoom functionality that affects all elements consistently
+                });
         });
     }
 
@@ -242,23 +258,20 @@ impl ScoreEditorTab {
 
     /// Draw the list of staves with their instrument assignments
     fn draw_staff_list(&mut self, ui: &mut Ui) {
-        ui.group(|ui| {
-            ui.set_min_width(200.0);
-            ui.vertical(|ui| {
-                ui.heading("Staves");
-                ui.separator();
+        SectionContainer::new("Staves")
+            .with_frame(true)
+            .show(ui, |ui| {
+                ui.set_min_width(200.0);
 
                 for (idx, staff) in self.staves.iter_mut().enumerate() {
                     ui.horizontal(|ui| {
                         ui.label(format!("Staff {}: {}", idx + 1, staff.clef.to_string()));
 
-                        // Instrument dropdown (placeholder)
-                        ComboBox::from_id_source(format!("staff_instrument_{}", idx))
-                            .selected_text(format!(
-                                "{}",
-                                self.instrument_names[staff.instrument_channel]
-                            ))
+                        // Instrument dropdown (placeholder) using LabeledCombo
+                        LabeledCombo::new("", format!("staff_instrument_{}", idx).as_str())
+                            .with_selected_text(&self.instrument_names[staff.instrument_channel])
                             .show_ui(ui, |ui| {
+                                let mut result = None;
                                 for (i, name) in self.instrument_names.iter().enumerate() {
                                     if ui
                                         .selectable_label(
@@ -267,14 +280,16 @@ impl ScoreEditorTab {
                                         )
                                         .clicked()
                                     {
-                                        staff.instrument_channel = i;
+                                        result = Some(i);
                                     }
                                 }
+                                result
                             });
+
+                        // TODO: Implement proper instrument assignment functionality
                     });
                 }
             });
-        });
     }
 
     // These functions are now integrated into the ui method to avoid mutable borrow issues
@@ -313,177 +328,190 @@ impl Tab for ScoreEditorTab {
             // Staff list with instrument assignment
             self.draw_staff_list(ui);
 
-            // Score editor
-            ui.vertical(|ui| {
-                // Clone the staves data to avoid mutable borrow issues
-                let staves_clone = self.staves.clone();
-                let zoom_level = self.zoom_level;
-                let selected_note_value = self.selected_note_value;
-                let show_grid = self.show_grid;
+            // Score editor wrapped in a section container
+            SectionContainer::new("Score")
+                .show_title(false)
+                .with_frame(true)
+                .show(ui, |ui| {
+                    // Clone the staves data to avoid mutable borrow issues
+                    let staves_clone = self.staves.clone();
+                    let zoom_level = self.zoom_level;
+                    let selected_note_value = self.selected_note_value;
+                    let show_grid = self.show_grid;
 
-                egui::ScrollArea::both().show(ui, |ui| {
-                    for staff_idx in 0..staves_clone.len() {
-                        ui.group(|ui| {
-                            let staff = &staves_clone[staff_idx];
+                    egui::ScrollArea::both().show(ui, |ui| {
+                        for staff_idx in 0..staves_clone.len() {
+                            ui.group(|ui| {
+                                let staff = &staves_clone[staff_idx];
 
-                            // Draw staff with individual components
-                            let staff_height = 100.0 * zoom_level;
-                            let clef_width = 40.0 * zoom_level;
+                                // Draw staff with individual components
+                                let staff_height = 100.0 * zoom_level;
+                                let clef_width = 40.0 * zoom_level;
 
-                            ui.horizontal(|ui| {
-                                // Draw the clef
-                                let (rect, _) = ui.allocate_exact_size(
-                                    Vec2::new(clef_width, staff_height),
-                                    egui::Sense::hover(),
-                                );
-
-                                // Draw staff lines
-                                for i in 0..5 {
-                                    let y = rect.min.y + (i as f32 + 1.0) * (staff_height / 6.0);
-                                    ui.painter().line_segment(
-                                        [egui::pos2(rect.min.x, y), egui::pos2(rect.max.x, y)],
-                                        Stroke::new(1.0, Color32::GRAY),
+                                ui.horizontal(|ui| {
+                                    // Draw the clef
+                                    let (rect, _) = ui.allocate_exact_size(
+                                        Vec2::new(clef_width, staff_height),
+                                        egui::Sense::hover(),
                                     );
-                                }
 
-                                // Draw clef symbol
-                                ui.painter().text(
-                                    egui::pos2(rect.min.x + 10.0, rect.min.y + staff_height / 2.0),
-                                    egui::Align2::CENTER_CENTER,
-                                    staff.clef.to_display_char(),
-                                    egui::FontId::proportional(32.0 * zoom_level),
-                                    Color32::WHITE,
-                                );
-
-                                // Draw measures
-                                for (measure_idx, measure) in staff.measures.iter().enumerate() {
-                                    let measure_width = 160.0 * zoom_level;
-
-                                    ui.group(|ui| {
-                                        let (rect, response) = ui.allocate_exact_size(
-                                            Vec2::new(measure_width, staff_height),
-                                            egui::Sense::click_and_drag(),
+                                    // Draw staff lines
+                                    for i in 0..5 {
+                                        let y =
+                                            rect.min.y + (i as f32 + 1.0) * (staff_height / 6.0);
+                                        ui.painter().line_segment(
+                                            [egui::pos2(rect.min.x, y), egui::pos2(rect.max.x, y)],
+                                            Stroke::new(1.0, Color32::GRAY),
                                         );
+                                    }
 
-                                        // Handle clicks for note placement
-                                        if response.clicked() {
-                                            let pos = response.interact_pointer_pos().unwrap();
-                                            let local_pos = Vec2::new(
-                                                (pos.x - rect.min.x) / measure_width,
-                                                (pos.y - rect.min.y) / staff_height,
+                                    // Draw clef symbol
+                                    ui.painter().text(
+                                        egui::pos2(
+                                            rect.min.x + 10.0,
+                                            rect.min.y + staff_height / 2.0,
+                                        ),
+                                        egui::Align2::CENTER_CENTER,
+                                        staff.clef.to_display_char(),
+                                        egui::FontId::proportional(32.0 * zoom_level),
+                                        Color32::WHITE,
+                                    );
+
+                                    // Draw measures
+                                    for (measure_idx, measure) in staff.measures.iter().enumerate()
+                                    {
+                                        let measure_width = 160.0 * zoom_level;
+
+                                        ui.group(|ui| {
+                                            let (rect, response) = ui.allocate_exact_size(
+                                                Vec2::new(measure_width, staff_height),
+                                                egui::Sense::click_and_drag(),
                                             );
 
-                                            // Store the click for later processing in the outer scope
-                                            self.current_position =
-                                                Some((staff_idx, measure_idx, local_pos));
-                                        }
+                                            // Handle clicks for note placement
+                                            if response.clicked() {
+                                                let pos = response.interact_pointer_pos().unwrap();
+                                                let local_pos = Vec2::new(
+                                                    (pos.x - rect.min.x) / measure_width,
+                                                    (pos.y - rect.min.y) / staff_height,
+                                                );
 
-                                        // Draw staff lines
-                                        for i in 0..5 {
-                                            let y = rect.min.y
-                                                + (i as f32 + 1.0) * (staff_height / 6.0);
-                                            ui.painter().line_segment(
-                                                [
-                                                    egui::pos2(rect.min.x, y),
-                                                    egui::pos2(rect.max.x, y),
-                                                ],
-                                                Stroke::new(1.0, Color32::GRAY),
-                                            );
-                                        }
+                                                // Store the click for later processing in the outer scope
+                                                self.current_position =
+                                                    Some((staff_idx, measure_idx, local_pos));
+                                            }
 
-                                        // Draw measure number and time signature
-                                        let (num, denom) = measure.time_signature;
-                                        ui.painter().text(
-                                            egui::pos2(
-                                                rect.min.x + 10.0,
-                                                rect.min.y + 15.0 * zoom_level,
-                                            ),
-                                            egui::Align2::LEFT_TOP,
-                                            format!("{}. {}/{}", measure_idx + 1, num, denom),
-                                            egui::FontId::proportional(14.0 * zoom_level),
-                                            Color32::LIGHT_GRAY,
-                                        );
-
-                                        // Draw key signature placeholder (C major)
-                                        ui.painter().text(
-                                            egui::pos2(
-                                                rect.min.x + 50.0 * zoom_level,
-                                                rect.min.y + 15.0 * zoom_level,
-                                            ),
-                                            egui::Align2::LEFT_TOP,
-                                            "C major",
-                                            egui::FontId::proportional(14.0 * zoom_level),
-                                            Color32::LIGHT_GRAY,
-                                        );
-
-                                        // Draw grid if enabled
-                                        if show_grid {
-                                            // Vertical grid lines
-                                            for i in 1..4 {
-                                                let x =
-                                                    rect.min.x + (i as f32 * measure_width / 4.0);
+                                            // Draw staff lines
+                                            for i in 0..5 {
+                                                let y = rect.min.y
+                                                    + (i as f32 + 1.0) * (staff_height / 6.0);
                                                 ui.painter().line_segment(
                                                     [
-                                                        egui::pos2(x, rect.min.y),
-                                                        egui::pos2(x, rect.max.y),
+                                                        egui::pos2(rect.min.x, y),
+                                                        egui::pos2(rect.max.x, y),
                                                     ],
-                                                    Stroke::new(0.5, Color32::from_rgb(70, 70, 70)),
+                                                    Stroke::new(1.0, Color32::GRAY),
                                                 );
                                             }
-                                        }
 
-                                        // Draw measure end bar line
-                                        ui.painter().line_segment(
-                                            [
-                                                egui::pos2(rect.max.x - 1.0, rect.min.y),
-                                                egui::pos2(rect.max.x - 1.0, rect.max.y),
-                                            ],
-                                            Stroke::new(2.0, Color32::GRAY),
-                                        );
-
-                                        // Draw notes
-                                        for note in &measure.notes {
-                                            let x = rect.min.x + note.position.0 * measure_width;
-                                            let y = rect.min.y + note.position.1 * staff_height;
-
-                                            // Draw the note
+                                            // Draw measure number and time signature
+                                            let (num, denom) = measure.time_signature;
                                             ui.painter().text(
-                                                egui::pos2(x, y),
-                                                egui::Align2::CENTER_CENTER,
-                                                note.value.to_display_char(),
-                                                egui::FontId::proportional(24.0 * zoom_level),
-                                                Color32::WHITE,
+                                                egui::pos2(
+                                                    rect.min.x + 10.0,
+                                                    rect.min.y + 15.0 * zoom_level,
+                                                ),
+                                                egui::Align2::LEFT_TOP,
+                                                format!("{}. {}/{}", measure_idx + 1, num, denom),
+                                                egui::FontId::proportional(14.0 * zoom_level),
+                                                Color32::LIGHT_GRAY,
                                             );
-                                        }
-                                    });
-                                }
-                            });
-                        });
-                        ui.add_space(20.0 * zoom_level);
-                    }
 
-                    ui.allocate_space(ui.available_size()); // Use all available space
+                                            // Draw key signature placeholder (C major)
+                                            ui.painter().text(
+                                                egui::pos2(
+                                                    rect.min.x + 50.0 * zoom_level,
+                                                    rect.min.y + 15.0 * zoom_level,
+                                                ),
+                                                egui::Align2::LEFT_TOP,
+                                                "C major",
+                                                egui::FontId::proportional(14.0 * zoom_level),
+                                                Color32::LIGHT_GRAY,
+                                            );
+
+                                            // Draw grid if enabled
+                                            if show_grid {
+                                                // Vertical grid lines
+                                                for i in 1..4 {
+                                                    let x = rect.min.x
+                                                        + (i as f32 * measure_width / 4.0);
+                                                    ui.painter().line_segment(
+                                                        [
+                                                            egui::pos2(x, rect.min.y),
+                                                            egui::pos2(x, rect.max.y),
+                                                        ],
+                                                        Stroke::new(
+                                                            0.5,
+                                                            Color32::from_rgb(70, 70, 70),
+                                                        ),
+                                                    );
+                                                }
+                                            }
+
+                                            // Draw measure end bar line
+                                            ui.painter().line_segment(
+                                                [
+                                                    egui::pos2(rect.max.x - 1.0, rect.min.y),
+                                                    egui::pos2(rect.max.x - 1.0, rect.max.y),
+                                                ],
+                                                Stroke::new(2.0, Color32::GRAY),
+                                            );
+
+                                            // Draw notes
+                                            for note in &measure.notes {
+                                                let x =
+                                                    rect.min.x + note.position.0 * measure_width;
+                                                let y = rect.min.y + note.position.1 * staff_height;
+
+                                                // Draw the note
+                                                ui.painter().text(
+                                                    egui::pos2(x, y),
+                                                    egui::Align2::CENTER_CENTER,
+                                                    note.value.to_display_char(),
+                                                    egui::FontId::proportional(24.0 * zoom_level),
+                                                    Color32::WHITE,
+                                                );
+                                            }
+                                        });
+                                    }
+                                });
+                            });
+                            ui.add_space(20.0 * zoom_level);
+                        }
+
+                        ui.allocate_space(ui.available_size()); // Use all available space
+                    });
+
+                    // Process any clicks that happened
+                    if let Some((staff_idx, measure_idx, pos)) = self.current_position.take() {
+                        if staff_idx < self.staves.len()
+                            && measure_idx < self.staves[staff_idx].measures.len()
+                        {
+                            // Add a note at the clicked position
+                            let staff_clef = self.staves[staff_idx].clef;
+                            let pitch = self.position_to_pitch(pos.y, staff_clef);
+
+                            // TODO: Implement note collision detection and proper placement
+                            self.staves[staff_idx].measures[measure_idx]
+                                .notes
+                                .push(Note {
+                                    position: (pos.x, pos.y),
+                                    value: selected_note_value,
+                                    pitch,
+                                });
+                        }
+                    }
                 });
-
-                // Process any clicks that happened
-                if let Some((staff_idx, measure_idx, pos)) = self.current_position.take() {
-                    if staff_idx < self.staves.len()
-                        && measure_idx < self.staves[staff_idx].measures.len()
-                    {
-                        // Add a note at the clicked position
-                        let staff_clef = self.staves[staff_idx].clef;
-                        let pitch = self.position_to_pitch(pos.y, staff_clef);
-
-                        self.staves[staff_idx].measures[measure_idx]
-                            .notes
-                            .push(Note {
-                                position: (pos.x, pos.y),
-                                value: selected_note_value,
-                                pitch,
-                            });
-                    }
-                }
-            });
         });
     }
 }

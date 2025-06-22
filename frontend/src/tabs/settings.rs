@@ -1,8 +1,12 @@
-use egui::{Color32, ComboBox, RichText, Ui, Vec2};
+use egui::{Color32, RichText, Ui};
 use rustic::prelude::Commands;
 use std::sync::mpsc::Sender;
 
 use super::Tab;
+use crate::widgets::{
+    ButtonGroup, LabeledCombo, LabeledSlider, MessageType, SectionContainer, StatusMessage,
+    prelude::{ThemeChoice, apply_scaling, configure_theme},
+};
 
 /// Settings tab for application configuration
 pub struct SettingsTab {
@@ -22,7 +26,7 @@ pub struct SettingsTab {
     tempo: f32,
 
     // UI settings
-    themes: Vec<String>,
+    theme_choices: Vec<ThemeChoice>,
     selected_theme: usize,
     scaling_factors: Vec<f32>,
     selected_scaling: usize,
@@ -69,12 +73,7 @@ impl SettingsTab {
         ];
 
         // UI settings placeholder data
-        let themes = vec![
-            "Dark".to_string(),
-            "Light".to_string(),
-            "High Contrast".to_string(),
-            "Custom".to_string(),
-        ];
+        let theme_choices = ThemeChoice::all();
 
         let scaling_factors = vec![0.8, 1.0, 1.2, 1.5, 2.0];
 
@@ -103,7 +102,7 @@ impl SettingsTab {
             selected_key_signature: 0, // C Major
             tempo: 120.0,
 
-            themes,
+            theme_choices,
             selected_theme: 0, // Dark
             scaling_factors,
             selected_scaling: 1, // 1.0x
@@ -117,18 +116,16 @@ impl SettingsTab {
 
     /// Draw the audio settings section
     fn draw_audio_settings(&mut self, ui: &mut Ui) {
-        ui.heading("Audio Settings");
-        ui.add_space(5.0);
-
-        // Sample rate selection
-        ui.horizontal(|ui| {
-            ui.label("Sample Rate:");
-            ComboBox::from_id_source("sample_rate")
-                .selected_text(format!(
+        SectionContainer::new("Audio Settings").show(ui, |ui| {
+            // Sample rate selection
+            LabeledCombo::new("Sample Rate:", "sample_rate")
+                .with_selected_text(format!(
                     "{} Hz",
                     self.sample_rates[self.selected_sample_rate]
                 ))
+                .with_label_width(120.0)
                 .show_ui(ui, |ui| {
+                    let mut result = None;
                     for (i, &rate) in self.sample_rates.iter().enumerate() {
                         if ui
                             .selectable_label(
@@ -137,22 +134,22 @@ impl SettingsTab {
                             )
                             .clicked()
                         {
-                            self.selected_sample_rate = i;
+                            result = Some(i);
                             self.config_dirty = true;
                         }
                     }
+                    result
                 });
-        });
 
-        // Buffer size selection
-        ui.horizontal(|ui| {
-            ui.label("Buffer Size:");
-            ComboBox::from_id_source("buffer_size")
-                .selected_text(format!(
+            // Buffer size selection with latency calculation
+            let selected = LabeledCombo::new("Buffer Size:", "buffer_size")
+                .with_selected_text(format!(
                     "{} samples",
                     self.buffer_sizes[self.selected_buffer_size]
                 ))
+                .with_label_width(120.0)
                 .show_ui(ui, |ui| {
+                    let mut result = None;
                     for (i, &size) in self.buffer_sizes.iter().enumerate() {
                         if ui
                             .selectable_label(
@@ -161,221 +158,252 @@ impl SettingsTab {
                             )
                             .clicked()
                         {
-                            self.selected_buffer_size = i;
+                            result = Some(i);
                             self.config_dirty = true;
                         }
                     }
+                    result
                 });
 
-            ui.label(
-                RichText::new(format!(
-                    "({:.1} ms latency)",
-                    self.buffer_sizes[self.selected_buffer_size] as f32 * 1000.0
-                        / self.sample_rates[self.selected_sample_rate] as f32
-                ))
-                .color(Color32::LIGHT_GRAY),
-            );
-        });
+            if selected.is_some() {
+                self.selected_buffer_size = selected.unwrap();
+            }
 
-        // Audio device selection
-        ui.horizontal(|ui| {
-            ui.label("Audio Device:");
-            ComboBox::from_id_source("audio_device")
-                .selected_text(&self.audio_devices[self.selected_audio_device])
+            // Display latency calculation
+            ui.horizontal(|ui| {
+                ui.add_space(120.0); // Match label width
+                ui.label(
+                    RichText::new(format!(
+                        "({:.1} ms latency)",
+                        self.buffer_sizes[self.selected_buffer_size] as f32 * 1000.0
+                            / self.sample_rates[self.selected_sample_rate] as f32
+                    ))
+                    .color(Color32::LIGHT_GRAY),
+                );
+            });
+
+            // Audio device selection
+            LabeledCombo::new("Audio Device:", "audio_device")
+                .with_selected_text(&self.audio_devices[self.selected_audio_device])
+                .with_label_width(120.0)
                 .show_ui(ui, |ui| {
+                    let mut result = None;
                     for (i, device) in self.audio_devices.iter().enumerate() {
                         if ui
                             .selectable_label(self.selected_audio_device == i, device)
                             .clicked()
                         {
-                            self.selected_audio_device = i;
+                            result = Some(i);
                             self.config_dirty = true;
                         }
                     }
+                    result
                 });
-        });
 
-        // Test audio button
-        if ui.button("Test Audio").clicked() {
-            // This would play a test tone in a real implementation
-            self.save_message = Some("Playing test tone...".to_string());
-        }
+            ui.add_space(5.0);
+
+            // Test audio button
+            if ui.button("Test Audio").clicked() {
+                // TODO: Implement actual audio test tone functionality
+                self.save_message = Some("Playing test tone...".to_string());
+            }
+        });
     }
 
     /// Draw the musical settings section
     fn draw_musical_settings(&mut self, ui: &mut Ui, app_sender: &Sender<Commands>) {
-        ui.heading("Musical Settings");
-        ui.add_space(5.0);
-
-        // Time signature selection
-        ui.horizontal(|ui| {
-            ui.label("Time Signature:");
-            ComboBox::from_id_source("time_signature")
-                .selected_text(&self.time_signatures[self.selected_time_signature])
+        SectionContainer::new("Musical Settings").show(ui, |ui| {
+            // Time signature selection
+            LabeledCombo::new("Time Signature:", "time_signature")
+                .with_selected_text(&self.time_signatures[self.selected_time_signature])
+                .with_label_width(120.0)
                 .show_ui(ui, |ui| {
+                    let mut result = None;
                     for (i, sig) in self.time_signatures.iter().enumerate() {
                         if ui
                             .selectable_label(self.selected_time_signature == i, sig)
                             .clicked()
                         {
-                            self.selected_time_signature = i;
+                            result = Some(i);
                             self.config_dirty = true;
                         }
                     }
+                    result
                 });
-        });
 
-        // Key signature selection
-        ui.horizontal(|ui| {
-            ui.label("Key Signature:");
-            ComboBox::from_id_source("key_signature")
-                .selected_text(&self.key_signatures[self.selected_key_signature])
+            // Key signature selection
+            LabeledCombo::new("Key Signature:", "key_signature")
+                .with_selected_text(&self.key_signatures[self.selected_key_signature])
+                .with_label_width(120.0)
                 .show_ui(ui, |ui| {
+                    let mut result = None;
                     for (i, key) in self.key_signatures.iter().enumerate() {
                         if ui
                             .selectable_label(self.selected_key_signature == i, key)
                             .clicked()
                         {
-                            self.selected_key_signature = i;
+                            result = Some(i);
                             self.config_dirty = true;
                         }
                     }
+                    result
                 });
-        });
 
-        // Tempo slider
-        ui.horizontal(|ui| {
-            ui.label("Tempo:");
-            if ui
-                .add(
-                    egui::Slider::new(&mut self.tempo, 40.0..=240.0)
-                        .text("BPM")
-                        .clamp_to_range(true)
-                        .smart_aim(true),
-                )
+            // Tempo slider
+            if LabeledSlider::new("Tempo:", &mut self.tempo, 40.0..=240.0)
+                .with_suffix(" BPM")
+                .with_label_width(120.0)
+                .clamp(true)
+                .smart_aim(true)
+                .show(ui)
                 .changed()
             {
                 self.config_dirty = true;
-                // Send tempo change to audio engine
+                // TODO: Implement proper error handling for command sending
                 let _ = app_sender.send(Commands::SetTempo(self.tempo as u32));
             }
-        });
 
-        // Metronome toggle
-        if ui.checkbox(&mut true, "Enable Metronome").clicked() {
-            // Toggle metronome
-            let _ = app_sender.send(Commands::ToggleMetronome);
-            self.config_dirty = true;
-        }
+            // Metronome toggle
+            if ui.checkbox(&mut true, "Enable Metronome").clicked() {
+                // TODO: Implement proper state tracking for metronome toggle
+                let _ = app_sender.send(Commands::ToggleMetronome);
+                self.config_dirty = true;
+            }
+        });
     }
 
     /// Draw the UI settings section
     fn draw_ui_settings(&mut self, ui: &mut Ui) {
-        ui.heading("UI Settings");
-        ui.add_space(5.0);
-
-        // Theme selection
-        ui.horizontal(|ui| {
-            ui.label("Theme:");
-            ComboBox::from_id_source("theme")
-                .selected_text(&self.themes[self.selected_theme])
+        SectionContainer::new("UI Settings").show(ui, |ui| {
+            // Theme selection
+            LabeledCombo::new("Theme:", "theme")
+                .with_selected_text(self.theme_choices[self.selected_theme].to_string())
+                .with_label_width(120.0)
                 .show_ui(ui, |ui| {
-                    for (i, theme) in self.themes.iter().enumerate() {
+                    let mut result = None;
+                    for (i, theme) in self.theme_choices.iter().enumerate() {
                         if ui
-                            .selectable_label(self.selected_theme == i, theme)
+                            .selectable_label(self.selected_theme == i, theme.to_string())
                             .clicked()
                         {
-                            self.selected_theme = i;
+                            result = Some(i);
                             self.config_dirty = true;
+
+                            // Apply the theme change immediately
+                            configure_theme(*theme, ui.ctx());
                         }
                     }
+                    result
                 });
-        });
 
-        // UI scaling
-        ui.horizontal(|ui| {
-            ui.label("UI Scaling:");
-            ComboBox::from_id_source("scaling")
-                .selected_text(format!("{}x", self.scaling_factors[self.selected_scaling]))
+            // UI scaling
+            LabeledCombo::new("UI Scaling:", "scaling")
+                .with_selected_text(format!("{}x", self.scaling_factors[self.selected_scaling]))
+                .with_label_width(120.0)
                 .show_ui(ui, |ui| {
+                    let mut result = None;
                     for (i, &scale) in self.scaling_factors.iter().enumerate() {
                         if ui
                             .selectable_label(self.selected_scaling == i, format!("{}x", scale))
                             .clicked()
                         {
-                            self.selected_scaling = i;
+                            result = Some(i);
                             self.config_dirty = true;
+
+                            // Apply the scaling change immediately
+                            apply_scaling(scale, ui.ctx());
                         }
                     }
+                    result
+                });
+
+            // Keyboard shortcuts section
+            ui.add_space(10.0);
+            SectionContainer::new("Keyboard Shortcuts")
+                .with_frame(false)
+                .show(ui, |ui| {
+                    // Convert shortcuts to format expected by DataGrid
+                    let shortcut_data: Vec<Vec<&str>> = self
+                        .shortcuts
+                        .iter()
+                        .map(|(key, action)| vec![key.as_str(), action.as_str()])
+                        .collect();
+
+                    // Display shortcuts in a grid
+                    crate::widgets::DataGrid::new()
+                        .with_headers(vec!["Key", "Action"])
+                        .with_data(shortcut_data)
+                        .with_striped(true)
+                        .with_col_spacing(40.0)
+                        .with_emphasize_headers(true)
+                        .show(ui);
                 });
         });
-
-        // Keyboard shortcuts table
-        ui.add_space(10.0);
-        ui.label("Keyboard Shortcuts:");
-        egui::Grid::new("shortcuts_grid")
-            .num_columns(2)
-            .spacing([40.0, 4.0])
-            .striped(true)
-            .show(ui, |ui| {
-                for (key, action) in &self.shortcuts {
-                    ui.label(RichText::new(key).monospace().strong());
-                    ui.label(action);
-                    ui.end_row();
-                }
-            });
     }
 
     /// Draw the config management section
     fn draw_config_management(&mut self, ui: &mut Ui) {
-        ui.heading("Configuration");
-        ui.add_space(5.0);
+        SectionContainer::new("Configuration").show(ui, |ui| {
+            // Button group for configuration actions
+            if let Some((button_index, _)) = ButtonGroup::new()
+                .add_button("Save Configuration")
+                .add_button("Load Configuration")
+                .add_destructive_button("Reset to Defaults")
+                .horizontal()
+                .with_spacing(10.0)
+                .show(ui)
+            {
+                match button_index {
+                    0 => {
+                        // Save configuration
+                        // TODO: Implement actual configuration saving functionality
+                        self.config_saved = true;
+                        self.config_dirty = false;
+                        self.save_message = Some("Configuration saved successfully!".to_string());
+                    }
+                    1 => {
+                        // Load configuration
+                        // TODO: Implement actual configuration loading functionality
+                        self.save_message = Some("Configuration loaded successfully!".to_string());
+                    }
+                    2 => {
+                        // Reset to defaults
+                        self.selected_sample_rate = 1; // 48000 Hz
+                        self.selected_buffer_size = 2; // 256 samples
+                        self.selected_audio_device = 0; // System Default
+                        self.selected_time_signature = 0; // 4/4
+                        self.selected_key_signature = 0; // C Major
+                        self.tempo = 120.0;
+                        self.selected_theme = 0; // Dark
+                        self.selected_scaling = 1; // 1.0x
 
-        ui.horizontal(|ui| {
-            if ui.button("Save Configuration").clicked() {
-                // Simulate saving configuration
-                self.config_saved = true;
-                self.config_dirty = false;
-                self.save_message = Some("Configuration saved successfully!".to_string());
+                        // Apply default theme and scaling
+                        configure_theme(ThemeChoice::Dark, ui.ctx());
+                        apply_scaling(1.0, ui.ctx());
 
-                // In a real implementation, this would write to a config file
+                        self.config_dirty = true;
+                        self.save_message = Some("Settings reset to defaults".to_string());
+                    }
+                    _ => {}
+                }
             }
 
-            if ui.button("Load Configuration").clicked() {
-                // Simulate loading configuration
-                self.save_message = Some("Configuration loaded successfully!".to_string());
+            ui.add_space(5.0);
 
-                // In a real implementation, this would read from a config file
+            // Show status messages
+            if let Some(message) = &self.save_message {
+                StatusMessage::new(message)
+                    .with_type(MessageType::Success)
+                    .show(ui);
             }
 
-            if ui.button("Reset to Defaults").clicked() {
-                // Reset to defaults
-                self.selected_sample_rate = 1; // 48000 Hz
-                self.selected_buffer_size = 2; // 256 samples
-                self.selected_audio_device = 0; // System Default
-                self.selected_time_signature = 0; // 4/4
-                self.selected_key_signature = 0; // C Major
-                self.tempo = 120.0;
-                self.selected_theme = 0; // Dark
-                self.selected_scaling = 1; // 1.0x
-
-                self.config_dirty = true;
-                self.save_message = Some("Settings reset to defaults".to_string());
+            // Show unsaved changes warning
+            if self.config_dirty {
+                StatusMessage::new("You have unsaved changes")
+                    .with_type(MessageType::Warning)
+                    .show(ui);
             }
         });
-
-        // Show save status message
-        if let Some(message) = &self.save_message {
-            ui.horizontal(|ui| {
-                ui.label(RichText::new(message).color(Color32::LIGHT_GREEN));
-            });
-        }
-
-        // Show unsaved changes warning
-        if self.config_dirty {
-            ui.add_space(5.0);
-            ui.label(RichText::new("* You have unsaved changes").color(Color32::LIGHT_YELLOW));
-        }
     }
 }
 
@@ -390,40 +418,18 @@ impl Tab for SettingsTab {
 
         // Use a scrollable area for all settings
         egui::ScrollArea::vertical().show(ui, |ui| {
-            // Three column layout
+            // Two column layout
             ui.columns(2, |columns| {
                 // Left column: Audio and Musical settings
                 columns[0].vertical(|ui| {
-                    egui::Frame::group(ui.style())
-                        .fill(ui.style().visuals.faint_bg_color)
-                        .show(ui, |ui| {
-                            self.draw_audio_settings(ui);
-                        });
-
-                    ui.add_space(10.0);
-
-                    egui::Frame::group(ui.style())
-                        .fill(ui.style().visuals.faint_bg_color)
-                        .show(ui, |ui| {
-                            self.draw_musical_settings(ui, app_sender);
-                        });
+                    self.draw_audio_settings(ui);
+                    self.draw_musical_settings(ui, app_sender);
                 });
 
                 // Right column: UI settings and Config management
                 columns[1].vertical(|ui| {
-                    egui::Frame::group(ui.style())
-                        .fill(ui.style().visuals.faint_bg_color)
-                        .show(ui, |ui| {
-                            self.draw_ui_settings(ui);
-                        });
-
-                    ui.add_space(10.0);
-
-                    egui::Frame::group(ui.style())
-                        .fill(ui.style().visuals.faint_bg_color)
-                        .show(ui, |ui| {
-                            self.draw_config_management(ui);
-                        });
+                    self.draw_ui_settings(ui);
+                    self.draw_config_management(ui);
                 });
             });
 
