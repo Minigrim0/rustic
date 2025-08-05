@@ -330,7 +330,7 @@ impl SettingsTab {
                         .collect();
 
                     // Display shortcuts in a grid
-                    crate::widgets::DataGrid::new()
+                    crate::widgets::DataGrid::new("keyboard_shortcuts".to_string())
                         .with_headers(vec!["Key", "Action"])
                         .with_data(shortcut_data)
                         .with_striped(true)

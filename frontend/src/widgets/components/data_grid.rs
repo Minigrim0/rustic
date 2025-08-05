@@ -28,6 +28,7 @@ use egui::{Color32, Grid, RichText, Ui};
 /// }
 /// ```
 pub struct DataGrid<'a> {
+    id: String,
     /// Headers for the grid
     headers: Option<Vec<&'a str>>,
     /// Data to display in the grid
@@ -52,8 +53,9 @@ impl<'a> DataGrid<'a> {
     /// # Returns
     ///
     /// A new `DataGrid` instance
-    pub fn new() -> Self {
+    pub fn new(name: String) -> Self {
         Self {
+            id: name,
             headers: None,
             data: Vec::new(),
             striped: false,
@@ -63,6 +65,20 @@ impl<'a> DataGrid<'a> {
             min_col_widths: Vec::new(),
             emphasize_headers: true,
         }
+    }
+
+    /// Sets the name of the datagrid
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the datagrid
+    ///
+    /// # Returns
+    ///
+    /// self for method chaining
+    pub fn with_name(mut self, name: String) -> Self {
+        self.id = name;
+        self
     }
 
     /// Sets the headers for the grid
@@ -225,7 +241,7 @@ impl<'a> DataGrid<'a> {
         }
 
         // Create the grid
-        Grid::new("data_grid")
+        Grid::new(self.id.clone())
             .num_columns(num_columns)
             .spacing([self.col_spacing, self.row_spacing])
             .striped(self.striped)
@@ -282,6 +298,6 @@ impl<'a> DataGrid<'a> {
 
 impl<'a> Default for DataGrid<'a> {
     fn default() -> Self {
-        Self::new()
+        Self::new("default_grid".to_string())
     }
 }

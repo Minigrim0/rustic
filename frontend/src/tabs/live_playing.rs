@@ -171,7 +171,7 @@ impl LivePlayingTab {
                         ];
 
                         // Apply custom colors for the "Linked" status
-                        let mut data_grid = DataGrid::new()
+                        let mut data_grid = DataGrid::new(channel.instrument_name.clone())
                             .with_data(grid_data)
                             .with_col_spacing(8.0)
                             .with_row_spacing(4.0);
@@ -263,7 +263,7 @@ impl Tab for LivePlayingTab {
                         vec!["Esc", "Stop loop/recording"],
                     ];
 
-                    DataGrid::new()
+                    DataGrid::new("kb_controls".to_string())
                         .with_data(control_data)
                         .with_striped(true)
                         .with_col_spacing(20.0)
