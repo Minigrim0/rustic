@@ -1,46 +1,17 @@
-# GitHub Actions Workflows
+# Music generator
+This project aims to generate music using rust and the `rodio` crate.
 
-This directory contains GitHub Actions workflows for automating various tasks in the Rustic project.
+## Frontend
+A frontend application is available under the `app` folder. This application is created using the tauri framework, with a Vue.js frontend.
 
-## Available Workflows
+It aims to provide a simple user interface to create audio pipelines for the instruments.
 
-### Publish Documentation
+# Architecture
+The project aims to use the Pipe & Filter architecture, alongside an Event-Driven architecture.
 
-**File:** `publish-docs.yml`
+## Pipe & Filter
+This architecture is used to create a pipeline of filters that process the audio data. Each filter is a simple function that takes an input and returns an output. The output of a filter is the input of the next filter in the pipeline.
+The frontend application aims at providing a simple way to create these pipelines.
 
-This workflow automatically publishes the Rust documentation to GitHub Pages whenever a new release is created.
-
-#### How it works
-
-1. When a new release is created on GitHub, this workflow is triggered
-2. It checks out the repository code
-3. Sets up Rust with the stable toolchain
-4. Generates documentation using `cargo doc`
-5. Deploys the generated documentation to the `gh-pages` branch
-
-#### Requirements
-
-For this workflow to function properly:
-
-1. The repository needs to have GitHub Pages enabled and configured to use the `gh-pages` branch
-2. The workflow needs proper permissions to push to the repository
-
-#### Enabling GitHub Pages
-
-To enable GitHub Pages for your documentation:
-
-1. Go to your repository's Settings
-2. Navigate to the "Pages" section
-3. Under "Source", select the `gh-pages` branch
-4. Click "Save"
-
-After the workflow runs for the first time and the `gh-pages` branch is created, your documentation will be available at:
-`https://[username].github.io/rustic/`
-
-#### Customization
-
-You can customize this workflow by editing the `publish-docs.yml` file:
-
-- Change when the workflow triggers (e.g., on push to main instead of on release)
-- Modify the documentation generation command to include dependencies or set other options
-- Adjust the GitHub Pages deployment configuration
+## Event-Driven
+The event-dirven architecture aims at triggering the creation of audio from keyboard events. This is done using the evdev crate, which allows to listen to keyboard events. These events will, depending on the context (provided by the `Application` structure, trigger an instrument to start playing a certain note.
