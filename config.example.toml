@@ -1,0 +1,29 @@
+# Example Rustic configuration file
+# Copy to ~/.config/rustic/config.toml and edit as needed
+
+[fs]
+root_dir = "~/.config/rustic"
+score_path = "scores"
+instrument_path = "instruments"
+recordings_path = "recordings"
+
+[system]
+sample_rate = 44100
+master_volume = 1.0
+
+[audio]
+# Audio buffer settings (advanced users only)
+# Lower cpal_buffer_size = less latency but more CPU usage
+# Increase audio_ring_buffer_size if you experience buffer underruns
+cpal_buffer_size = 64           # Audio callback buffer size (16-2048 samples)
+render_chunk_size = 256         # Audio render chunk size (samples)
+audio_ring_buffer_size = 88200  # Ring buffer size (88200 = 2s @ 44.1kHz)
+message_ring_buffer_size = 1024 # Command queue size (messages)
+target_latency_ms = 50.0        # Target maximum latency (milliseconds)
+
+[logging]
+# Logging configuration
+level = "info"              # Log level: trace, debug, info, warn, error
+log_to_file = false         # Enable file logging
+log_file = "rustic.log"     # Log file path (relative to config directory)
+log_to_stdout = true        # Enable console logging
