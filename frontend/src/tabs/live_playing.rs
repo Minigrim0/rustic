@@ -20,7 +20,7 @@ struct ChannelData {
 pub struct LivePlayingTab {
     pub is_enabled: bool,
     channels: Vec<ChannelData>,
-    active_notes: Vec<(usize, u8)>, // (channel_index, note_value)
+    _active_notes: Vec<(usize, u8)>, // (channel_index, note_value)
 }
 
 impl LivePlayingTab {
@@ -70,27 +70,27 @@ impl LivePlayingTab {
         LivePlayingTab {
             is_enabled: true,
             channels,
-            active_notes: Vec::new(),
+            _active_notes: Vec::new(),
         }
     }
 
     /// Simulate note activation for visual feedback
-    fn activate_note(&mut self, channel_idx: usize, note_value: u8) {
+    fn _activate_note(&mut self, channel_idx: usize, note_value: u8) {
         if channel_idx < self.channels.len() {
             self.channels[channel_idx].is_playing = true;
-            self.active_notes.push((channel_idx, note_value));
+            self._active_notes.push((channel_idx, note_value));
         }
     }
 
     /// Simulate note deactivation
-    fn deactivate_note(&mut self, channel_idx: usize, note_value: u8) {
+    fn _deactivate_note(&mut self, channel_idx: usize, note_value: u8) {
         if channel_idx < self.channels.len() {
             // Remove the note from active notes
-            self.active_notes
+            self._active_notes
                 .retain(|&(ch, note)| ch != channel_idx || note != note_value);
 
             // If no more notes are active for this channel, set is_playing to false
-            if !self.active_notes.iter().any(|&(ch, _)| ch == channel_idx) {
+            if !self._active_notes.iter().any(|&(ch, _)| ch == channel_idx) {
                 self.channels[channel_idx].is_playing = false;
             }
         }

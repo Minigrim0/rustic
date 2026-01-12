@@ -14,7 +14,7 @@ mod widgets;
 
 use mapping::KeyMapper;
 use tabs::{GraphEditorTab, LivePlayingTab, ScoreEditorTab, SettingsTab, Tab};
-use widgets::{SectionContainer, ThemeChoice, apply_scaling, configure_theme};
+use widgets::{SectionContainer, ThemeChoice, configure_theme};
 
 /// Main application state that integrates with egui
 pub struct RusticApp {

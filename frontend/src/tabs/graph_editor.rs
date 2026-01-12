@@ -19,7 +19,7 @@ pub struct GraphEditorTab {
     // UI state
     show_help: bool,
     canvas_offset: Vec2,
-    zoom: f32,
+    _zoom: f32,
     selected_node: Option<usize>,
 }
 
@@ -127,7 +127,7 @@ impl GraphEditorTab {
             connections,
             show_help: false,
             canvas_offset: Vec2::new(0.0, 0.0),
-            zoom: 1.0,
+            _zoom: 1.0,
             selected_node: None,
         }
     }

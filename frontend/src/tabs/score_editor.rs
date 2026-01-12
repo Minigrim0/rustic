@@ -3,7 +3,7 @@ use rustic::prelude::Commands;
 use std::sync::mpsc::Sender;
 
 use super::Tab;
-use crate::widgets::{ButtonGroup, DataGrid, LabeledCombo, SectionContainer};
+use crate::widgets::{ButtonGroup, LabeledCombo, SectionContainer};
 
 /// Note duration values
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -16,7 +16,7 @@ enum NoteValue {
 }
 
 impl NoteValue {
-    fn to_string(&self) -> &'static str {
+    fn _to_string(&self) -> &'static str {
         match self {
             NoteValue::Whole => "Whole",
             NoteValue::Half => "Half",
@@ -65,7 +65,7 @@ impl Clef {
 struct Note {
     position: (f32, f32), // x, y position within the measure
     value: NoteValue,
-    pitch: i8, // MIDI note number, or relative position on staff
+    _pitch: i8, // MIDI note number, or relative position on staff
 }
 
 /// A measure in a staff
@@ -507,7 +507,7 @@ impl Tab for ScoreEditorTab {
                                 .push(Note {
                                     position: (pos.x, pos.y),
                                     value: selected_note_value,
-                                    pitch,
+                                    _pitch: pitch,
                                 });
                         }
                     }
