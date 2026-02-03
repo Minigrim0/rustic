@@ -1,0 +1,68 @@
+// Button styles
+
+button {
+    padding: 0.5rem 1rem;
+    background-color: var(--accent-primary);
+    color: var(--bg-secondary);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    font-weight: 500;
+
+    &:hover {
+        background-color: var(--accent-hover);
+    }
+
+    &:active {
+        transform: translateY(1px);
+    }
+}
+
+.primary-button {
+    background: var(--accent-primary);
+    color: var(--bg-secondary);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: var(--accent-hover);
+    }
+}
+
+.secondary-button {
+    background: var(--accent-secondary);
+    color: var(--bg-secondary);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: var(--accent-secondary-hover);
+    }
+
+    &:disabled {
+        background: var(--border-strong);
+        cursor: not-allowed;
+        opacity: 0.6;
+        transform: none;
+
+        &:hover {
+            background: var(--border-strong);
+        }
+    }
+}
+
+.action-buttons {
+    margin-top: 2rem;
+    text-align: center;
+}

@@ -1,13 +1,8 @@
 <template>
     <div class="visualizer-container">
         <!-- Canvas for waveform display -->
-        <canvas
-            ref="canvas"
-            width="800"
-            height="200"
-            class="waveform-canvas"
-            :title="`Waveform: ${samples.length} samples at ${sampleRate}Hz`"
-        ></canvas>
+        <canvas ref="canvas" width="800" height="200" class="waveform-canvas"
+            :title="`Waveform: ${samples.length} samples at ${sampleRate}Hz`"></canvas>
 
         <!-- Waveform info display -->
         <div class="waveform-info">
@@ -15,21 +10,26 @@
                 <span class="info-label">Samples:</span>
                 <span class="info-value">{{
                     formatNumber(samples.length)
-                }}</span>
+                    }}</span>
+            </div>
+
+            <div class="info-row">
 
                 <span class="info-label">Duration:</span>
                 <span class="info-value">{{ formatDuration(duration) }}</span>
+            </div>
 
+            <div class="info-row">
                 <span class="info-label">Peak:</span>
                 <span class="info-value">{{
                     formatAmplitude(peakAmplitude)
-                }}</span>
+                    }}</span>
             </div>
         </div>
     </div>
 </template>
 
-<script>
+<script lang="ts">
 /**
  * AudioVisualizer Component
  *

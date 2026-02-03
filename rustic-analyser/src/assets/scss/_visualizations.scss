@@ -1,0 +1,88 @@
+// Visualization components: waveform, frequency chart, spectrum, cards
+
+.visualizations {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+
+    @media (min-width: 768px) {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.visualizer-container,
+.frequency-chart-container {
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px var(--shadow-medium);
+}
+
+.waveform-canvas,
+.frequency-canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    background-color: var(--canvas-bg);
+    border: 1px solid var(--border-medium);
+    border-radius: 4px;
+}
+
+.visualization-card {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px var(--shadow-light);
+    margin-bottom: 1.5rem;
+
+    h3 {
+        color: var(--accent-primary);
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        border-bottom: 1px solid var(--border-light);
+        padding-bottom: 0.5rem;
+    }
+}
+
+// Chart legend
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-right: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.legend-color {
+    width: 20px;
+    height: 10px;
+    margin-right: 0.5rem;
+    border-radius: 2px;
+}
+
+.legend-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+// Spectrum display
+.spectrum-display {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    padding: 1rem;
+
+    canvas {
+        width: 100%;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+        background-color: var(--canvas-bg);
+    }
+}
