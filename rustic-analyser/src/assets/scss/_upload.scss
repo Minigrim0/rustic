@@ -1,0 +1,55 @@
+// File upload component
+
+.file-upload {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-light);
+
+    h3 {
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+}
+
+.upload-container {
+    border: 2px dashed var(--upload-border);
+    border-radius: 4px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+
+    &:hover {
+        border-color: var(--upload-hover);
+        background-color: var(--bg-accent);
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    label {
+        display: block;
+        cursor: pointer;
+    }
+}
+
+.upload-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.upload-text {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.file-info {
+    font-size: 0.9rem;
+    color: var(--text-tertiary);
+    margin-top: 1rem;
+}

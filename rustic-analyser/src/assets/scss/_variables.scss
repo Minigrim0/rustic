@@ -1,0 +1,85 @@
+// Theme CSS custom properties
+// Light and dark mode color tokens
+
+:root {
+    // Light Theme Colors
+    --bg-primary: #f9f9f9;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f8f9fa;
+    --bg-accent: rgba(255, 255, 255, 0.05);
+
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-tertiary: #888888;
+    --text-muted: #999999;
+
+    --border-light: #eeeeee;
+    --border-medium: #dddddd;
+    --border-strong: #cccccc;
+
+    --accent-primary: #2196f3;
+    --accent-hover: #1976d2;
+    --accent-secondary: #6c757d;
+    --accent-secondary-hover: #5a6268;
+
+    --success-bg: #d4edda;
+    --success-text: #155724;
+    --success-border: #4caf50;
+
+    --error-bg: #ffebee;
+    --error-text: #d32f2f;
+    --error-border: #f44336;
+
+    --warning-text: #856404;
+
+    --shadow-light: rgba(0, 0, 0, 0.05);
+    --shadow-medium: rgba(0, 0, 0, 0.1);
+
+    --canvas-bg: #f5f5f5;
+    --grid-color: #dddddd;
+    --chart-bg: #ffffff;
+
+    --upload-border: #dddddd;
+    --upload-hover: #2196f3;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #3a3a3a;
+    --bg-accent: rgba(255, 255, 255, 0.1);
+
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-tertiary: #aaaaaa;
+    --text-muted: #888888;
+
+    --border-light: #404040;
+    --border-medium: #555555;
+    --border-strong: #666666;
+
+    --accent-primary: #64b5f6;
+    --accent-hover: #42a5f5;
+    --accent-secondary: #78909c;
+    --accent-secondary-hover: #90a4ae;
+
+    --success-bg: #1b5e20;
+    --success-text: #a5d6a7;
+    --success-border: #4caf50;
+
+    --error-bg: #b71c1c;
+    --error-text: #ffcdd2;
+    --error-border: #f44336;
+
+    --warning-text: #fff3cd;
+
+    --shadow-light: rgba(0, 0, 0, 0.3);
+    --shadow-medium: rgba(0, 0, 0, 0.5);
+
+    --canvas-bg: #333333;
+    --grid-color: #555555;
+    --chart-bg: #404040;
+
+    --upload-border: #555555;
+    --upload-hover: #64b5f6;
+}
