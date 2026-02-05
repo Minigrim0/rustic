@@ -1,15 +1,12 @@
 import { createApp } from 'vue'
-import './assets/scss/style.scss'
+import './assets/css/style.css'
 import App from './App.vue'
+import router from './router'
+import VChart from "vue-echarts";
+import "echarts"; // pulls in everything
 
-/**
- * Initialize the Vue application
- * This is the main entry point for the Rustic Analyser app
- */
 const app = createApp(App)
+app.use(router)
+app.component("v-chart", VChart); 
 
-// Mount the application to the DOM
 app.mount('#app')
-
-// Log app initialization
-console.log('Rustic Analyser app initialized')
