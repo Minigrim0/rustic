@@ -1,14 +1,17 @@
 //! Audio analysis module
 //!
 //! This module contains functionality for analyzing audio samples,
-//! including FFT, spectrum analysis, pitch detection, and harmonic analysis.
+//! including FFT, spectrum analysis, pitch detection, and waveform downsampling.
 
+mod downsample;
 mod fft;
-mod harmonics;
+mod peaks;
 mod pitch;
 mod spectrum;
 
 // Re-export public items
+pub use downsample::downsample_waveform;
 pub use fft::{compute_fft, FrequencyData};
+pub use peaks::pick_top_frequencies;
 pub use pitch::{estimate_pitch, frequency_to_note};
 pub use spectrum::compute_spectrum;

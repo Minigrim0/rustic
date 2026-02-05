@@ -2,8 +2,10 @@ use log::info;
 use rustfft::{num_complex::Complex, FftPlanner};
 use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
+use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/types/")]
 pub struct FrequencyData {
     pub frequency: f32,
     pub magnitude: f32,
