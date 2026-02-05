@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "rustic-analyser/src-tauri",
+    "rustic-toolkit/src-tauri",
     "rustic-derive",
     "rustic",
     "rustic-meta",

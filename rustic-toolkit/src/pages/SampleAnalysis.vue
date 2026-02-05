@@ -29,10 +29,6 @@
                 <div class="flex items-center justify-between">
                     <h2 class="text-sm font-medium">{{ audioData.name }}</h2>
                     <div class="flex items-center gap-1">
-                        <button @click="saveAnalysis"
-                            class="rounded px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-white/10">
-                            Save
-                        </button>
                         <button @click="clearData"
                             class="rounded px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-white/10">
                             Clear
@@ -86,14 +82,8 @@ import FileUpload from "../components/FileUpload.vue";
 import { analyzeAudioFile } from "../utils/tauri-api";
 import { notifications } from "../stores/notifications";
 
-import { type AudioSummary } from "../types";
+import { type AudioSummary, type AudioFileInfo } from "../types";
 import Visualizers from "../components/Visualizers.vue";
-
-interface AudioFileInfo {
-    name: string;
-    size: number;
-    type: string;
-}
 
 export default {
     name: "SampleAnalysis",
@@ -101,120 +91,6 @@ export default {
         FileUpload,
         Visualizers
     },
-    computed: {
-        // STEP 25: Transform frequency data from backend format to component format
-        transformedFrequencies() {
-            if (!this.analysisResult || !this.analysisResult.frequencies) {
-                console.log(
-                    "📊 No frequency data available for transformation",
-                );
-                return [];
-            }
-
-            console.log(
-                `📊 Transforming ${this.analysisResult.frequencies.length} frequency data points`,
-            );
-
-            // Transform from FrequencyData objects to [frequency, magnitude] pairs
-            // Backend returns: { frequency: f32, magnitude: f32, phase: f32 }
-            // Component expects: [frequency, magnitude] pairs (phase is ignored)
-            const transformed = this.analysisResult.frequencies.map(
-                (freqData, index) => {
-                    // Handle both possible data structures from backend
-                    if (Array.isArray(freqData)) {
-                        // If already in array format [freq, mag]
-                        return freqData;
-                    } else if (
-                        freqData.frequency !== undefined &&
-                        freqData.magnitude !== undefined
-                    ) {
-                        // If in FrequencyData object format { frequency: x, magnitude: y, phase: z }
-                        return [freqData.frequency, freqData.magnitude];
-                    } else {
-                        console.warn(
-                            `⚠ Unexpected frequency data format at index ${index}:`,
-                            freqData,
-                        );
-                        return [0, 0];
-                    }
-                },
-            );
-
-            // Sort by frequency to ensure proper display
-            transformed.sort((a, b) => a[0] - b[0]);
-
-            if (transformed.length > 0) {
-                const freqRange = {
-                    min: transformed[0][0],
-                    max: transformed[transformed.length - 1][0],
-                    count: transformed.length,
-                };
-                console.log(`✓ Frequency transformation complete:`, freqRange);
-            }
-
-            return transformed;
-        },
-
-        // STEP 26: Validate spectrogram data format
-        validatedSpectrogram() {
-            if (
-                !this.spectrogram ||
-                !Array.isArray(this.spectrogram) ||
-                this.spectrogram.length === 0
-            ) {
-                console.log("📈 No spectrogram data available for validation");
-                return null;
-            }
-
-            console.log(
-                `📈 Validating spectrogram with ${this.spectrogram.length} time frames`,
-            );
-
-            // Ensure each frame is an array of numbers
-            const validation = {
-                isArray: Array.isArray(this.spectrogram),
-                hasFrames: this.spectrogram.length > 0,
-                allFramesAreArrays: this.spectrogram.every((frame) =>
-                    Array.isArray(frame),
-                ),
-                allValuesAreNumbers: this.spectrogram.every(
-                    (frame) =>
-                        Array.isArray(frame) &&
-                        frame.every(
-                            (val) => typeof val === "number" && !isNaN(val),
-                        ),
-                ),
-            };
-
-            console.log("📈 Spectrogram validation:", validation);
-
-            if (!validation.isArray || !validation.hasFrames) {
-                console.warn("⚠ Spectrogram is not a valid array or is empty");
-                return null;
-            }
-
-            if (!validation.allFramesAreArrays) {
-                console.warn("⚠ Not all spectrogram frames are arrays");
-                return null;
-            }
-
-            if (!validation.allValuesAreNumbers) {
-                console.warn("⚠ Spectrogram contains non-numeric values");
-                return null;
-            }
-
-            const spectrogramInfo = {
-                timeFrames: this.spectrogram.length,
-                frequencyBins: this.spectrogram[0].length,
-                totalDataPoints:
-                    this.spectrogram.length * this.spectrogram[0].length,
-            };
-
-            console.log(`✓ Spectrogram validation passed:`, spectrogramInfo);
-            return this.spectrogram;
-        },
-    },
-
     data(): {
         audioData: AudioFileInfo | null;
         analysisResult: AudioSummary | null;

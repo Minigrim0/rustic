@@ -1,5 +1,5 @@
 /**
- * Tauri IPC layer for the Rustic Analyser.
+ * Tauri IPC layer for the Rustic Toolkit.
  *
  * All functions map 1-to-1 to backend commands.
  * Types are auto-generated from Rust via ts-rs.

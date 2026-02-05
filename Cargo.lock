@@ -6053,26 +6053,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustic-analyser"
-version = "0.1.0"
-dependencies = [
- "colog",
- "hound",
- "log",
- "rustfft",
- "serde",
- "serde_json",
- "symphonia",
- "tauri",
- "tauri-build",
- "tauri-plugin-fs",
- "tauri-plugin-opener",
- "tempfile",
- "thiserror 2.0.18",
- "ts-rs",
-]
-
-[[package]]
 name = "rustic-derive"
 version = "0.1.0"
 dependencies = [
@@ -6090,6 +6070,26 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
+]
+
+[[package]]
+name = "rustic-toolkit"
+version = "0.1.0"
+dependencies = [
+ "colog",
+ "hound",
+ "log",
+ "rustfft",
+ "serde",
+ "serde_json",
+ "symphonia",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-fs",
+ "tauri-plugin-opener",
+ "tempfile",
+ "thiserror 2.0.18",
+ "ts-rs",
 ]
 
 [[package]]
