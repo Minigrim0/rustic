@@ -6,6 +6,8 @@ use device_query::{DeviceQuery, DeviceState, Keycode};
 use eframe::{App, CreationContext, Frame, NativeOptions};
 use egui::Context;
 use log::info;
+use rustic::AudioHandle;
+use rustic::audio::{AudioError, BackendEvent};
 use rustic::prelude::Commands;
 
 mod mapping;
@@ -28,8 +30,8 @@ pub struct RusticApp {
 
     // Rustic audio engine communication
     app_sender: Sender<Commands>,
-    app_receiver: Receiver<Commands>,
-    rustic_apphandle: JoinHandle<()>,
+    app_receiver: Receiver<BackendEvent>,
+    rustic_apphandle: AudioHandle,
 
     // Input state
     device_state: DeviceState,
@@ -40,7 +42,7 @@ pub struct RusticApp {
 
 impl RusticApp {
     /// Create a new instance of the app
-    fn new(cc: &CreationContext) -> Self {
+    fn new(cc: &CreationContext) -> Result<Self, AudioError> {
         info!("Building application structure");
         // Set up the custom theme
         let ctx = &cc.egui_ctx;
@@ -49,14 +51,14 @@ impl RusticApp {
         // Set up communication channels with the rustic audio engine
         let (frontend_sender, backend_receiver): (Sender<Commands>, Receiver<Commands>) =
             mpsc::channel();
-        let (backend_sender, frontend_receiver): (Sender<Commands>, Receiver<Commands>) =
+        let (backend_sender, frontend_receiver): (Sender<BackendEvent>, Receiver<BackendEvent>) =
             mpsc::channel();
 
         // Start the rustic audio engine
-        let rustic_apphandle = rustic::start_app(backend_sender, backend_receiver);
+        let rustic_apphandle = rustic::start_app(backend_sender, backend_receiver)?;
 
         // Create and return the app
-        RusticApp {
+        Ok(RusticApp {
             current_tab: 0,
             tabs: vec!["Live Playing", "Score Editor", "Graph Editor", "Settings"],
             live_playing_tab: LivePlayingTab::new(),
@@ -72,7 +74,7 @@ impl RusticApp {
             pressed_keys: Vec::new(),
             focused: true,
             key_mapper: KeyMapper::new(frontend_sender),
-        }
+        })
     }
 
     /// Process keyboard input and convert to Commands
@@ -207,10 +209,13 @@ fn main() -> Result<(), eframe::Error> {
         ..Default::default()
     };
 
+
     // Run the app
     eframe::run_native(
         "Rustic",
         options,
-        Box::new(|cc| Box::new(RusticApp::new(cc))),
+        Box::new(|cc| {
+            Box::new(RusticApp::new(cc).unwrap())
+        }),
     )
 }

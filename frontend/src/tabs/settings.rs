@@ -277,13 +277,13 @@ impl SettingsTab {
         SectionContainer::new("UI Settings").show(ui, |ui| {
             // Theme selection
             LabeledCombo::new("Theme:", "theme")
-                .with_selected_text(self.theme_choices[self.selected_theme].to_string())
+                .with_selected_text(self.theme_choices[self.selected_theme].as_string())
                 .with_label_width(120.0)
                 .show_ui(ui, |ui| {
                     let mut result = None;
                     for (i, theme) in self.theme_choices.iter().enumerate() {
                         if ui
-                            .selectable_label(self.selected_theme == i, theme.to_string())
+                            .selectable_label(self.selected_theme == i, theme.as_string())
                             .clicked()
                         {
                             result = Some(i);

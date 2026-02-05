@@ -25,7 +25,7 @@ pub enum ThemeChoice {
 
 impl ThemeChoice {
     /// Convert theme choice to string representation
-    pub fn to_string(&self) -> &'static str {
+    pub fn as_string(&self) -> &'static str {
         match self {
             ThemeChoice::Dark => "Dark",
             ThemeChoice::Light => "Light",
