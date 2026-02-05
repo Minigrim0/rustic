@@ -28,6 +28,7 @@ If any of these checks fail, the commit will be aborted, and you'll need to fix 
 3. You should see a confirmation that the hooks were installed successfully
 
 The Windows installation script installs both Bash and PowerShell versions of the pre-commit hook:
+
 - `pre-commit` - Bash script (for Git Bash or WSL users)
 - `pre-commit.ps1` - PowerShell script (native Windows support)
 - `pre-commit.cmd` - Wrapper script that runs the PowerShell version
@@ -45,7 +46,7 @@ If the installation scripts don't work for you, you can manually copy the hooks:
 
 If you need to bypass the pre-commit hook in an emergency situation, you can use:
 
-```
+```bash
 git commit --no-verify
 ```
 
