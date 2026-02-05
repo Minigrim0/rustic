@@ -72,17 +72,3 @@
     font-size: 0.9rem;
     color: var(--text-secondary);
 }
-
-// Spectrum display
-.spectrum-display {
-    background: var(--bg-secondary);
-    border-radius: 4px;
-    padding: 1rem;
-
-    canvas {
-        width: 100%;
-        border-radius: 4px;
-        margin-bottom: 0.5rem;
-        background-color: var(--canvas-bg);
-    }
-}
