@@ -19,7 +19,4 @@ pub trait Tab {
 }
 
 // Re-export public fields
-pub mod exports {
-    
-    
-}
+pub mod exports {}

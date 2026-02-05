@@ -3,8 +3,7 @@ mod constants;
 mod theme;
 
 pub mod prelude {
-    
-    
+
     pub use super::theme::*;
 }
 
