@@ -55,7 +55,7 @@ impl ThemeChoice {
 /// # Examples
 ///
 /// ```
-/// use rustic::widgets::theme::{configure_theme, ThemeChoice};
+/// use frontend::widgets::{configure_theme, ThemeChoice};
 ///
 /// fn update_theme(ctx: &egui::Context) {
 ///     configure_theme(ThemeChoice::Dark, ctx);
@@ -224,7 +224,7 @@ fn create_custom_theme() -> Style {
 /// # Examples
 ///
 /// ```
-/// use rustic::widgets::theme::apply_scaling;
+/// use frontend::widgets::apply_scaling;
 ///
 /// fn update_scale(ctx: &egui::Context) {
 ///     apply_scaling(1.2, ctx); // Scale UI by 120%

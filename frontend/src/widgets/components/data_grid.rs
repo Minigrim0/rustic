@@ -10,7 +10,7 @@ use egui::{Color32, Grid, RichText, Ui};
 /// # Example
 ///
 /// ```
-/// use widgets::components::DataGrid;
+/// use frontend::widgets::DataGrid;
 ///
 /// fn draw_ui(ui: &mut egui::Ui) {
 ///     let headers = vec!["Name", "Value", "Status"];
@@ -20,7 +20,7 @@ use egui::{Color32, Grid, RichText, Ui};
 ///         vec!["Disk Space", "80%", "Warning"],
 ///     ];
 ///
-///     DataGrid::new()
+///     DataGrid::new("grid".to_string())
 ///         .with_headers(headers)
 ///         .with_data(data)
 ///         .with_striped(true)

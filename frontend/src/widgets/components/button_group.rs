@@ -10,7 +10,7 @@ use egui::{Response, Ui};
 /// # Example
 ///
 /// ```
-/// use widgets::components::ButtonGroup;
+/// use frontend::widgets::ButtonGroup;
 ///
 /// fn draw_ui(ui: &mut egui::Ui) {
 ///     let response = ButtonGroup::new()

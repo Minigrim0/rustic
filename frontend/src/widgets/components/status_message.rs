@@ -23,7 +23,7 @@ pub enum MessageType {
 /// # Example
 ///
 /// ```
-/// use widgets::components::{StatusMessage, MessageType};
+/// use frontend::widgets::{StatusMessage, MessageType};
 ///
 /// fn draw_ui(ui: &mut egui::Ui) {
 ///     // Display a success message
@@ -35,7 +35,7 @@ pub enum MessageType {
 ///     if let Some(error) = get_error() {
 ///         StatusMessage::new(&error)
 ///             .with_type(MessageType::Error)
-///             .with_dismiss_button(true)
+///             ._with_dismiss_button(true)
 ///             .show(ui);
 ///     }
 /// }

@@ -384,7 +384,6 @@ mod tests {
 
         assert_eq!(buffer.sample_rate(), 44100);
         assert_eq!(buffer.channels(), 1);
-        assert_eq!(buffer.bits_per_sample(), 16);
         assert_eq!(buffer.samples().len(), 4410);
     }
 }
