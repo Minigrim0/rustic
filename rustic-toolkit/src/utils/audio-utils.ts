@@ -1,5 +1,5 @@
 /**
- * Audio utilities for the Rustic Analyser
+ * Audio utilities for the Rustic Toolkit
  *
  * Most analysis (RMS, peak frequency, pitch, note) is now handled by the
  * backend.  This file keeps only client-side helpers.
