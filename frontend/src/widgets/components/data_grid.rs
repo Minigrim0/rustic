@@ -76,7 +76,7 @@ impl<'a> DataGrid<'a> {
     /// # Returns
     ///
     /// self for method chaining
-    pub fn with_name(mut self, name: String) -> Self {
+    pub fn _with_name(mut self, name: String) -> Self {
         self.id = name;
         self
     }

@@ -6,8 +6,9 @@ use super::Tab;
 use crate::widgets::{ButtonGroup, LabeledCombo, SectionContainer};
 
 /// Note duration values
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 enum NoteValue {
+    #[default]
     Whole,
     Half,
     Quarter,
@@ -26,7 +27,7 @@ impl NoteValue {
         }
     }
 
-    fn to_display_char(&self) -> &'static str {
+    fn as_display_char(&self) -> &'static str {
         match self {
             NoteValue::Whole => "𝅝",     // Unicode for whole note
             NoteValue::Half => "𝅗𝅥",      // Unicode for half note
@@ -45,14 +46,14 @@ enum Clef {
 }
 
 impl Clef {
-    fn to_string(&self) -> &'static str {
+    fn as_string(&self) -> &'static str {
         match self {
             Clef::Treble => "Treble",
             Clef::Bass => "Bass",
         }
     }
 
-    fn to_display_char(&self) -> &'static str {
+    fn as_display_char(&self) -> &'static str {
         match self {
             Clef::Treble => "𝄞", // Unicode for treble clef
             Clef::Bass => "𝄢",   // Unicode for bass clef
@@ -83,12 +84,13 @@ struct Staff {
     instrument_channel: usize, // which instrument/channel this staff is linked to
 }
 
+#[derive(Default)]
 /// Score Editor tab for editing musical scores
 pub struct ScoreEditorTab {
     staves: Vec<Staff>,
     selected_note_value: NoteValue,
     current_position: Option<(usize, usize, Vec2)>, // (staff_idx, measure_idx, position)
-    selected_note: Option<(usize, usize, usize)>,   // (staff_idx, measure_idx, note_idx)
+    _selected_note: Option<(usize, usize, usize)>,   // (staff_idx, measure_idx, note_idx)
     zoom_level: f32,
     show_grid: bool,
 
@@ -147,7 +149,7 @@ impl ScoreEditorTab {
             staves,
             selected_note_value: NoteValue::Quarter,
             current_position: None,
-            selected_note: None,
+            _selected_note: None,
             zoom_level: 1.0,
             show_grid: true,
             instrument_names,
@@ -170,7 +172,7 @@ impl ScoreEditorTab {
                             NoteValue::Eighth,
                             NoteValue::Sixteenth,
                         ] {
-                            let text = RichText::new(value.to_display_char()).size(24.0).color(
+                            let text = RichText::new(value.as_display_char()).size(24.0).color(
                                 if *value == self.selected_note_value {
                                     Color32::LIGHT_BLUE
                                 } else {
@@ -265,7 +267,7 @@ impl ScoreEditorTab {
 
                 for (idx, staff) in self.staves.iter_mut().enumerate() {
                     ui.horizontal(|ui| {
-                        ui.label(format!("Staff {}: {}", idx + 1, staff.clef.to_string()));
+                        ui.label(format!("Staff {}: {}", idx + 1, staff.clef.as_string()));
 
                         // Instrument dropdown (placeholder) using LabeledCombo
                         LabeledCombo::new("", format!("staff_instrument_{}", idx).as_str())
@@ -340,9 +342,9 @@ impl Tab for ScoreEditorTab {
                     let show_grid = self.show_grid;
 
                     egui::ScrollArea::both().show(ui, |ui| {
-                        for staff_idx in 0..staves_clone.len() {
+                        for (staff_idx, staff) in staves_clone.iter().enumerate() {
                             ui.group(|ui| {
-                                let staff = &staves_clone[staff_idx];
+                                // let staff = &staves_clone[staff_idx];
 
                                 // Draw staff with individual components
                                 let staff_height = 100.0 * zoom_level;
@@ -372,7 +374,7 @@ impl Tab for ScoreEditorTab {
                                             rect.min.y + staff_height / 2.0,
                                         ),
                                         egui::Align2::CENTER_CENTER,
-                                        staff.clef.to_display_char(),
+                                        staff.clef.as_display_char(),
                                         egui::FontId::proportional(32.0 * zoom_level),
                                         Color32::WHITE,
                                     );
@@ -477,7 +479,7 @@ impl Tab for ScoreEditorTab {
                                                 ui.painter().text(
                                                     egui::pos2(x, y),
                                                     egui::Align2::CENTER_CENTER,
-                                                    note.value.to_display_char(),
+                                                    note.value.as_display_char(),
                                                     egui::FontId::proportional(24.0 * zoom_level),
                                                     Color32::WHITE,
                                                 );
@@ -493,8 +495,8 @@ impl Tab for ScoreEditorTab {
                     });
 
                     // Process any clicks that happened
-                    if let Some((staff_idx, measure_idx, pos)) = self.current_position.take() {
-                        if staff_idx < self.staves.len()
+                    if let Some((staff_idx, measure_idx, pos)) = self.current_position.take()
+                        && staff_idx < self.staves.len()
                             && measure_idx < self.staves[staff_idx].measures.len()
                         {
                             // Add a note at the clicked position
@@ -510,7 +512,6 @@ impl Tab for ScoreEditorTab {
                                     _pitch: pitch,
                                 });
                         }
-                    }
                 });
         });
     }

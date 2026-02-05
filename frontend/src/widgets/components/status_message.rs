@@ -104,7 +104,7 @@ impl<'a> StatusMessage<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_dismiss_button(mut self, show: bool) -> Self {
+    pub fn _with_dismiss_button(mut self, show: bool) -> Self {
         self.dismiss_button = show;
         self
     }
@@ -118,7 +118,7 @@ impl<'a> StatusMessage<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_icon(mut self, show: bool) -> Self {
+    pub fn _with_icon(mut self, show: bool) -> Self {
         self.show_icon = show;
         self
     }
@@ -146,7 +146,7 @@ impl<'a> StatusMessage<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_min_height(mut self, height: f32) -> Self {
+    pub fn _with_min_height(mut self, height: f32) -> Self {
         self.min_height = Some(height);
         self
     }

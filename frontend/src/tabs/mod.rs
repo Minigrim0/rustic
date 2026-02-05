@@ -20,6 +20,6 @@ pub trait Tab {
 
 // Re-export public fields
 pub mod exports {
-    pub use super::live_playing::LivePlayingTab;
-    pub use super::settings::SettingsTab;
+    
+    
 }

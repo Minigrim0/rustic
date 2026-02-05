@@ -1,6 +1,5 @@
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
-use std::thread::JoinHandle;
 
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use eframe::{App, CreationContext, Frame, NativeOptions};
@@ -31,7 +30,7 @@ pub struct RusticApp {
     // Rustic audio engine communication
     app_sender: Sender<Commands>,
     app_receiver: Receiver<BackendEvent>,
-    rustic_apphandle: AudioHandle,
+    _rustic_apphandle: AudioHandle,
 
     // Input state
     device_state: DeviceState,
@@ -68,7 +67,7 @@ impl RusticApp {
 
             app_sender: frontend_sender.clone(),
             app_receiver: frontend_receiver,
-            rustic_apphandle,
+            _rustic_apphandle: rustic_apphandle,
 
             device_state: DeviceState::new(),
             pressed_keys: Vec::new(),

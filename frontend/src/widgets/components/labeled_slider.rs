@@ -115,7 +115,7 @@ impl<'a, Num: egui::emath::Numeric> LabeledSlider<'a, Num> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_slider_width(mut self, width: f32) -> Self {
+    pub fn _with_slider_width(mut self, width: f32) -> Self {
         self.slider_width = Some(width);
         self
     }
@@ -157,7 +157,7 @@ impl<'a, Num: egui::emath::Numeric> LabeledSlider<'a, Num> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn enabled(mut self, enabled: bool) -> Self {
+    pub fn _enabled(mut self, enabled: bool) -> Self {
         self.enabled = enabled;
         self
     }
@@ -171,7 +171,7 @@ impl<'a, Num: egui::emath::Numeric> LabeledSlider<'a, Num> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_text(mut self, text: impl Into<String>) -> Self {
+    pub fn _with_text(mut self, text: impl Into<String>) -> Self {
         self.custom_text = Some(text.into());
         self
     }
@@ -185,7 +185,7 @@ impl<'a, Num: egui::emath::Numeric> LabeledSlider<'a, Num> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_format(mut self, format: impl Into<String>) -> Self {
+    pub fn _with_format(mut self, format: impl Into<String>) -> Self {
         self.custom_format = Some(format.into());
         self
     }
@@ -235,7 +235,7 @@ impl<'a, Num: egui::emath::Numeric> LabeledSlider<'a, Num> {
             // If a custom formatter is provided, we need to create a new closure
             // that captures the formatter by value but doesn't try to access self.value
             if let Some(format) = &self.custom_format {
-                let format_string = format.clone();
+                let _format_string = format.clone();
                 slider = slider.custom_formatter(move |n, _| format!("{}", n));
             }
 

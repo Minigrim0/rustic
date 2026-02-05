@@ -107,7 +107,7 @@ impl<'a> LabeledCombo<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_combo_width(mut self, width: f32) -> Self {
+    pub fn _with_combo_width(mut self, width: f32) -> Self {
         self.combo_width = Some(width);
         self
     }
@@ -121,7 +121,7 @@ impl<'a> LabeledCombo<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn enabled(mut self, enabled: bool) -> Self {
+    pub fn _enabled(mut self, enabled: bool) -> Self {
         self.enabled = enabled;
         self
     }

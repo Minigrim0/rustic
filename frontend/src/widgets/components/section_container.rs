@@ -71,7 +71,7 @@ impl<'a> SectionContainer<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_subtitle(mut self, subtitle: impl Into<String>) -> Self {
+    pub fn _with_subtitle(mut self, subtitle: impl Into<String>) -> Self {
         self.subtitle = Some(subtitle.into());
         self
     }
@@ -99,7 +99,7 @@ impl<'a> SectionContainer<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_title_spacing(mut self, spacing: f32) -> Self {
+    pub fn _with_title_spacing(mut self, spacing: f32) -> Self {
         self.title_spacing = spacing;
         self
     }
@@ -127,7 +127,7 @@ impl<'a> SectionContainer<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_bottom_margin(mut self, with_margin: bool) -> Self {
+    pub fn _with_bottom_margin(mut self, with_margin: bool) -> Self {
         self.with_bottom_margin = with_margin;
         self
     }
@@ -155,7 +155,7 @@ impl<'a> SectionContainer<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn enabled(mut self, enabled: bool) -> Self {
+    pub fn _enabled(mut self, enabled: bool) -> Self {
         self.enabled = enabled;
         self
     }

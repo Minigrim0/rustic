@@ -5,6 +5,7 @@ use std::sync::mpsc::Sender;
 use super::Tab;
 use crate::widgets::{ButtonGroup, SectionContainer};
 
+#[derive(Default)]
 /// The Graph Editor tab for visual node-graph instrument building
 pub struct GraphEditorTab {
     // Node types
@@ -84,10 +85,7 @@ impl GraphEditorTab {
         ];
 
         // Create some example nodes
-        let mut nodes = Vec::new();
-
-        // Add a sine wave generator
-        nodes.push(Node {
+        let nodes = vec![Node {
             name: "Sine Wave".to_string(),
             node_type: NodeType::Generator,
             position: Vec2::new(100.0, 100.0),
@@ -95,10 +93,8 @@ impl GraphEditorTab {
                 ("Frequency".to_string(), 440.0),
                 ("Amplitude".to_string(), 0.5),
             ],
-        });
-
-        // Add a low pass filter
-        nodes.push(Node {
+        },
+        Node {
             name: "Low Pass Filter".to_string(),
             node_type: NodeType::Filter,
             position: Vec2::new(350.0, 150.0),
@@ -106,15 +102,13 @@ impl GraphEditorTab {
                 ("Cutoff".to_string(), 1000.0),
                 ("Resonance".to_string(), 0.7),
             ],
-        });
-
-        // Add an audio output
-        nodes.push(Node {
+        },
+        Node {
             name: "Audio Output".to_string(),
             node_type: NodeType::Sink,
             position: Vec2::new(600.0, 100.0),
             params: vec![("Volume".to_string(), 0.8)],
-        });
+        }];
 
         // Add connections between nodes
         let connections = vec![(0, 1), (1, 2)];
