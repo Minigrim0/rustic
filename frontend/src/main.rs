@@ -208,13 +208,10 @@ fn main() -> Result<(), eframe::Error> {
         ..Default::default()
     };
 
-
     // Run the app
     eframe::run_native(
         "Rustic",
         options,
-        Box::new(|cc| {
-            Box::new(RusticApp::new(cc).unwrap())
-        }),
+        Box::new(|cc| Box::new(RusticApp::new(cc).unwrap())),
     )
 }

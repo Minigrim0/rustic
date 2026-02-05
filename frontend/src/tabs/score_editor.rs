@@ -90,7 +90,7 @@ pub struct ScoreEditorTab {
     staves: Vec<Staff>,
     selected_note_value: NoteValue,
     current_position: Option<(usize, usize, Vec2)>, // (staff_idx, measure_idx, position)
-    _selected_note: Option<(usize, usize, usize)>,   // (staff_idx, measure_idx, note_idx)
+    _selected_note: Option<(usize, usize, usize)>,  // (staff_idx, measure_idx, note_idx)
     zoom_level: f32,
     show_grid: bool,
 
@@ -497,21 +497,21 @@ impl Tab for ScoreEditorTab {
                     // Process any clicks that happened
                     if let Some((staff_idx, measure_idx, pos)) = self.current_position.take()
                         && staff_idx < self.staves.len()
-                            && measure_idx < self.staves[staff_idx].measures.len()
-                        {
-                            // Add a note at the clicked position
-                            let staff_clef = self.staves[staff_idx].clef;
-                            let pitch = self.position_to_pitch(pos.y, staff_clef);
+                        && measure_idx < self.staves[staff_idx].measures.len()
+                    {
+                        // Add a note at the clicked position
+                        let staff_clef = self.staves[staff_idx].clef;
+                        let pitch = self.position_to_pitch(pos.y, staff_clef);
 
-                            // TODO: Implement note collision detection and proper placement
-                            self.staves[staff_idx].measures[measure_idx]
-                                .notes
-                                .push(Note {
-                                    position: (pos.x, pos.y),
-                                    value: selected_note_value,
-                                    _pitch: pitch,
-                                });
-                        }
+                        // TODO: Implement note collision detection and proper placement
+                        self.staves[staff_idx].measures[measure_idx]
+                            .notes
+                            .push(Note {
+                                position: (pos.x, pos.y),
+                                value: selected_note_value,
+                                _pitch: pitch,
+                            });
+                    }
                 });
         });
     }

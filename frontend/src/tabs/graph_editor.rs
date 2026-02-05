@@ -85,30 +85,32 @@ impl GraphEditorTab {
         ];
 
         // Create some example nodes
-        let nodes = vec![Node {
-            name: "Sine Wave".to_string(),
-            node_type: NodeType::Generator,
-            position: Vec2::new(100.0, 100.0),
-            params: vec![
-                ("Frequency".to_string(), 440.0),
-                ("Amplitude".to_string(), 0.5),
-            ],
-        },
-        Node {
-            name: "Low Pass Filter".to_string(),
-            node_type: NodeType::Filter,
-            position: Vec2::new(350.0, 150.0),
-            params: vec![
-                ("Cutoff".to_string(), 1000.0),
-                ("Resonance".to_string(), 0.7),
-            ],
-        },
-        Node {
-            name: "Audio Output".to_string(),
-            node_type: NodeType::Sink,
-            position: Vec2::new(600.0, 100.0),
-            params: vec![("Volume".to_string(), 0.8)],
-        }];
+        let nodes = vec![
+            Node {
+                name: "Sine Wave".to_string(),
+                node_type: NodeType::Generator,
+                position: Vec2::new(100.0, 100.0),
+                params: vec![
+                    ("Frequency".to_string(), 440.0),
+                    ("Amplitude".to_string(), 0.5),
+                ],
+            },
+            Node {
+                name: "Low Pass Filter".to_string(),
+                node_type: NodeType::Filter,
+                position: Vec2::new(350.0, 150.0),
+                params: vec![
+                    ("Cutoff".to_string(), 1000.0),
+                    ("Resonance".to_string(), 0.7),
+                ],
+            },
+            Node {
+                name: "Audio Output".to_string(),
+                node_type: NodeType::Sink,
+                position: Vec2::new(600.0, 100.0),
+                params: vec![("Volume".to_string(), 0.8)],
+            },
+        ];
 
         // Add connections between nodes
         let connections = vec![(0, 1), (1, 2)];
