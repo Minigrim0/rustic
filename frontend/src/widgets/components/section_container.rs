@@ -10,11 +10,11 @@ use egui::{Frame, Ui};
 /// # Example
 ///
 /// ```
-/// use widgets::components::SectionContainer;
+/// use frontend::widgets::SectionContainer;
 ///
 /// fn draw_ui(ui: &mut egui::Ui) {
 ///     SectionContainer::new("Audio Settings")
-///         .show(ui, |ui| {
+///         .show(ui, |ui: &mut egui::Ui| {
 ///             ui.label("Sample Rate:");
 ///             ui.add(egui::Slider::new(&mut 48000, 44100..=96000));
 ///         });

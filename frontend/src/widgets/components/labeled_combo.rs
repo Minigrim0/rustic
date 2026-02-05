@@ -10,16 +10,16 @@ use egui::{ComboBox, Ui};
 /// # Example
 ///
 /// ```
-/// use widgets::components::LabeledCombo;
+/// use frontend::widgets::LabeledCombo;
 ///
 /// fn draw_ui(ui: &mut egui::Ui) {
 ///     let mut selected = 0;
 ///     let options = vec!["Option 1", "Option 2", "Option 3"];
 ///
 ///     let combo = LabeledCombo::new("Settings:", "setting_id")
-///         .with_selected_text(&options[selected]);
+///         .with_selected_text(&*options[selected]);
 ///
-///     if let Some(new_selection) = combo.show_ui(ui, |ui| {
+///     if let Some(new_selection) = combo.show_ui(ui, |ui: &mut egui::Ui| {
 ///         let mut result = None;
 ///         for (i, option) in options.iter().enumerate() {
 ///             if ui.selectable_label(selected == i, *option).clicked() {

@@ -10,7 +10,7 @@ use egui::{Slider, Ui};
 /// # Example
 ///
 /// ```
-/// use widgets::components::LabeledSlider;
+/// use frontend::widgets::LabeledSlider;
 ///
 /// fn draw_ui(ui: &mut egui::Ui) {
 ///     let mut value = 50.0;
