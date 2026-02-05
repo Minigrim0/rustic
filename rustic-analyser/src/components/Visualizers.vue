@@ -53,7 +53,7 @@
                 Spectrogram
             </button>
             <div v-show="spectrogramOpen" class="border-t border-gray-100 dark:border-white/5">
-                <SpectrumDisplay />
+                <SpectrogramChart :start="timeRange[0]" :end="timeRange[1]" />
             </div>
         </section>
     </div>
@@ -65,7 +65,7 @@ import { ref } from "vue";
 import RangeSelector from "./RangeSelector.vue";
 import AudioVisualizer from "./visualisers/AudioVisualizer.vue";
 import FrequencyChart from "./visualisers/FrequencyChart.vue";
-import SpectrumDisplay from "./visualisers/SpectrumDisplay.vue";
+import SpectrogramChart from "./visualisers/SpectrogramChart.vue";
 
 import { type AudioSummary } from "../types";
 

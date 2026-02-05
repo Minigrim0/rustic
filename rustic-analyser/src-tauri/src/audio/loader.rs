@@ -25,21 +25,17 @@ pub struct AudioBuffer {
 
     /// Number of channels in the original audio
     channels: u16,
-
-    /// Bits per sample in the original audio
-    bits_per_sample: u16,
 }
 
 impl AudioBuffer {
     /// Create a new audio buffer
-    pub fn new(samples: Vec<f32>, sample_rate: u32, channels: u16, bits_per_sample: u16) -> Self {
+    pub fn new(samples: Vec<f32>, sample_rate: u32, channels: u16) -> Self {
         let duration = samples.len() as f32 / sample_rate as f32;
         Self {
             samples,
             sample_rate,
             duration,
             channels,
-            bits_per_sample,
         }
     }
 
@@ -61,11 +57,6 @@ impl AudioBuffer {
     /// Get the number of channels in the original audio
     pub fn channels(&self) -> u16 {
         self.channels
-    }
-
-    /// Get the bits per sample
-    pub fn bits_per_sample(&self) -> u16 {
-        self.bits_per_sample
     }
 }
 
@@ -105,7 +96,7 @@ impl AudioLoader {
 
         let mut reader = WavReader::open(path).map_err(|e| {
             error!("Failed to open WAV file: {}", e);
-            io::Error::new(io::ErrorKind::Other, format!("WAV error: {}", e))
+            io::Error::other(format!("WAV error: {}", e))
         })?;
 
         let spec = reader.spec();
@@ -151,7 +142,6 @@ impl AudioLoader {
             samples,
             sample_rate,
             channels,
-            bits_per_sample,
         ))
     }
 
@@ -186,7 +176,7 @@ impl AudioLoader {
             .format(&hint, mss, &format_opts, &metadata_opts)
             .map_err(|e| {
                 error!("Error probing audio file: {}", e);
-                io::Error::new(io::ErrorKind::Other, format!("Probe error: {}", e))
+                io::Error::other(format!("Probe error: {}", e))
             })?;
 
         // Get the format reader
@@ -195,14 +185,14 @@ impl AudioLoader {
         // Get the default track
         let track = format
             .default_track()
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "No default track found"))?;
+            .ok_or_else(|| io::Error::other("No default track found"))?;
 
         // Create a decoder for the track
         let mut decoder = symphonia::default::get_codecs()
             .make(&track.codec_params, &decoder_opts)
             .map_err(|e| {
                 error!("Error creating decoder: {}", e);
-                io::Error::new(io::ErrorKind::Other, format!("Decoder error: {}", e))
+                io::Error::other(format!("Decoder error: {}", e))
             })?;
 
         // Get the sample rate
@@ -321,7 +311,6 @@ impl AudioLoader {
             samples,
             sample_rate,
             channels,
-            bits_per_sample,
         ))
     }
 

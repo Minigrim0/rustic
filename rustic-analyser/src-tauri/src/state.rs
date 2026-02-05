@@ -1,22 +1,13 @@
 use crate::audio::{AudioBuffer, AudioLoader};
 use crate::types::AudioSummary;
 
+#[derive(Default)]
 /// Application state: holds the currently loaded audio file and its precomputed summary.
 /// Managed by Tauri via `RwLock<AudioState>`.
 pub struct AudioState {
     pub buffer: Option<AudioBuffer>,
     pub summary: Option<AudioSummary>,
     pub loader: AudioLoader,
-}
-
-impl Default for AudioState {
-    fn default() -> Self {
-        Self {
-            buffer: None,
-            summary: None,
-            loader: AudioLoader::new(),
-        }
-    }
 }
 
 impl AudioState {
