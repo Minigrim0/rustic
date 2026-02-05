@@ -138,11 +138,7 @@ impl AudioLoader {
             }
         };
 
-        Ok(AudioBuffer::new(
-            samples,
-            sample_rate,
-            channels,
-        ))
+        Ok(AudioBuffer::new(samples, sample_rate, channels))
     }
 
     /// Load any audio format supported by Symphonia
@@ -307,11 +303,7 @@ impl AudioLoader {
             sample_buf
         };
 
-        Ok(AudioBuffer::new(
-            samples,
-            sample_rate,
-            channels,
-        ))
+        Ok(AudioBuffer::new(samples, sample_rate, channels))
     }
 
     /// Convert multi-channel samples to mono f32 samples
