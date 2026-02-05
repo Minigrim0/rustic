@@ -2,6 +2,7 @@
 output/*
 resources/
 .dist/
+assets/
 
 # Example score
 score.toml
