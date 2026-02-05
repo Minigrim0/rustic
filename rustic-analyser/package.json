@@ -11,18 +11,22 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-fs": "^2.3.0",
     "@tauri-apps/plugin-opener": "^2",
+    "@vueform/slider": "^2.1.10",
+    "echarts": "^6.0.0",
+    "tailwindcss": "^4.1.18",
     "vue": "^3.5.13",
-    "vue3-plotly": "^0.0.7"
+    "vue-echarts": "^8.0.1",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
     "@types/node": "^25.2.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.8.1",
-    "sass-embedded": "^1.97.3",
     "typescript": "^5.9.3",
     "vite": "^6.0.3",
     "vue-tsc": "^3.2.4"
