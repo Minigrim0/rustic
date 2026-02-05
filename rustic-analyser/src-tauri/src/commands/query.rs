@@ -3,7 +3,7 @@ use std::sync::RwLock;
 use log::info;
 use tauri::State;
 
-use crate::analysis::{compute_fft, compute_spectrum, downsample_waveform, pick_top_frequencies, FrequencyData};
+use crate::analysis::{compute_fft, compute_spectrum, downsample_spectrogram, downsample_waveform, pick_top_frequencies, FrequencyData};
 use crate::error::AppError;
 use crate::state::AudioState;
 use crate::types::{SpectrogramData, SpectrumData, WaveformData};
@@ -122,7 +122,8 @@ pub async fn get_spectrogram(
         (buf.samples()[s..e].to_vec(), buf.sample_rate())
     };
 
-    let data = compute_spectrum(&slice, sample_rate);
+    let raw = compute_spectrum(&slice, sample_rate);
+    let data = downsample_spectrogram(raw, 500);
     let time_bins = data.len() as u32;
     let freq_bins = data.first().map_or(0, |v| v.len()) as u32;
 
@@ -132,5 +133,6 @@ pub async fn get_spectrogram(
         end_time: end,
         time_bins,
         freq_bins,
+        sample_rate,
     })
 }

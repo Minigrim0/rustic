@@ -14,4 +14,4 @@ pub use downsample::downsample_waveform;
 pub use fft::{compute_fft, FrequencyData};
 pub use peaks::pick_top_frequencies;
 pub use pitch::{estimate_pitch, frequency_to_note};
-pub use spectrum::compute_spectrum;
+pub use spectrum::{compute_spectrum, downsample_spectrogram};

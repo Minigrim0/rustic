@@ -53,8 +53,7 @@ pub fn compute_fft(samples: &[f32], sample_rate: u32) -> Vec<FrequencyData> {
     let nyquist = fft_size / 2;
     let mut result = Vec::with_capacity(nyquist);
 
-    for i in 0..nyquist {
-        let complex = fft_output[i];
+    for (i, complex) in fft_output.iter().take(nyquist).enumerate() {
         let frequency = i as f32 * sample_rate as f32 / fft_size as f32;
         let magnitude = (complex.re.powi(2) + complex.im.powi(2)).sqrt();
         let phase = complex.im.atan2(complex.re);

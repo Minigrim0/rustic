@@ -51,4 +51,5 @@ pub struct SpectrogramData {
     pub end_time: f64,
     pub time_bins: u32,
     pub freq_bins: u32,
+    pub sample_rate: u32,
 }

@@ -4,4 +4,4 @@
  * Spectrogram (STFT) for a time window (Phase 2 response).
  * `data[time_index][freq_bin]` = magnitude.
  */
-export type SpectrogramData = { data: Array<Array<number>>, start_time: number, end_time: number, time_bins: number, freq_bins: number, };
+export type SpectrogramData = { data: Array<Array<number>>, start_time: number, end_time: number, time_bins: number, freq_bins: number, sample_rate: number, };
