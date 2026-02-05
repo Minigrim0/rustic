@@ -1,8 +1,8 @@
 name: Publish Documentation
 
 on:
-  release:
-    types: [created]
+  push:
+    branches: [main]
 
 jobs:
   publish-docs:
@@ -12,14 +12,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Generate documentation
         run: |
@@ -27,8 +23,8 @@ jobs:
           echo "<meta http-equiv=\"refresh\" content=\"0; url=rustic\">" > target/doc/index.html
 
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@4.1.4
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: target/doc
-          commit-message: "docs: Update documentation for ${{ github.event.release.tag_name }}"
+          commit-message: "docs: Update documentation for ${{ github.sha }}"
