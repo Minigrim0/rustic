@@ -145,8 +145,8 @@ mod tests {
         ];
         let result = downsample_spectrogram(data, 2);
         assert_eq!(result.len(), 2);
-        assert_eq!(result[0], vec![3.0, 5.0]);   // avg of [2,4] and [4,6]
-        assert_eq!(result[1], vec![20.0, 30.0]);  // avg of [10,20] and [30,40]
+        assert_eq!(result[0], vec![3.0, 5.0]); // avg of [2,4] and [4,6]
+        assert_eq!(result[1], vec![20.0, 30.0]); // avg of [10,20] and [30,40]
     }
 
     #[test]
