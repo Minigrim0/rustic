@@ -18,6 +18,10 @@ export default {
     <NotificationToast />
     <div class="flex h-full">
         <Navbar />
-        <router-view class="flex-1 overflow-hidden" />
+        <router-view v-slot="{ Component }">
+            <keep-alive>
+                <component :is="Component" class="flex-1 overflow-hidden" />
+            </keep-alive>
+        </router-view>
     </div>
 </template>
