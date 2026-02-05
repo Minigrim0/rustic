@@ -11,10 +11,10 @@ pub mod spacing {
     pub const ITEM_SPACING: f32 = 8.0;
 
     /// Small spacing between tightly related UI elements
-    pub const SMALL_SPACING: f32 = 4.0;
+    pub const _SMALL_SPACING: f32 = 4.0;
 
     /// Large spacing for section separations
-    pub const LARGE_SPACING: f32 = 16.0;
+    pub const _LARGE_SPACING: f32 = 16.0;
 
     /// Standard padding inside containers
     pub const CONTAINER_PADDING: f32 = 10.0;
@@ -26,10 +26,10 @@ pub mod spacing {
     pub const LARGE_PADDING: f32 = 20.0;
 
     /// Standard width for labels in forms
-    pub const LABEL_WIDTH: f32 = 120.0;
+    pub const _LABEL_WIDTH: f32 = 120.0;
 
     /// Standard height for sliders and other controls
-    pub const CONTROL_HEIGHT: f32 = 24.0;
+    pub const _CONTROL_HEIGHT: f32 = 24.0;
 }
 
 /// Color constants for consistent UI theming
@@ -40,19 +40,19 @@ pub mod colors {
     pub const PRIMARY: Color32 = Color32::from_rgb(90, 170, 255);
 
     /// Secondary brand color
-    pub const SECONDARY: Color32 = Color32::from_rgb(100, 200, 150);
+    pub const _SECONDARY: Color32 = Color32::from_rgb(100, 200, 150);
 
     /// Error color for warnings and errors
-    pub const ERROR: Color32 = Color32::from_rgb(230, 80, 80);
+    pub const _ERROR: Color32 = Color32::from_rgb(230, 80, 80);
 
     /// Warning color for cautions and alerts
-    pub const WARNING: Color32 = Color32::from_rgb(230, 180, 80);
+    pub const _WARNING: Color32 = Color32::from_rgb(230, 180, 80);
 
     /// Success color for positive feedback
-    pub const SUCCESS: Color32 = Color32::from_rgb(80, 210, 120);
+    pub const _SUCCESS: Color32 = Color32::from_rgb(80, 210, 120);
 
     /// Info color for neutral information
-    pub const INFO: Color32 = Color32::from_rgb(90, 170, 255);
+    pub const _INFO: Color32 = Color32::from_rgb(90, 170, 255);
 
     /// Dark background for sections and panels
     pub const BACKGROUND_DARK: Color32 = Color32::from_rgb(30, 30, 35);
@@ -67,7 +67,7 @@ pub mod colors {
     pub const TEXT: Color32 = Color32::from_rgb(230, 230, 230);
 
     /// Text color for secondary/dimmed text
-    pub const TEXT_DIM: Color32 = Color32::from_rgb(170, 170, 180);
+    pub const _TEXT_DIM: Color32 = Color32::from_rgb(170, 170, 180);
 }
 
 /// Standard strokes for outlines and borders
@@ -75,19 +75,19 @@ pub mod strokes {
     use super::{Color32, Stroke};
 
     /// Default stroke for containers
-    pub const DEFAULT: Stroke = Stroke {
+    pub const _DEFAULT: Stroke = Stroke {
         width: 1.0,
         color: Color32::from_gray(150),
     };
 
     /// Thin stroke for subtle separations
-    pub const THIN: Stroke = Stroke {
+    pub const _THIN: Stroke = Stroke {
         width: 0.5,
         color: Color32::from_gray(150),
     };
 
     /// Thick stroke for emphasis
-    pub const THICK: Stroke = Stroke {
+    pub const _THICK: Stroke = Stroke {
         width: 2.0,
         color: Color32::from_gray(180),
     };
@@ -104,19 +104,19 @@ pub mod sizes {
     use super::Vec2;
 
     /// Default button size
-    pub const BUTTON: Vec2 = Vec2::new(100.0, 28.0);
+    pub const _BUTTON: Vec2 = Vec2::new(100.0, 28.0);
 
     /// Small button size
-    pub const BUTTON_SMALL: Vec2 = Vec2::new(80.0, 24.0);
+    pub const _BUTTON_SMALL: Vec2 = Vec2::new(80.0, 24.0);
 
     /// Large button size
-    pub const BUTTON_LARGE: Vec2 = Vec2::new(140.0, 32.0);
+    pub const _BUTTON_LARGE: Vec2 = Vec2::new(140.0, 32.0);
 
     /// Icon button size
-    pub const BUTTON_ICON: Vec2 = Vec2::new(28.0, 28.0);
+    pub const _BUTTON_ICON: Vec2 = Vec2::new(28.0, 28.0);
 
     /// Default panel width
-    pub const PANEL_WIDTH: f32 = 240.0;
+    pub const _PANEL_WIDTH: f32 = 240.0;
 }
 
 /// Standard margins for containers
@@ -124,7 +124,7 @@ pub mod margins {
     use super::Margin;
 
     /// Small margin for compact containers
-    pub const SMALL: Margin = Margin {
+    pub const _SMALL: Margin = Margin {
         top: 4.0,
         right: 4.0,
         bottom: 4.0,
@@ -151,25 +151,25 @@ pub mod margins {
 /// Font sizes for different text elements
 pub mod fonts {
     /// Small font size for captions and secondary text
-    pub const SMALL: f32 = 12.0;
+    pub const _SMALL: f32 = 12.0;
 
     /// Default font size for most text
-    pub const DEFAULT: f32 = 14.0;
+    pub const _DEFAULT: f32 = 14.0;
 
     /// Medium font size for important text
-    pub const MEDIUM: f32 = 16.0;
+    pub const _MEDIUM: f32 = 16.0;
 
     /// Large font size for headings
-    pub const LARGE: f32 = 20.0;
+    pub const _LARGE: f32 = 20.0;
 
     /// Extra large font size for main headings
-    pub const XLARGE: f32 = 24.0;
+    pub const _XLARGE: f32 = 24.0;
 }
 
 /// Rounding radius for different UI elements
 pub mod rounding {
     /// No rounding (square corners)
-    pub const NONE: f32 = 0.0;
+    pub const _NONE: f32 = 0.0;
 
     /// Slight rounding for subtle effect
     pub const SLIGHT: f32 = 2.0;
@@ -178,23 +178,23 @@ pub mod rounding {
     pub const DEFAULT: f32 = 4.0;
 
     /// Medium rounding for more pronounced effect
-    pub const MEDIUM: f32 = 6.0;
+    pub const _MEDIUM: f32 = 6.0;
 
     /// Large rounding for buttons and prominent elements
-    pub const LARGE: f32 = 8.0;
+    pub const _LARGE: f32 = 8.0;
 
     /// Full rounding for circular elements
-    pub const FULL: f32 = f32::INFINITY;
+    pub const _FULL: f32 = f32::INFINITY;
 }
 
 /// Common animation durations
 pub mod animation {
     /// Fast animation duration (ms)
-    pub const FAST: f32 = 100.0;
+    pub const _FAST: f32 = 100.0;
 
     /// Default animation duration (ms)
-    pub const DEFAULT: f32 = 200.0;
+    pub const _DEFAULT: f32 = 200.0;
 
     /// Slow animation duration (ms)
-    pub const SLOW: f32 = 400.0;
+    pub const _SLOW: f32 = 400.0;
 }

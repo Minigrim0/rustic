@@ -242,7 +242,7 @@ pub fn apply_scaling(scale: f32, ctx: &egui::Context) {
 ///
 /// This function configures the fonts used in the application.
 /// It's currently a placeholder for future font customization.
-pub fn configure_fonts(ctx: &egui::Context) {
+pub fn _configure_fonts(ctx: &egui::Context) {
     // Get the current fonts
     let fonts = egui::FontDefinitions::default();
 

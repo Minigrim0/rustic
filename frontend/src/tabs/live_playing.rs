@@ -16,6 +16,7 @@ struct ChannelData {
     is_playing: bool,
 }
 
+#[derive(Default)]
 /// Live Playing tab for real-time instrument performance
 pub struct LivePlayingTab {
     pub is_enabled: bool,
@@ -104,7 +105,7 @@ impl LivePlayingTab {
         let columns_per_row = (available_width / column_width).max(1.0).floor() as usize;
 
         // Group channels into rows
-        for chunk_index in 0..(self.channels.len() + columns_per_row - 1) / columns_per_row {
+        for chunk_index in 0..self.channels.len().div_ceil(columns_per_row) {
             ui.horizontal(|ui| {
                 let start_idx = chunk_index * columns_per_row;
                 let end_idx = (start_idx + columns_per_row).min(self.channels.len());

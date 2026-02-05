@@ -105,7 +105,7 @@ impl<'a> ButtonGroup<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn add_primary_button(mut self, text: &'a str) -> Self {
+    pub fn _add_primary_button(mut self, text: &'a str) -> Self {
         self.buttons.push(ButtonConfig {
             text,
             tooltip: None,
@@ -146,7 +146,7 @@ impl<'a> ButtonGroup<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn add_button_with_tooltip(mut self, text: &'a str, tooltip: &'a str) -> Self {
+    pub fn _add_button_with_tooltip(mut self, text: &'a str, tooltip: &'a str) -> Self {
         self.buttons.push(ButtonConfig {
             text,
             tooltip: Some(tooltip),
@@ -172,7 +172,7 @@ impl<'a> ButtonGroup<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn vertical(mut self) -> Self {
+    pub fn _vertical(mut self) -> Self {
         self.horizontal = false;
         self
     }
@@ -200,7 +200,7 @@ impl<'a> ButtonGroup<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn with_min_width(mut self, width: f32) -> Self {
+    pub fn _with_min_width(mut self, width: f32) -> Self {
         self.min_width = Some(width);
         self
     }
@@ -228,7 +228,7 @@ impl<'a> ButtonGroup<'a> {
     /// # Returns
     ///
     /// Self for method chaining
-    pub fn enabled(mut self, enabled: bool) -> Self {
+    pub fn _enabled(mut self, enabled: bool) -> Self {
         self.enabled = enabled;
         self
     }
@@ -246,8 +246,7 @@ impl<'a> ButtonGroup<'a> {
         let mut clicked_button = None;
 
         let layout_fn = |ui: &mut Ui| {
-            let mut index = 0;
-            for button_config in &self.buttons {
+            for (index, button_config) in self.buttons.iter().enumerate() {
                 let enabled = self.enabled && button_config.enabled;
 
                 // Create the button
@@ -286,8 +285,6 @@ impl<'a> ButtonGroup<'a> {
                 if self.horizontal && index < self.buttons.len() - 1 {
                     ui.add_space(self.spacing);
                 }
-
-                index += 1;
             }
         };
 

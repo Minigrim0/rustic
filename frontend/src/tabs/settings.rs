@@ -8,6 +8,7 @@ use crate::widgets::{
     prelude::{ThemeChoice, apply_scaling, configure_theme},
 };
 
+#[derive(Default)]
 /// Settings tab for application configuration
 pub struct SettingsTab {
     // Audio settings
@@ -165,8 +166,8 @@ impl SettingsTab {
                     result
                 });
 
-            if selected.is_some() {
-                self.selected_buffer_size = selected.unwrap();
+            if let Some(selected_item) = selected {
+                self.selected_buffer_size = selected_item;
             }
 
             // Display latency calculation
