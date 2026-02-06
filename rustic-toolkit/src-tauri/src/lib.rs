@@ -1,8 +1,8 @@
 use std::sync::RwLock;
 
 use log::info;
-use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
 use tauri::Emitter;
+use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
 use tauri_plugin_fs::FsExt;
 
 mod analysis;
