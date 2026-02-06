@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["simple_source"],"struct":["SimpleSink","SimpleSource","System"],"trait":["AudioGraphElement","Entry","Filter","Sink","Source"]};

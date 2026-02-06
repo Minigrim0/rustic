@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["BandPass_META","HighPassFilter_META","LowPassFilter_META"],"struct":["BandPass","HighPassFilter","LowPassFilter"]};

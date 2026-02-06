@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ADSREnvelope","ADSREnvelopeBuilder","BezierSegment","ConstantSegment","FunctionSegment","LinearSegment"],"trait":["Segment","SustainSegment"]};

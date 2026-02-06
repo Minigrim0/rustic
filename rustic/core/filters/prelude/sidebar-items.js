@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["Clipper_META","CombinatorFilter_META","DelayFilter_META","DuplicateFilter_META","GainFilter_META","MovingAverage_META","ResonantBandpassFilter_META","Tremolo_META"],"struct":["Clipper","CombinatorFilter","DelayFilter","DuplicateFilter","GainFilter","MovingAverage","ResonantBandpassFilter","Tremolo"]};

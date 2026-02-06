@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ThemeChoice"],"fn":["_configure_fonts","apply_scaling","configure_theme"]};

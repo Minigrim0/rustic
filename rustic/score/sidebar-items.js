@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["compiled_score","instances","measure","notes","prelude","score","score_builder","staff"]};

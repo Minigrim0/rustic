@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The core module of rustic. Contains the envelopes, filters, generators and the graph building utilities. Core audio processing module"><title>rustic::core - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustic" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0 (254b59607 2026-01-19)" data-channel="1.93.0" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module core</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../rustic/index.html">rustic</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module core</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#overview" title="Overview">Overview</a></li><li><a href="#purpose" title="Purpose">Purpose</a></li><li><a href="#key-components" title="Key components">Key components</a></li><li><a href="#usage" title="Usage">Usage</a></li></ul><h3><a href="#reexports">Module Items</a></h3><ul class="block"><li><a href="#reexports" title="Re-exports">Re-exports</a></li><li><a href="#modules" title="Modules">Modules</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate rustic</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">rustic</a></div><h1>Module <span>core</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/rustic/core/mod.rs.html#1-47">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The core module of rustic. Contains the envelopes, filters, generators and the
+graph building utilities.
+Core audio processing module</p>
+<h3 id="overview"><a class="doc-anchor" href="#overview">§</a>Overview</h3>
+<p>The <code>core</code> module provides the foundational DSP abstractions and primitives
+used across the workspace: <code>Generator</code>s (oscillators and tone combiners),
+<code>Envelope</code>s (ADSR and segment-based curves), <code>Filter</code>s (frequency and time
+domain processors), and graph utilities for routing signals between nodes.</p>
+<h3 id="purpose"><a class="doc-anchor" href="#purpose">§</a>Purpose</h3>
+<p>This module exists to expose composable, well-tested building blocks so
+frontends and higher-level APIs (in <code>instruments</code> and <code>score</code>) can assemble
+musical behaviours without re-implementing low-level DSP logic.</p>
+<h3 id="key-components"><a class="doc-anchor" href="#key-components">§</a>Key components</h3>
+<ul>
+<li><code>generator</code>: Oscillators, noise sources and multi-tone combiners.</li>
+<li><code>envelope</code>: Time-based modulation (ADSR, segments) that shapes amplitude or
+other parameters.</li>
+<li><code>filters</code>: Audio processors (amplifiers, tremolo, delays, resonant filters).</li>
+<li><code>graph</code>: Utilities to wire processors together and build signal graphs.</li>
+<li><code>utils</code>: Shared types, e.g. <code>Note</code> and tone frequency tables.</li>
+</ul>
+<h3 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h3>
+<p>Prefer using <code>core::prelude</code> for common types. See module docs for examples
+and mathematical foundations (e.g., sine wave generation and ADSR equations).</p>
+</div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><dl class="item-table reexports"><dt id="reexport.Note"><code>pub use utils::<a class="struct" href="utils/note/struct.Note.html" title="struct rustic::core::utils::note::Note">Note</a>;</code></dt><dt id="reexport.NOTES"><code>pub use utils::<a class="enum" href="utils/tones/enum.NOTES.html" title="enum rustic::core::utils::tones::NOTES">NOTES</a>;</code></dt></dl><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="envelope/index.html" title="mod rustic::core::envelope">envelope</a></dt><dd>Defines the different envelope shapes &amp; types
+Envelopes implement the <code>Envelope</code> trait and can
+be of 3 types; linear, bezier, adsr
+Envelopes — time-based modulators (ADSR and segments)</dd><dt><a class="mod" href="filters/index.html" title="mod rustic::core::filters">filters</a></dt><dd>Filters are structures that implement the <code>Filter</code> trait. They
+operate on audio signals to modify their frequency response.
+examples include low-pass, high-pass, tremolo, …
+Filters — signal processors for frequency and time-domain shaping</dd><dt><a class="mod" href="generator/index.html" title="mod rustic::core::generator">generator</a></dt><dd>Generators are structures that implement the <code>Generator</code> trait.
+They generate audio signals of different types such as sine, square, sawtooth, etc.
+Generators — oscillators and tone combiners</dd><dt><a class="mod" href="graph/index.html" title="mod rustic::core::graph">graph</a></dt><dd>Audio signal graph processing and routing
+Graphs are used to build audio pipelines for the application.
+They serve as metastructures for filters.
+Graphs can be used to create complex audio effects and processing chains.</dd><dt><a class="mod" href="utils/index.html" title="mod rustic::core::utils">utils</a></dt><dd>Core utilities including note types, tones, and helper functions
+Core utilities module</dd></dl></section></div></main></body></html>

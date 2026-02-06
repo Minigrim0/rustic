@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DurationModifier","NoteDuration","NoteModifier","NoteName"],"struct":["Note"]};
