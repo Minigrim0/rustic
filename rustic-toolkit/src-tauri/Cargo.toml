@@ -3,7 +3,7 @@ name = "rustic-toolkit"
 version = "1.0.0"
 description = "The rustic toolkit, a collection of tools to analyse audio, build graphs and test filters"
 authors = ["Minigrim0"]
-edition = "2021"
+edition = "2024"
 
 [lib]
 name = "rustic_toolkit_lib"

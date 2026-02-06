@@ -1,5 +1,5 @@
 use log::info;
-use rustfft::{num_complex::Complex, FftPlanner};
+use rustfft::{FftPlanner, num_complex::Complex};
 use std::f32::consts::PI;
 
 /// Computes a time-frequency spectrogram for the given samples

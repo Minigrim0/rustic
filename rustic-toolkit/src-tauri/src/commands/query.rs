@@ -4,8 +4,8 @@ use log::info;
 use tauri::State;
 
 use crate::analysis::{
-    compute_fft, compute_spectrum, downsample_spectrogram, downsample_waveform,
-    pick_top_frequencies, FrequencyData,
+    FrequencyData, compute_fft, compute_spectrum, downsample_spectrogram, downsample_waveform,
+    pick_top_frequencies,
 };
 use crate::error::AppError;
 use crate::state::AudioState;
