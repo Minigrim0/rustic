@@ -61,20 +61,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            rustic-toolkit/src-tauri/target/release/bundle/deb/*.deb
-            rustic-toolkit/src-tauri/target/release/bundle/appimage/*.AppImage
+            target/release/bundle/deb/*.deb
+            target/release/bundle/appimage/*.AppImage
 
       - name: Upload macOS artifacts
         if: matrix.platform == 'macos-latest'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            rustic-toolkit/src-tauri/target/release/bundle/dmg/*.dmg
+            target/release/bundle/dmg/*.dmg
 
       - name: Upload Windows artifacts
         if: matrix.platform == 'windows-latest'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            rustic-toolkit/src-tauri/target/release/bundle/msi/*.msi
-            rustic-toolkit/src-tauri/target/release/bundle/nsis/*.exe
+            target/release/bundle/msi/*.msi
+            target/release/bundle/nsis/*.exe
