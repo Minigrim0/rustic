@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-toolkit:
-    if: startsWith(github.event.release.tag_name, 'release:toolkit-v')
+    if: startsWith(github.event.release.tag_name, 'release_toolkit-v')
     permissions:
       contents: write
     strategy:
