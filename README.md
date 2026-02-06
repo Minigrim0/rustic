@@ -1,49 +1,77 @@
 # Rustic
 
-Rustic is a modular audio synthesis framework written in Rust that provides real-time digital signal processing capabilities for building musical instruments, audio effects, and synthesis applications.
+<div align="center">
+    <img alt="CI badge" src="https://github.com/minigrim0/rustic/actions/workflows/ci.yml/badge.svg" />
+    <img alt="Docs badge" src="https://img.shields.io/badge/docs-latest-blue.svg" />
+    <img alt="License badge" src="https://img.shields.io/github/license/minigrim0/rustic" />
+    <img alt="Rust version badge" src="https://img.shields.io/badge/rust-1.73%2B-gray" />
+</div>
 
-## Frontend
+Rustic is a **modular audio synthesis framework** written in Rust that lets you build real‑time DSP pipelines, musical instruments, audio effects, and full‑stack synthesis applications.
 
-A frontend application is available under the `frontend` folder. This is a simple webgl application that allows to create audio pipelines for the instruments.
+## Quick start
 
-It aims to provide a simple user interface to create audio pipelines for the instruments.
+```bash
+git clone https://github.com/minigrim0/rustic.git
+cd rustic
+```
 
-## Architecture
+Follow the *Getting started* section to create a project, run the frontend, and explore the demo apps.
 
-The project aims to use the Pipe & Filter architecture, alongside an Event-Driven architecture.
+## Components
 
-### Pipe & Filter
+The project consists of multile components.
 
-This architecture is used to create a pipeline of filters that process the audio data. Each filter is a simple function that takes an input and returns an output. The output of a filter is the input of the next filter in the pipeline.
-The frontend application aims at providing a simple way to create these pipelines.
+- `rustic/` - The core library, responsible for managing the audio thread and synthesis
+- `rustic-meta/` + `rustic-derive/` - Handles deriving metadata for filter structures in the core library
+- `rustic-toolkit/` - A frontend using the library for audio analysis, filter graph building and testing (still heavily WIP). Serves as a playground for audio synthesis.
+- `frontend/` - Deprecated - Initial attempt at making a frontend for actually playing music, might disappear entirely in the near future.
 
-### Event-Driven
+### Core library architecture
 
-The event-driven architecture aims at triggering the creation of audio from keyboard events. This is done using the evdev crate, which allows to listen to keyboard events. These events will, depending on the context (provided by the `Application` structure, trigger an instrument to start playing a certain note.
+The library implements a real-time-safe audio system using three threads that communicate via lock-free data structures:
+
+#### Thread Responsibilities:
+
+- **Command Thread** (`spawn_command_thread`): Receives Commands from the frontend, validates them, translates to AudioMessage enum, and forwards to render thread. Maintains the App state machine.
+- **Render Thread** (`spawn_audio_render_thread`): Owns all Instrument instances, processes AudioMessage queue, calls tick() on instruments, produces audio samples, pushes to ArrayQueue<f32>.
+- **CPAL Callback** (`create_cpal_callback`): Real-time audio thread managed by cpal, pulls samples from ArrayQueue<f32>, writes to audio device buffer. Must never block.
 
 ## Development
 
-### Pre-commit Hooks
+### Pre‑commit hooks
 
-This project includes pre-commit hooks to ensure code quality. The hooks check code formatting and run tests before allowing commits.
-
-#### Installation
-
-##### Linux/macOS
+The repository uses [pre‑commit](https://pre-commit.com/) to enforce
+formatting (rustfmt) and to run the default test suite.
 
 ```bash
-./hooks/install.sh
+pre-commit install          # install hooks
+pre-commit run --all-files  # test hooks locally
 ```
-
-##### Windows
-
-```cmd
-hooks\install.bat
-```
-
-See `hooks/README.md` for more information.
 
 ### Documentation
 
-Project documentation is automatically built and published to GitHub Pages when a new release is created. The documentation is generated using `cargo doc` and can be accessed at:
+Documentation is automatically built & published to GitHub Pages on every push to main.
+
 [https://minigrim0.github.io/rustic/](https://minigrim0.github.io/rustic/)
+
+### Get involved
+
+- Clone the repo:
+
+```bash
+git clone https://github.com/minigrim0/rustic.git
+cd rustic
+```
+
+- Build & run the examples:
+
+```bash
+cargo run --example drum_machine
+```
+
+- For frontend development:
+
+```bash
+cargo tauri dev
+```
