@@ -156,10 +156,10 @@ impl AudioLoader {
 
         // Create a hint to help the format registry
         let mut hint = Hint::new();
-        if let Some(ext) = path.as_ref().extension() {
-            if let Some(ext_str) = ext.to_str() {
-                hint.with_extension(ext_str);
-            }
+        if let Some(ext) = path.as_ref().extension()
+            && let Some(ext_str) = ext.to_str()
+        {
+            hint.with_extension(ext_str);
         }
 
         // Use the default options

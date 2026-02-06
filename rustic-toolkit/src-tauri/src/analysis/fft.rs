@@ -66,11 +66,11 @@ pub fn compute_fft(samples: &[f32], sample_rate: u32) -> Vec<FrequencyData> {
     }
 
     // Normalize magnitudes
-    if let Some(max_magnitude) = result.iter().map(|f| f.magnitude).reduce(f32::max) {
-        if max_magnitude > 0.0 {
-            for freq_data in &mut result {
-                freq_data.magnitude /= max_magnitude;
-            }
+    if let Some(max_magnitude) = result.iter().map(|f| f.magnitude).reduce(f32::max)
+        && max_magnitude > 0.0
+    {
+        for freq_data in &mut result {
+            freq_data.magnitude /= max_magnitude;
         }
     }
 
