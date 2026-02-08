@@ -1,5 +1,5 @@
 use egui::{Color32, RichText, Stroke, Ui, Vec2};
-use rustic::prelude::Commands;
+use rustic::app::commands::Command;
 use std::sync::mpsc::Sender;
 
 use super::Tab;
@@ -314,7 +314,7 @@ impl ScoreEditorTab {
 }
 
 impl Tab for ScoreEditorTab {
-    fn ui(&mut self, ui: &mut Ui, _app_sender: &Sender<Commands>) {
+    fn ui(&mut self, ui: &mut Ui, _app_sender: &Sender<Command>) {
         ui.vertical_centered(|ui| {
             ui.heading("Score Editor");
             ui.add_space(8.0);

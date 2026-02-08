@@ -1,5 +1,5 @@
 use egui::{Color32, RichText, Ui};
-use rustic::prelude::Commands;
+use rustic::app::commands::{Command, SettingsCommand};
 use std::sync::mpsc::Sender;
 
 use super::Tab;
@@ -212,7 +212,7 @@ impl SettingsTab {
     }
 
     /// Draw the musical settings section
-    fn draw_musical_settings(&mut self, ui: &mut Ui, app_sender: &Sender<Commands>) {
+    fn draw_musical_settings(&mut self, ui: &mut Ui, app_sender: &Sender<Command>) {
         SectionContainer::new("Musical Settings").show(ui, |ui| {
             // Time signature selection
             LabeledCombo::new("Time Signature:", "time_signature")
@@ -261,13 +261,13 @@ impl SettingsTab {
             {
                 self.config_dirty = true;
                 // TODO: Implement proper error handling for command sending
-                let _ = app_sender.send(Commands::SetTempo(self.tempo as u32));
+                let _ = app_sender.send(Command::Settings(SettingsCommand::SetTempo(self.tempo as u32)));
             }
 
             // Metronome toggle
             if ui.checkbox(&mut true, "Enable Metronome").clicked() {
                 // TODO: Implement proper state tracking for metronome toggle
-                let _ = app_sender.send(Commands::ToggleMetronome);
+                let _ = app_sender.send(Command::Settings(SettingsCommand::ToggleMetronome));
                 self.config_dirty = true;
             }
         });
@@ -409,7 +409,7 @@ impl SettingsTab {
 }
 
 impl Tab for SettingsTab {
-    fn ui(&mut self, ui: &mut Ui, app_sender: &Sender<Commands>) {
+    fn ui(&mut self, ui: &mut Ui, app_sender: &Sender<Command>) {
         ui.vertical_centered(|ui| {
             ui.heading("Settings");
             ui.add_space(10.0);
