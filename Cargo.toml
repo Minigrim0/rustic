@@ -4,6 +4,7 @@ members = [
     "rustic-derive",
     "rustic",
     "rustic-meta",
-    "frontend", "rustic-lang",
+    "rustic-tui",
+    "rustic-lang",
 ]
 resolver = "2"
