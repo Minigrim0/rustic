@@ -19,12 +19,7 @@ impl KeyMapper {
     }
 
     /// Map a keyboard key to a Command
-    pub fn map_key(
-        &self,
-        key: &Keycode,
-        is_release: bool,
-        shift_pressed: bool,
-    ) -> Option<Command> {
+    pub fn map_key(&self, key: &Keycode, is_release: bool, shift_pressed: bool) -> Option<Command> {
         if is_release {
             self.map_key_release(key)
         } else if shift_pressed {
@@ -37,31 +32,127 @@ impl KeyMapper {
     /// Map a key press event to a Command
     fn map_key_press(&self, key: &Keycode) -> Option<Command> {
         match key {
-            Keycode::Key1 => Some(Command::Live(LiveCommand::NoteStart { note: 0, row: 0, velocity: 1.0 })),
-            Keycode::Key2 => Some(Command::Live(LiveCommand::NoteStart { note: 1, row: 0, velocity: 1.0 })),
-            Keycode::Key3 => Some(Command::Live(LiveCommand::NoteStart { note: 2, row: 0, velocity: 1.0 })),
-            Keycode::Key4 => Some(Command::Live(LiveCommand::NoteStart { note: 3, row: 0, velocity: 1.0 })),
-            Keycode::Key5 => Some(Command::Live(LiveCommand::NoteStart { note: 4, row: 0, velocity: 1.0 })),
-            Keycode::Key6 => Some(Command::Live(LiveCommand::NoteStart { note: 5, row: 0, velocity: 1.0 })),
-            Keycode::Key7 => Some(Command::Live(LiveCommand::NoteStart { note: 6, row: 0, velocity: 1.0 })),
-            Keycode::Key8 => Some(Command::Live(LiveCommand::NoteStart { note: 7, row: 0, velocity: 1.0 })),
-            Keycode::Key9 => Some(Command::Live(LiveCommand::NoteStart { note: 8, row: 0, velocity: 1.0 })),
-            Keycode::Key0 => Some(Command::Live(LiveCommand::NoteStart { note: 9, row: 0, velocity: 1.0 })),
-            Keycode::Minus => Some(Command::Live(LiveCommand::NoteStart { note: 9, row: 0, velocity: 1.0 })),
-            Keycode::Equal => Some(Command::Live(LiveCommand::NoteStart { note: 9, row: 0, velocity: 1.0 })),
+            Keycode::Key1 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 0,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Key2 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 1,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Key3 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 2,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Key4 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 3,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Key5 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 4,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Key6 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 5,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Key7 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 6,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Key8 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 7,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Key9 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 8,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Key0 => Some(Command::Live(LiveCommand::NoteStart {
+                note: 9,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Minus => Some(Command::Live(LiveCommand::NoteStart {
+                note: 9,
+                row: 0,
+                velocity: 1.0,
+            })),
+            Keycode::Equal => Some(Command::Live(LiveCommand::NoteStart {
+                note: 9,
+                row: 0,
+                velocity: 1.0,
+            })),
 
-            Keycode::Q => Some(Command::Live(LiveCommand::NoteStart { note: 0, row: 1, velocity: 1.0 })),
-            Keycode::W => Some(Command::Live(LiveCommand::NoteStart { note: 1, row: 1, velocity: 1.0 })),
-            Keycode::E => Some(Command::Live(LiveCommand::NoteStart { note: 2, row: 1, velocity: 1.0 })),
-            Keycode::R => Some(Command::Live(LiveCommand::NoteStart { note: 3, row: 1, velocity: 1.0 })),
-            Keycode::T => Some(Command::Live(LiveCommand::NoteStart { note: 4, row: 1, velocity: 1.0 })),
-            Keycode::Y => Some(Command::Live(LiveCommand::NoteStart { note: 5, row: 1, velocity: 1.0 })),
-            Keycode::U => Some(Command::Live(LiveCommand::NoteStart { note: 6, row: 1, velocity: 1.0 })),
-            Keycode::I => Some(Command::Live(LiveCommand::NoteStart { note: 7, row: 1, velocity: 1.0 })),
-            Keycode::O => Some(Command::Live(LiveCommand::NoteStart { note: 8, row: 1, velocity: 1.0 })),
-            Keycode::P => Some(Command::Live(LiveCommand::NoteStart { note: 9, row: 1, velocity: 1.0 })),
-            Keycode::LeftBracket => Some(Command::Live(LiveCommand::NoteStart { note: 10, row: 1, velocity: 1.0 })),
-            Keycode::RightBracket => Some(Command::Live(LiveCommand::NoteStart { note: 11, row: 1, velocity: 1.0 })),
+            Keycode::Q => Some(Command::Live(LiveCommand::NoteStart {
+                note: 0,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::W => Some(Command::Live(LiveCommand::NoteStart {
+                note: 1,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::E => Some(Command::Live(LiveCommand::NoteStart {
+                note: 2,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::R => Some(Command::Live(LiveCommand::NoteStart {
+                note: 3,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::T => Some(Command::Live(LiveCommand::NoteStart {
+                note: 4,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::Y => Some(Command::Live(LiveCommand::NoteStart {
+                note: 5,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::U => Some(Command::Live(LiveCommand::NoteStart {
+                note: 6,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::I => Some(Command::Live(LiveCommand::NoteStart {
+                note: 7,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::O => Some(Command::Live(LiveCommand::NoteStart {
+                note: 8,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::P => Some(Command::Live(LiveCommand::NoteStart {
+                note: 9,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::LeftBracket => Some(Command::Live(LiveCommand::NoteStart {
+                note: 10,
+                row: 1,
+                velocity: 1.0,
+            })),
+            Keycode::RightBracket => Some(Command::Live(LiveCommand::NoteStart {
+                note: 11,
+                row: 1,
+                velocity: 1.0,
+            })),
 
             Keycode::Z => Some(Command::Live(LiveCommand::OctaveUp(0))),
             Keycode::X => Some(Command::Live(LiveCommand::OctaveUp(1))),
@@ -108,7 +199,9 @@ impl KeyMapper {
             Keycode::O => Some(Command::Live(LiveCommand::NoteStop { note: 8, row: 1 })),
             Keycode::P => Some(Command::Live(LiveCommand::NoteStop { note: 9, row: 1 })),
             Keycode::LeftBracket => Some(Command::Live(LiveCommand::NoteStop { note: 10, row: 1 })),
-            Keycode::RightBracket => Some(Command::Live(LiveCommand::NoteStop { note: 11, row: 1 })),
+            Keycode::RightBracket => {
+                Some(Command::Live(LiveCommand::NoteStop { note: 11, row: 1 }))
+            }
 
             _ => None,
         }

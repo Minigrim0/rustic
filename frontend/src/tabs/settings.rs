@@ -261,7 +261,9 @@ impl SettingsTab {
             {
                 self.config_dirty = true;
                 // TODO: Implement proper error handling for command sending
-                let _ = app_sender.send(Command::Settings(SettingsCommand::SetTempo(self.tempo as u32)));
+                let _ = app_sender.send(Command::Settings(SettingsCommand::SetTempo(
+                    self.tempo as u32,
+                )));
             }
 
             // Metronome toggle
