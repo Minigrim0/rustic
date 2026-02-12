@@ -1,5 +1,5 @@
 use egui::{Color32, RichText, Ui, Vec2};
-use rustic::prelude::Commands;
+use rustic::app::commands::Command;
 use std::sync::mpsc::Sender;
 
 use super::Tab;
@@ -212,7 +212,7 @@ impl LivePlayingTab {
 }
 
 impl Tab for LivePlayingTab {
-    fn ui(&mut self, ui: &mut Ui, _app_sender: &Sender<Commands>) {
+    fn ui(&mut self, ui: &mut Ui, _app_sender: &Sender<Command>) {
         ui.vertical_centered(|ui| {
             ui.heading("Live Playing");
 

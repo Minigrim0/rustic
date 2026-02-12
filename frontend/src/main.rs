@@ -6,8 +6,8 @@ use eframe::{App, CreationContext, Frame, NativeOptions};
 use egui::Context;
 use log::info;
 use rustic::AudioHandle;
+use rustic::app::commands::Command;
 use rustic::audio::{AudioError, BackendEvent};
-use rustic::prelude::Commands;
 
 mod mapping;
 mod tabs;
@@ -28,7 +28,7 @@ pub struct RusticApp {
     settings_tab: SettingsTab,
 
     // Rustic audio engine communication
-    app_sender: Sender<Commands>,
+    app_sender: Sender<Command>,
     app_receiver: Receiver<BackendEvent>,
     _rustic_apphandle: AudioHandle,
 
@@ -48,7 +48,7 @@ impl RusticApp {
         configure_theme(ThemeChoice::Dark, ctx);
 
         // Set up communication channels with the rustic audio engine
-        let (frontend_sender, backend_receiver): (Sender<Commands>, Receiver<Commands>) =
+        let (frontend_sender, backend_receiver): (Sender<Command>, Receiver<Command>) =
             mpsc::channel();
         let (backend_sender, frontend_receiver): (Sender<BackendEvent>, Receiver<BackendEvent>) =
             mpsc::channel();

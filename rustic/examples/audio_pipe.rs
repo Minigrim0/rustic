@@ -12,12 +12,10 @@ use rodio::{OutputStream, Sink};
 use rustic::core::filters::prelude::{
     CombinatorFilter, DelayFilter, DuplicateFilter, GainFilter, Tremolo,
 };
-use rustic::core::graph::{
-    AudioGraphElement, Filter, SimpleSink, Sink as SystemSink, Source, System,
-};
+use rustic::core::graph::{Filter, SimpleSink, Sink as SystemSink, Source, System};
 use rustic::core::utils::{NOTES, Note};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Player {
     _notes: Vec<Note>,
     i: usize,
@@ -48,18 +46,6 @@ impl Source for Player {
         //     + self.notes[1].tick(self.sample_rate as i32)
         //     + self.notes[2].tick(self.sample_rate as i32)
         0.0
-    }
-}
-
-impl AudioGraphElement for Player {
-    fn get_name(&self) -> &str {
-        "Player"
-    }
-
-    fn set_index(&mut self, _index: usize) {}
-
-    fn get_index(&self) -> usize {
-        0
     }
 }
 
@@ -99,7 +85,7 @@ fn main() {
 
     let system_sink: Box<dyn SystemSink> = Box::from(SimpleSink::new());
 
-    let mut system = System::<1, 1>::new();
+    let mut system = System::new();
     let sum_filter = system.add_filter(sum_filter);
     let dupe_filter = system.add_filter(dupe_filter);
     let delay_filter = system.add_filter(delay_filter);
@@ -107,8 +93,8 @@ fn main() {
     let final_tremolo = system.add_filter(final_tremolo);
     // let clipper = system.add_filter(clipper);
 
-    system.set_source(0, source);
-    system.set_sink(0, system_sink);
+    let source_id = system.add_source(source);
+    let sink_id = system.add_sink(system_sink);
 
     system.connect(sum_filter, dupe_filter, 0, 0);
     system.connect(dupe_filter, delay_filter, 1, 0);
@@ -117,11 +103,11 @@ fn main() {
 
     system.connect(dupe_filter, final_tremolo, 0, 0);
 
-    system.connect_sink(final_tremolo, 0, 0);
-    system.connect_source(0, sum_filter, 0);
+    system.connect_sink(final_tremolo, sink_id, 0);
+    system.connect_source(source_id, sum_filter, 0);
 
     if system.compute().is_err() {
-        error!("An error occured while computing the filter graph's layers");
+        error!("An error occurred while computing the filter graph's layers");
         return;
     }
 
