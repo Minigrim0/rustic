@@ -1,23 +1,27 @@
-use std::sync::RwLock;
+use std::sync::mpsc::{Receiver, Sender};
+use std::sync::{RwLock, mpsc};
 
-use log::info;
-use tauri::Emitter;
-use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
+use rustic::audio::BackendEvent;
+use rustic::prelude::Command;
+use tauri::{Emitter, Manager};
 use tauri_plugin_fs::FsExt;
 
 mod analysis;
 mod audio;
 mod commands;
 mod error;
+mod rustic_state;
 mod state;
 mod types;
+
+use rustic_state::RusticState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     colog::init();
     log::set_max_level(log::LevelFilter::Info);
 
-    info!("Starting Rustic Sample Analyser");
+    log::info!("Starting Rustic Toolkit");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -37,30 +41,30 @@ pub fn run() {
             let scope = app.fs_scope();
             scope.allow_directory("/tmp", true)?;
 
-            // Native menu
-            let file_menu = SubmenuBuilder::new(app, "File")
-                .item(
-                    &MenuItemBuilder::with_id("open", "Open File")
-                        .accelerator("CmdOrCtrl+O")
-                        .build(app)?,
-                )
-                .separator()
-                .item(&PredefinedMenuItem::quit(app, Some("Quit"))?)
-                .build()?;
+            // Set up communication channels with the rustic audio engine
+            let (frontend_sender, backend_receiver): (Sender<Command>, Receiver<Command>) =
+                mpsc::channel();
+            let (backend_sender, frontend_receiver): (
+                Sender<BackendEvent>,
+                Receiver<BackendEvent>,
+            ) = mpsc::channel();
 
-            let help_menu = SubmenuBuilder::new(app, "Help")
-                .item(&MenuItemBuilder::with_id("about", "About Rustic").build(app)?)
-                .build()?;
+            // Start the rustic audio engine
+            let audio_handle = rustic::start_app(backend_sender, backend_receiver)?;
 
-            let menu = MenuBuilder::new(app)
-                .items(&[&file_menu, &help_menu])
-                .build()?;
-
-            app.set_menu(menu)?;
-
-            app.on_menu_event(|app, event| {
-                let _ = app.emit(event.id().as_ref(), ());
+            // Bridge backend events to Tauri frontend events
+            let tauri_handle = app.handle().clone();
+            std::thread::spawn(move || {
+                log::info!("Rustic event bridge started");
+                while let Ok(event) = frontend_receiver.recv() {
+                    if let Err(e) = tauri_handle.emit("rustic-event", &event) {
+                        log::error!("Failed to emit rustic event: {e}");
+                    }
+                }
+                log::info!("Rustic event bridge shut down");
             });
+
+            app.manage(RusticState::new(frontend_sender, audio_handle));
 
             Ok(())
         })
