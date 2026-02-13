@@ -9,17 +9,13 @@
         </div>
 
         <!-- Graph canvas -->
-        <div ref="graphContainer" class="flex-1 overflow-hidden"></div>
+        <BaklavaEditor :view-model="baklava" />
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    name: "GraphPlayground",
-    data() {
-        return {};
-    },
-    mounted() {},
-    methods: {},
-};
+<script setup lang="ts">
+import { BaklavaEditor, useBaklava } from "@baklavajs/renderer-vue";
+import "@baklavajs/themes/dist/syrup-dark.css";
+
+const baklava = useBaklava();
 </script>
