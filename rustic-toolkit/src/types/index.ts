@@ -12,4 +12,4 @@ export interface AudioFileInfo {
     name: string;
     size: number;
     type: string;
-};
+}

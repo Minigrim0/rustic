@@ -24,9 +24,9 @@ import VChart from "vue-echarts";
 import "echarts";
 import type { EChartsOption } from "echarts";
 
-import { notifications } from "../../stores/notifications";
-import { type AudioSummary, type WaveformData } from "../../types";
-import { getWaveform } from "../../utils/tauri-api";
+import { notifications } from "@/stores/notifications.ts";
+import { type AudioSummary, type WaveformData } from "@/types";
+import { getWaveform } from "@/utils/tauri-api.ts";
 
 const props = defineProps<{
     summary: AudioSummary;
@@ -50,8 +50,7 @@ const loadWaveformData = async () => {
     componentStatus.loaded = false;
 
     try {
-        const data = await getWaveform(props.start, props.end, 1000);
-        componentStatus.data = data;
+        componentStatus.data = await getWaveform(props.start, props.end, 1000);
     } catch (err: any) {
         notifications.error(`Unable to load waveform data: ${err.message || err}`);
         componentStatus.error = `${err.message || err}`;

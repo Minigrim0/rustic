@@ -4,7 +4,6 @@ use std::sync::mpsc::{Receiver, Sender};
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use eframe::{App, CreationContext, Frame, NativeOptions};
 use egui::Context;
-use log::info;
 use rustic::audio::AudioHandle;
 use rustic::audio::{AudioError, BackendEvent};
 use rustic::prelude::Command;
@@ -42,7 +41,7 @@ pub struct RusticApp {
 impl RusticApp {
     /// Create a new instance of the app
     fn new(cc: &CreationContext) -> Result<Self, AudioError> {
-        info!("Building application structure");
+        log::info!("Building application structure");
         // Set up the custom theme
         let ctx = &cc.egui_ctx;
         configure_theme(ThemeChoice::Dark, ctx);

@@ -14,7 +14,7 @@ import type {
     WaveformData,
     SpectrumData,
     SpectrogramData,
-} from "../types";
+} from "@/types";
 
 // ── Phase 1: Load & summarize ──────────────────────────────────────
 

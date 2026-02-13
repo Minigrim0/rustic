@@ -67,7 +67,7 @@ import AudioVisualizer from "./visualisers/AudioVisualizer.vue";
 import FrequencyChart from "./visualisers/FrequencyChart.vue";
 import SpectrogramChart from "./visualisers/SpectrogramChart.vue";
 
-import { type AudioSummary } from "../types";
+import { type AudioSummary } from "@/types";
 
 const waveformOpen = ref(true);
 const spectrumOpen = ref(true);
