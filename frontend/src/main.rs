@@ -5,9 +5,9 @@ use device_query::{DeviceQuery, DeviceState, Keycode};
 use eframe::{App, CreationContext, Frame, NativeOptions};
 use egui::Context;
 use log::info;
-use rustic::AudioHandle;
-use rustic::app::commands::Command;
+use rustic::audio::AudioHandle;
 use rustic::audio::{AudioError, BackendEvent};
+use rustic::prelude::Command;
 
 mod mapping;
 mod tabs;
