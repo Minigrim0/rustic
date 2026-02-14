@@ -13,7 +13,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-rustic = { path = "../../rustic", features = ["meta"] }
+rustic = { path = "../../rustic", features = ["meta", "ts"] }
+rustic-meta = { path = "../../rustic-meta" }
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }

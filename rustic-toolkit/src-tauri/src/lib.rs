@@ -35,6 +35,7 @@ pub fn run() {
             commands::query::get_spectrogram,
             commands::utils::frequency_to_note_command,
             commands::utils::save_analysis,
+            commands::meta::get_graph_metadata,
         ])
         .setup(|app| {
             // File system scope
