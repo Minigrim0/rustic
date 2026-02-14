@@ -7,9 +7,10 @@ export type { FrequencyData } from "./FrequencyData";
 export type { SpectrogramData } from "./SpectrogramData";
 export type { SpectrumData } from "./SpectrumData";
 export type { WaveformData } from "./WaveformData";
+export type { GraphMetadata } from "./GraphMetadata";
 
 export interface AudioFileInfo {
     name: string;
     size: number;
     type: string;
-};
+}

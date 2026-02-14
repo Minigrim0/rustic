@@ -4,6 +4,7 @@ use quote::quote;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 /// Represents a literal value that defines a List parameter's type.
 pub enum Literal {
     Toggle(String, bool),
@@ -49,6 +50,7 @@ impl ToTokens for Literal {
 
 /// Determines the size of a List parameter.
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 pub enum ListSize<S> {
     /// Size is determined by the value of another field on the struct.
     Field(S),
@@ -57,6 +59,7 @@ pub enum ListSize<S> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 pub enum Parameter<S> {
     Toggle {
         title: S,
@@ -94,7 +97,7 @@ pub enum Parameter<S> {
     },
 }
 
-impl<T: quote::ToTokens> ToTokens for ListSize<T> {
+impl<T: ToTokens> ToTokens for ListSize<T> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
             ListSize::Field(name) => {
@@ -111,7 +114,7 @@ impl<T: quote::ToTokens> ToTokens for ListSize<T> {
     }
 }
 
-impl<T: quote::ToTokens> ToTokens for Parameter<T> {
+impl<T: ToTokens> ToTokens for Parameter<T> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
             Parameter::Toggle {

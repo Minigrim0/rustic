@@ -1,7 +1,7 @@
+use crate::analysis::FrequencyData;
+use rustic_meta::{FilterInfo, MetaGenerator, MetaSink};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-
-use crate::analysis::FrequencyData;
 
 /// Summary of a fully analyzed audio file (Phase 1 response).
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -52,4 +52,12 @@ pub struct SpectrogramData {
     pub time_bins: u32,
     pub freq_bins: u32,
     pub sample_rate: u32,
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../src/types/")]
+pub struct GraphMetadata {
+    pub generators: Vec<MetaGenerator>,
+    pub filters: Vec<FilterInfo>,
+    pub sinks: Vec<MetaSink>,
 }

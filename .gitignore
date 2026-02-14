@@ -9,3 +9,4 @@ score.toml
 test.toml
 .DS_Store
 *.log
+.*
