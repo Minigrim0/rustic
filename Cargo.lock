@@ -5950,6 +5950,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
+ "ts-rs",
 ]
 
 [[package]]
@@ -5961,6 +5962,7 @@ dependencies = [
  "log",
  "rustfft",
  "rustic",
+ "rustic-meta",
  "serde",
  "serde_json",
  "symphonia",
