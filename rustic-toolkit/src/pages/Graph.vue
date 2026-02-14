@@ -14,8 +14,16 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from "vue";
 import { BaklavaEditor, useBaklava } from "@baklavajs/renderer-vue";
 import "@baklavajs/themes/dist/syrup-dark.css";
+import { getGraphMetadata } from "@/utils/tauri-api";
+import { registerNodesFromMetadata } from "@/graph/nodes";
 
 const baklava = useBaklava();
+
+onMounted(async () => {
+    const metadata = await getGraphMetadata();
+    registerNodesFromMetadata(baklava.editor, metadata);
+});
 </script>
