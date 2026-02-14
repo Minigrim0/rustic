@@ -14,6 +14,7 @@ import type {
     WaveformData,
     SpectrumData,
     SpectrogramData,
+    GraphMetadata
 } from "@/types";
 
 // ── Phase 1: Load & summarize ──────────────────────────────────────
@@ -75,6 +76,10 @@ export async function getSpectrogram(
     return invoke<SpectrogramData>("get_spectrogram", { start, end });
 }
 
+export async function getGraphMetadata(): Promise<GraphMetadata> {
+    return invoke<GraphMetadata>("get_graph_metadata");
+}
+
 // ── Utilities ──────────────────────────────────────────────────────
 
 /** Convert a frequency (Hz) to the nearest musical note name. */
@@ -88,16 +93,6 @@ export async function saveAnalysis(
     summary: AudioSummary,
 ): Promise<void> {
     return invoke<void>("save_analysis", { path, summary });
-}
-
-/** Write raw file data to a temp path via the Tauri FS plugin. */
-export async function writeTempFile(
-    filename: string,
-    fileData: Uint8Array,
-): Promise<string> {
-    const tempPath = `/tmp/${filename}`;
-    await writeFile(tempPath, fileData);
-    return tempPath;
 }
 
 // ── Menu events ───────────────────────────────────────────────────
