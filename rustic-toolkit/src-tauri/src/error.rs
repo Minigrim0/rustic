@@ -1,6 +1,6 @@
-use std::{io, sync::PoisonError};
-use std::sync::TryLockError;
 use serde::ser::{Serialize, Serializer};
+use std::sync::TryLockError;
+use std::{io, sync::PoisonError};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
