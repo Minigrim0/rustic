@@ -1,5 +1,5 @@
 use std::{io, sync::PoisonError};
-
+use std::sync::TryLockError;
 use serde::ser::{Serialize, Serializer};
 use thiserror::Error;
 
