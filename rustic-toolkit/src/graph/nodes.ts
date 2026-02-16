@@ -1,4 +1,4 @@
-import { defineNode, NodeInterface, type Editor } from "@baklavajs/core";
+import { defineNode, defineDynamicNode, NodeInterface, type Editor } from "@baklavajs/core";
 import {
     NumberInterface,
     SliderInterface,
@@ -7,6 +7,7 @@ import {
 } from "@baklavajs/renderer-vue";
 import type { GraphMetadata } from "@/types";
 import type { Parameter } from "../../src-tauri/bindings/Parameter";
+// import {ButtonInterface} from "baklavajs";
 
 type ParamStr = Parameter<string>;
 
@@ -60,11 +61,29 @@ export function registerNodesFromMetadata(editor: Editor, metadata: GraphMetadat
         }
 
         const paramInputs = buildParameterInputs(gen.parameters);
+        const generatorControl: Record<string, () => NodeInterface<any>> = {"playing": () => new CheckboxInterface("Play", false)}
+        const inputs = {
+            backendNodeId: () => new NodeInterface<string>("Backend Node ID", "").setHidden(true),
+            ...paramInputs,
+            ...generatorControl,
+        };
 
-        const GeneratorNode = defineNode({
+        const GeneratorNode = defineDynamicNode({
             type: sanitizeType(gen.name),
+            onUpdate(node) {
+                console.log(node);
+                let updatedInterface = () => new CheckboxInterface("Pause", false);
+                if (!node.playing) {
+                    updatedInterface = () => new CheckboxInterface("Play", false);
+                }
+                return {
+                    ...paramInputs,
+                    "playing": updatedInterface,
+                    forceUpdateInputs: ["playing"]
+                }
+            },
             title: gen.name,
-            inputs: paramInputs,
+            inputs: inputs,
             outputs,
         });
         editor.registerNodeType(GeneratorNode, { category: "Generators" });
@@ -72,7 +91,9 @@ export function registerNodesFromMetadata(editor: Editor, metadata: GraphMetadat
 
     // Register filters
     for (const filter of metadata.filters) {
-        const inputs: Record<string, () => NodeInterface<any>> = {};
+        const inputs: Record<string, () => NodeInterface<any>> = {
+            backendNodeId: () => new NodeInterface<string>("Backend Node ID", "").setHidden(true),
+        };
         for (let i = 0; i < filter.source_amount; i++) {
             const label = filter.source_amount === 1 ? "Input" : `Input ${i + 1}`;
             inputs[`in_${i}`] = () => new NodeInterface(label, 0);
@@ -94,7 +115,9 @@ export function registerNodesFromMetadata(editor: Editor, metadata: GraphMetadat
 
     // Register sinks
     for (const sink of metadata.sinks) {
-        const inputs: Record<string, () => NodeInterface<any>> = {};
+        const inputs: Record<string, () => NodeInterface<any>> = {
+            backendNodeId: () => new NodeInterface<string>("Backend Node ID", "").setHidden(true),
+        };
         for (let i = 0; i < sink.input_count; i++) {
             const label = sink.input_count === 1 ? "Input" : `Input ${i + 1}`;
             inputs[`in_${i}`] = () => new NodeInterface(label, 0);
