@@ -1,3 +1,4 @@
+use rustic::audio::RenderMode;
 use serde::ser::{Serialize, Serializer};
 use std::sync::TryLockError;
 use std::{io, sync::PoisonError};
@@ -22,6 +23,12 @@ pub enum AppError {
 
     #[error("Invalid time rande")]
     InvalidTimeRange,
+
+    #[error("Unknown render mode {0}")]
+    UnknownRenderMode(String),
+
+    #[error("communication channel closed unexpectedly")]
+    ChannelClosed,
 }
 
 impl Serialize for AppError {
