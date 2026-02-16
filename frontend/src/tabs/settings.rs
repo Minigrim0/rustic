@@ -1,5 +1,5 @@
 use egui::{Color32, RichText, Ui};
-use rustic::app::commands::{Command, SettingsCommand};
+use rustic::app::commands::{AppCommand, Command, SettingsCommand};
 use std::sync::mpsc::Sender;
 
 use super::Tab;
@@ -261,15 +261,17 @@ impl SettingsTab {
             {
                 self.config_dirty = true;
                 // TODO: Implement proper error handling for command sending
-                let _ = app_sender.send(Command::Settings(SettingsCommand::SetTempo(
-                    self.tempo as u32,
+                let _ = app_sender.send(Command::App(AppCommand::Settings(
+                    SettingsCommand::SetTempo(self.tempo as u32),
                 )));
             }
 
             // Metronome toggle
             if ui.checkbox(&mut true, "Enable Metronome").clicked() {
                 // TODO: Implement proper state tracking for metronome toggle
-                let _ = app_sender.send(Command::Settings(SettingsCommand::ToggleMetronome));
+                let _ = app_sender.send(Command::App(AppCommand::Settings(
+                    SettingsCommand::ToggleMetronome,
+                )));
                 self.config_dirty = true;
             }
         });
