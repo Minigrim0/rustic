@@ -1,13 +1,14 @@
-import { defineNode, defineDynamicNode, NodeInterface, type Editor } from "@baklavajs/core";
+import { defineNode, NodeInterface, type Editor } from "@baklavajs/core";
 import {
     NumberInterface,
     SliderInterface,
     CheckboxInterface,
     IntegerInterface,
 } from "@baklavajs/renderer-vue";
+import { markRaw } from "vue";
 import type { GraphMetadata } from "@/types";
 import type { Parameter } from "../../src-tauri/bindings/Parameter";
-// import {ButtonInterface} from "baklavajs";
+import PlayButton from "@/components/graph/PlayButton.vue";
 
 type ParamStr = Parameter<string>;
 
@@ -61,29 +62,18 @@ export function registerNodesFromMetadata(editor: Editor, metadata: GraphMetadat
         }
 
         const paramInputs = buildParameterInputs(gen.parameters);
-        const generatorControl: Record<string, () => NodeInterface<any>> = {"playing": () => new CheckboxInterface("Play", false)}
         const inputs = {
             backendNodeId: () => new NodeInterface<string>("Backend Node ID", "").setHidden(true),
+            playing: () => new NodeInterface<boolean>("Play", false)
+                .setComponent(markRaw(PlayButton))
+                .setPort(false),
             ...paramInputs,
-            ...generatorControl,
         };
 
-        const GeneratorNode = defineDynamicNode({
+        const GeneratorNode = defineNode({
             type: sanitizeType(gen.name),
-            onUpdate(node) {
-                console.log(node);
-                let updatedInterface = () => new CheckboxInterface("Pause", false);
-                if (!node.playing) {
-                    updatedInterface = () => new CheckboxInterface("Play", false);
-                }
-                return {
-                    ...paramInputs,
-                    "playing": updatedInterface,
-                    forceUpdateInputs: ["playing"]
-                }
-            },
             title: gen.name,
-            inputs: inputs,
+            inputs,
             outputs,
         });
         editor.registerNodeType(GeneratorNode, { category: "Generators" });
