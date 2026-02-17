@@ -1,5 +1,5 @@
 use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{RwLock, mpsc};
+use std::sync::{Mutex, RwLock, mpsc};
 
 use rustic::audio::BackendEvent;
 use rustic::prelude::Command;
@@ -36,6 +36,7 @@ pub fn run() {
             commands::utils::frequency_to_note_command,
             commands::utils::save_analysis,
             commands::meta::get_graph_metadata,
+            commands::rustic::change_render_mode,
         ])
         .setup(|app| {
             // File system scope
@@ -43,6 +44,7 @@ pub fn run() {
             scope.allow_directory("/tmp", true)?;
 
             // Set up communication channels with the rustic audio engine
+            log::info!("Creating communication channels");
             let (frontend_sender, backend_receiver): (Sender<Command>, Receiver<Command>) =
                 mpsc::channel();
             let (backend_sender, frontend_receiver): (
@@ -51,9 +53,11 @@ pub fn run() {
             ) = mpsc::channel();
 
             // Start the rustic audio engine
+            log::info!("Starting audio engine");
             let audio_handle = rustic::start_app(backend_sender, backend_receiver)?;
 
             // Bridge backend events to Tauri frontend events
+            log::info!("Starting event bridge thread");
             let tauri_handle = app.handle().clone();
             std::thread::spawn(move || {
                 log::info!("Rustic event bridge started");
@@ -65,8 +69,9 @@ pub fn run() {
                 log::info!("Rustic event bridge shut down");
             });
 
-            app.manage(RusticState::new(frontend_sender, audio_handle));
+            app.manage(Mutex::new(RusticState::new(frontend_sender, audio_handle)));
 
+            log::info!("Setup complete");
             Ok(())
         })
         .run(tauri::generate_context!())
