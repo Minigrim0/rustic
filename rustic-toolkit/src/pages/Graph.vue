@@ -17,7 +17,7 @@
 import { onMounted } from "vue";
 import { BaklavaEditor, useBaklava } from "@baklavajs/renderer-vue";
 import "@baklavajs/themes/dist/syrup-dark.css";
-import { getGraphMetadata } from "@/utils/tauri-api";
+import {getGraphMetadata, setRenderMode} from "@/utils/tauri-api";
 import { registerNodesFromMetadata } from "@/graph/nodes";
 
 const baklava = useBaklava();
@@ -25,5 +25,8 @@ const baklava = useBaklava();
 onMounted(async () => {
     const metadata = await getGraphMetadata();
     registerNodesFromMetadata(baklava.editor, metadata);
+
+    // Change render mode in the backend
+    await setRenderMode("graph");
 });
 </script>
