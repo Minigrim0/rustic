@@ -6,7 +6,6 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { writeFile } from "@tauri-apps/plugin-fs";
 
 import type {
     AudioSummary,
@@ -17,14 +16,10 @@ import type {
     GraphMetadata
 } from "@/types";
 
-// ── Phase 1: Load & summarize ──────────────────────────────────────
-
 /** Load an audio file and return a global summary. */
 export async function analyzeAudioFile(path: string): Promise<AudioSummary> {
     return invoke<AudioSummary>("analyze_audio_file", { path });
 }
-
-// ── Phase 2: Windowed queries ──────────────────────────────────────
 
 /** Get waveform samples for a time window, downsampled for display. */
 export async function getWaveform(
@@ -80,8 +75,6 @@ export async function getGraphMetadata(): Promise<GraphMetadata> {
     return invoke<GraphMetadata>("get_graph_metadata");
 }
 
-// ── Utilities ──────────────────────────────────────────────────────
-
 /** Convert a frequency (Hz) to the nearest musical note name. */
 export async function frequencyToNote(frequency: number): Promise<string> {
     return invoke<string>("frequency_to_note_command", { frequency });
@@ -95,12 +88,16 @@ export async function saveAnalysis(
     return invoke<void>("save_analysis", { path, summary });
 }
 
-// ── Menu events ───────────────────────────────────────────────────
-
 /** Listen for a native menu event by item ID. Returns an unlisten function. */
 export function onMenuEvent(
     menuId: string,
     handler: () => void,
 ): Promise<UnlistenFn> {
     return listen(menuId, handler);
+}
+
+export async function setRenderMode(
+    render_mode: "graph" | "instrument"
+): Promise<void> {
+    return invoke<void>("change_render_mode", {renderMode: render_mode});
 }
