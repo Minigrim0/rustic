@@ -16,10 +16,54 @@ mod types;
 
 use rustic_state::RusticState;
 
+/// Initialize toolkit-owned logging with colored terminal output and file logging.
+fn init_toolkit_logging() {
+    use simplelog::*;
+    use std::fs;
+
+    let cache_dir = directories::ProjectDirs::from("xyz", "minigrim0", "rustic")
+        .map(|d: directories::ProjectDirs| d.cache_dir().to_path_buf().join("toolkit"))
+        .unwrap_or_else(|| std::path::PathBuf::from("/tmp/rustic-toolkit"));
+
+    let _ = fs::create_dir_all(&cache_dir);
+
+    let log_file_path = cache_dir.join("rustic-toolkit.log");
+
+    let term_config = ConfigBuilder::new()
+        .set_time_format_rfc3339()
+        .set_target_level(LevelFilter::Info)
+        .set_location_level(LevelFilter::Debug)
+        .build();
+
+    let term_logger = TermLogger::new(
+        LevelFilter::Info,
+        term_config,
+        TerminalMode::Mixed,
+        ColorChoice::Auto,
+    );
+
+    let mut loggers: Vec<Box<dyn SharedLogger>> = vec![term_logger];
+
+    if let Ok(file) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_file_path)
+    {
+        let file_config = ConfigBuilder::new()
+            .set_time_format_rfc3339()
+            .set_target_level(LevelFilter::Trace)
+            .set_location_level(LevelFilter::Trace)
+            .build();
+
+        loggers.push(WriteLogger::new(LevelFilter::Trace, file_config, file));
+    }
+
+    let _ = CombinedLogger::init(loggers);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    colog::init();
-    log::set_max_level(log::LevelFilter::Info);
+    init_toolkit_logging();
 
     log::info!("Starting Rustic Toolkit");
 
@@ -52,9 +96,9 @@ pub fn run() {
                 Receiver<BackendEvent>,
             ) = mpsc::channel();
 
-            // Start the rustic audio engine
+            // Start the rustic audio engine (skip logging — toolkit owns it)
             log::info!("Starting audio engine");
-            let audio_handle = rustic::start_app(backend_sender, backend_receiver)?;
+            let audio_handle = rustic::start_app(backend_sender, backend_receiver, true)?;
 
             // Bridge backend events to Tauri frontend events
             log::info!("Starting event bridge thread");

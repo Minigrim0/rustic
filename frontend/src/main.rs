@@ -53,7 +53,7 @@ impl RusticApp {
             mpsc::channel();
 
         // Start the rustic audio engine
-        let rustic_apphandle = rustic::start_app(backend_sender, backend_receiver)?;
+        let rustic_apphandle = rustic::start_app(backend_sender, backend_receiver, false)?;
 
         // Create and return the app
         Ok(RusticApp {
