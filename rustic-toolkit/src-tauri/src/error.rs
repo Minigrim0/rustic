@@ -1,6 +1,4 @@
-use rustic::audio::RenderMode;
 use serde::ser::{Serialize, Serializer};
-use std::sync::TryLockError;
 use std::{io, sync::PoisonError};
 use thiserror::Error;
 
@@ -29,6 +27,9 @@ pub enum AppError {
 
     #[error("communication channel closed unexpectedly")]
     ChannelClosed,
+
+    #[error("Configuration error: {0}")]
+    ConfigError(String),
 }
 
 impl Serialize for AppError {

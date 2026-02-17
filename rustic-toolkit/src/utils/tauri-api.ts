@@ -13,7 +13,8 @@ import type {
     WaveformData,
     SpectrumData,
     SpectrogramData,
-    GraphMetadata
+    GraphMetadata,
+    EngineConfig,
 } from "@/types";
 
 /** Load an audio file and return a global summary. */
@@ -100,4 +101,14 @@ export async function setRenderMode(
     render_mode: "graph" | "instrument"
 ): Promise<void> {
     return invoke<void>("change_render_mode", {renderMode: render_mode});
+}
+
+/** Read the engine configuration from ~/.config/rustic/config.toml (or defaults). */
+export async function getEngineConfig(): Promise<EngineConfig> {
+    return invoke<EngineConfig>("get_engine_config");
+}
+
+/** Write the engine configuration back to ~/.config/rustic/config.toml. */
+export async function setEngineConfig(config: EngineConfig): Promise<void> {
+    return invoke<void>("set_engine_config", { config });
 }

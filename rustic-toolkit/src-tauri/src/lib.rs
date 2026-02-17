@@ -81,6 +81,8 @@ pub fn run() {
             commands::utils::save_analysis,
             commands::meta::get_graph_metadata,
             commands::rustic::change_render_mode,
+            commands::settings::get_engine_config,
+            commands::settings::set_engine_config,
         ])
         .setup(|app| {
             // File system scope
