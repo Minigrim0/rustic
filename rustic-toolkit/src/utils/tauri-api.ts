@@ -103,6 +103,56 @@ export async function setRenderMode(
     return invoke<void>("change_render_mode", {renderMode: render_mode});
 }
 
+// ── Graph commands ──────────────────────────────────────────────────
+
+/** Add a node to the backend audio graph. Returns the assigned backend ID. */
+export async function graphAddNode(
+    nodeType: string,
+    kind: "Generator" | "Filter" | "Sink",
+    position: [number, number],
+): Promise<number> {
+    return invoke<number>("graph_add_node", { nodeType, kind, position });
+}
+
+/** Remove a node from the backend audio graph. */
+export async function graphRemoveNode(id: number): Promise<void> {
+    return invoke<void>("graph_remove_node", { id });
+}
+
+/** Connect two nodes in the backend audio graph. */
+export async function graphConnect(
+    from: number,
+    fromPort: number,
+    to: number,
+    toPort: number,
+): Promise<void> {
+    return invoke<void>("graph_connect", { from, fromPort, to, toPort });
+}
+
+/** Disconnect two nodes in the backend audio graph. */
+export async function graphDisconnect(from: number, to: number): Promise<void> {
+    return invoke<void>("graph_disconnect", { from, to });
+}
+
+/** Start a specific generator node in the audio graph. */
+export async function graphStartNode(id: number): Promise<void> {
+    return invoke<void>("graph_start_node", { id });
+}
+
+/** Stop a specific generator node in the audio graph. */
+export async function graphStopNode(id: number): Promise<void> {
+    return invoke<void>("graph_stop_node", { id });
+}
+
+/** Set a parameter on a node in the backend audio graph. */
+export async function graphSetParameter(
+    nodeId: number,
+    paramName: string,
+    value: number,
+): Promise<void> {
+    return invoke<void>("graph_set_parameter", { nodeId, paramName, value });
+}
+
 /** Read the engine configuration from ~/.config/rustic/config.toml (or defaults). */
 export async function getEngineConfig(): Promise<EngineConfig> {
     return invoke<EngineConfig>("get_engine_config");
