@@ -52,6 +52,23 @@ function buildParameterInputs(params: ParamStr[]): Record<string, () => NodeInte
     return inputs;
 }
 
+/** Infer the node kind from its interface keys. */
+export function getNodeKind(node: any): "Generator" | "Filter" | "Sink" {
+    const outputKeys = Object.keys(node.outputs ?? {});
+    const inputKeys = Object.keys(node.inputs ?? {});
+    const hasOut = outputKeys.some((k) => k.startsWith("out_"));
+    const hasIn = inputKeys.some((k) => k.startsWith("in_"));
+    if (hasOut && !hasIn) return "Generator";
+    if (!hasOut && hasIn) return "Sink";
+    return "Filter";
+}
+
+/** Extract the numeric port index from an interface key like `in_0` or `out_1`. */
+export function getPortIndex(interfaceKey: string): number {
+    const m = interfaceKey.match(/_(\d+)$/);
+    return m ? parseInt(m[1]!, 10) : 0;
+}
+
 export function registerNodesFromMetadata(editor: Editor, metadata: GraphMetadata): void {
     // Register generators
     for (const gen of metadata.generators) {

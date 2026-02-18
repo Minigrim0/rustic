@@ -1,4 +1,5 @@
 pub mod analyze;
+pub mod graph;
 pub mod meta;
 pub mod query;
 pub mod rustic;

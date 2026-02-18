@@ -83,6 +83,13 @@ pub fn run() {
             commands::rustic::change_render_mode,
             commands::settings::get_engine_config,
             commands::settings::set_engine_config,
+            commands::graph::graph_add_node,
+            commands::graph::graph_remove_node,
+            commands::graph::graph_connect,
+            commands::graph::graph_disconnect,
+            commands::graph::graph_start_node,
+            commands::graph::graph_stop_node,
+            commands::graph::graph_set_parameter,
         ])
         .setup(|app| {
             // File system scope
