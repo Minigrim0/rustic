@@ -35,7 +35,6 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use log::error;
 use std::sync::mpsc::{Receiver, Sender};
-use std::thread::JoinHandle;
 
 pub mod app;
 
@@ -52,13 +51,12 @@ pub mod inputs;
 /// Instruments are structures that implement the `Instrument` trait.
 pub mod instruments;
 
-#[cfg(feature = "meta")]
 /// This module defines the metadata structures for the application.
-/// It allows to store and retreive metadata about filters
+/// It allows to store and retrieve metadata about filters
 pub mod meta;
 
 /// The mod score contains all the building block for creating music
-/// Sheets contain instruments layed out on a staff, divided into measures
+/// Sheets contain instruments laid out on a staff, divided into measures
 /// Notes in the measures are structures that implement the `MeasureNote` trait.
 /// This allows to build complex notes, chords, ...
 pub mod score;
@@ -70,7 +68,7 @@ pub mod prelude {
     // App exports
     pub use super::app::{
         self,
-        prelude::{App, Commands},
+        prelude::{App, AppCommand, AudioCommand, Command},
     };
 
     // Core exports - only expose the module, details accessed through it
@@ -88,9 +86,6 @@ pub mod prelude {
 
 #[cfg(feature = "plotting")]
 pub mod plotting;
-
-#[cfg(feature = "testing")]
-pub mod testing;
 
 // Re-export Note from core utils
 pub use core::{NOTES, Note};
@@ -111,92 +106,64 @@ pub fn init_logging(
         _ => LevelFilter::Info,
     };
 
-    let log_config = ConfigBuilder::new().set_time_format_rfc3339().build();
-
     let mut loggers: Vec<Box<dyn SharedLogger>> = vec![];
 
     if config.log_to_stdout {
+        let term_config = ConfigBuilder::new()
+            .set_time_format_rfc3339()
+            .set_target_level(LevelFilter::Info)
+            .set_location_level(LevelFilter::Debug)
+            .build();
+
         loggers.push(TermLogger::new(
             log_level,
-            log_config.clone(),
+            term_config,
             TerminalMode::Mixed,
             ColorChoice::Auto,
         ));
     }
 
     if config.log_to_file {
+        let file_config = ConfigBuilder::new()
+            .set_time_format_rfc3339()
+            .set_target_level(LevelFilter::Trace)
+            .set_location_level(LevelFilter::Trace)
+            .build();
+
         let log_path = config_dir.join(&config.log_file);
         let log_file = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
             .open(log_path)?;
-        loggers.push(WriteLogger::new(log_level, log_config, log_file));
+        loggers.push(WriteLogger::new(log_level, file_config, log_file));
     }
 
     CombinedLogger::init(loggers)?;
     Ok(())
 }
 
-/// Handle to the audio system threads
-pub struct AudioHandle {
-    command_thread: JoinHandle<()>,
-    render_thread: JoinHandle<()>,
-    stream: cpal::Stream,
-    shared_state: std::sync::Arc<audio::SharedAudioState>,
-}
-
-impl AudioHandle {
-    /// Gracefully shutdown the audio system
-    pub fn shutdown(self) -> Result<(), audio::AudioError> {
-        use std::sync::atomic::Ordering;
-
-        // Signal shutdown
-        self.shared_state.shutdown.store(true, Ordering::Release);
-
-        // Wait for threads to finish
-        self.command_thread
-            .join()
-            .map_err(|_| audio::AudioError::ThreadPanic)?;
-        self.render_thread
-            .join()
-            .map_err(|_| audio::AudioError::ThreadPanic)?;
-
-        // Drop stream (stops playback)
-        drop(self.stream);
-
-        Ok(())
-    }
-
-    /// Get audio metrics
-    pub fn get_metrics(&self) -> AudioMetrics {
-        use std::sync::atomic::Ordering;
-
-        AudioMetrics {
-            buffer_underruns: self.shared_state.buffer_underruns.load(Ordering::Relaxed),
-            sample_rate: self.shared_state.sample_rate.load(Ordering::Relaxed),
-        }
-    }
-}
-
-/// Audio system metrics
-pub struct AudioMetrics {
-    pub buffer_underruns: u64,
-    pub sample_rate: u32,
-}
-
 pub fn start_app(
     event_tx: Sender<audio::BackendEvent>,
-    command_rx: Receiver<app::prelude::Commands>,
-) -> Result<AudioHandle, audio::AudioError> {
+    command_rx: Receiver<prelude::Command>,
+    skip_logging: bool,
+) -> Result<audio::AudioHandle, audio::AudioError> {
     use std::sync::Arc;
     use std::sync::atomic::Ordering;
 
-    // Initialize app (loads config from file)
-    let mut app = app::prelude::App::new();
+    // Initialize app (loads config from file or defaults)
+    let mut app = match app::prelude::FSConfig::app_root_dir() {
+        Ok(root) => {
+            let config_path = root.join("config.toml");
+            prelude::App::from_file(&config_path).unwrap_or_else(|_| prelude::App::new())
+        }
+        Err(_) => prelude::App::new(),
+    };
 
-    // Initialize logging from config
-    if let Ok(config_dir) = app::prelude::FSConfig::app_root_dir() {
-        let _ = init_logging(&app.config.logging, &config_dir);
+    // Initialize logging from config (skip if caller owns logging)
+    if !skip_logging {
+        if let Ok(config_dir) = app::prelude::FSConfig::app_root_dir() {
+            let _ = init_logging(&app.config.logging, &config_dir);
+        }
     }
 
     log::info!("Starting Rustic audio system");
@@ -294,10 +261,10 @@ pub fn start_app(
 
     log::info!("Audio system started successfully");
 
-    Ok(AudioHandle {
+    Ok(audio::AudioHandle::new(
         command_thread,
         render_thread,
         stream,
         shared_state,
-    })
+    ))
 }

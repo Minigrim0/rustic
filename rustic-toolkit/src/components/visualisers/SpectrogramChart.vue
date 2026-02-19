@@ -83,10 +83,10 @@ import VChart from "vue-echarts";
 import "echarts";
 import type { EChartsOption } from "echarts";
 
-import { notifications } from "../../stores/notifications";
-import { type SpectrogramData } from "../../types";
-import { getSpectrogram } from "../../utils/tauri-api";
-import { spectrogramSettings, type ColorScheme } from "../../composables/useSpectrogramSettings";
+import { notifications } from "@/stores/notifications.ts";
+import { type SpectrogramData } from "@/types";
+import { getSpectrogram } from "@/utils/tauri-api.ts";
+import { spectrogramSettings, type ColorScheme } from "@/composables/useSpectrogramSettings.ts";
 
 const props = defineProps<{
     start: number;

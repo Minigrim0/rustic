@@ -78,7 +78,7 @@ fn main() {
             "Snare Waveform",
             (-0.1, 1.1),
             (-1.1, 1.1),
-            "snare.png",
+            "hihat.png",
         ) {
             log::error!("Error: {}", e.to_string());
         }

@@ -12,16 +12,20 @@
                         <path stroke-linecap="round" stroke-linejoin="round" :d="section.icon" />
                     </svg>
                     <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ section.label }}</span>
+                    <span v-if="section.requiresRestart"
+                        class="ml-auto rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
+                        Restart required
+                    </span>
                 </div>
 
                 <!-- Fields -->
                 <div class="px-3 py-3">
-                    <FormKit type="group" v-model="settingsStore[section.id]">
+                    <FormKit type="group" v-model="storeFor(section)![section.id]">
                         <FormKitSchema :schema="section.schema" />
                     </FormKit>
 
                     <div class="mt-2 flex justify-end">
-                        <button @click="resetSection(section.id)"
+                        <button @click="resetSectionFor(section)"
                             class="rounded px-2 py-0.5 text-[10px] font-medium text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300">
                             Reset to defaults
                         </button>
@@ -41,7 +45,33 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from "vue";
 import { FormKitSchema } from "@formkit/vue";
-import { sections } from "../stores/settingsSchema";
-import { settingsStore, resetSection, resetAll } from "../stores/settings";
+import { sections, type SettingsSection } from "../stores/settingsSchema";
+import {
+    settingsStore,
+    engineStore,
+    resetSection,
+    resetEngineSection,
+    resetAll,
+    loadEngineSettings,
+} from "../stores/settings";
+
+/** Return the correct reactive store for a given section. */
+function storeFor(section: SettingsSection) {
+    return section.storage === "engine" ? engineStore : settingsStore;
+}
+
+/** Reset the correct store section. */
+function resetSectionFor(section: SettingsSection) {
+    if (section.storage === "engine") {
+        resetEngineSection(section.id);
+    } else {
+        resetSection(section.id);
+    }
+}
+
+onMounted(() => {
+    loadEngineSettings();
+});
 </script>

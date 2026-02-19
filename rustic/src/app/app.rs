@@ -3,49 +3,20 @@
 //! utilities for managing files and directories.
 
 use std::default::Default;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use clap::Parser;
-use log::{error, info, trace};
-use serde::{Deserialize, Serialize};
+use log::{info, trace};
 
+use super::commands::{LiveCommand, SystemCommand};
 use super::prelude::*;
-
+use crate::app::error::AppError;
 use crate::instruments::prelude::KeyboardBuilder;
 use crate::prelude::Instrument;
 
-use super::row::Row;
+use super::{AppMode, RunMode, config::AppConfig, row::Row};
 
-#[derive(Debug, Default, Deserialize, Serialize)]
-/// The application configuration
-pub struct AppConfig {
-    pub fs: FSConfig,
-    pub system: SystemConfig,
-
-    #[serde(default)]
-    pub audio: crate::audio::AudioConfig,
-
-    #[serde(default)]
-    pub logging: crate::audio::LogConfig,
-}
-
-#[derive(Default)]
-pub enum RunMode {
-    Live,
-    Score,
-    #[default]
-    Unknown,
-}
-
-#[derive(Default)]
-pub enum AppMode {
-    #[default]
-    Setup, // Setup mode, the app has not started yet
-    Input,   // Waiting for user input
-    Running, // Simply running, use inputs as commands/notes
-}
-
-/// Application meta-object, contains the application's configuration,
+/// Application metaobject, contains the application's configuration,
 /// Available instruments, paths to save/load files to/from, ...
 pub struct App {
     pub config: AppConfig,
@@ -58,30 +29,8 @@ pub struct App {
 
 impl Default for App {
     fn default() -> Self {
-        let root_path = match FSConfig::app_root_dir() {
-            Ok(path) => path,
-            Err(e) => {
-                error!("Unable to build app root dir: {}", e);
-                PathBuf::from("./")
-            }
-        };
-
-        let config_file = root_path.join("config.toml");
-
-        let config = if config_file.exists() {
-            match toml::from_str(&std::fs::read_to_string(config_file).unwrap()) {
-                Ok(config) => config,
-                Err(e) => {
-                    error!("Unable to parse config file: {}", e);
-                    AppConfig::default()
-                }
-            }
-        } else {
-            AppConfig::default()
-        };
-
         Self {
-            config,
+            config: AppConfig::default(),
             run_mode: RunMode::Unknown,
             mode: AppMode::Input,
             instruments: vec![Box::new(KeyboardBuilder::new().build())],
@@ -137,17 +86,9 @@ impl App {
     }
 
     /// Tries to load the application configuration from a file.
-    pub fn from_file(path: &Path) -> Result<App, String> {
-        info!(
-            "Loading configuration from file: {}",
-            path.to_str().unwrap_or("unknown")
-        );
-        let config: AppConfig =
-            toml::from_str(&std::fs::read_to_string(path).map_err(|e| e.to_string())?)
-                .map_err(|e| format!("Unable to load config: {}", e))?;
-
+    pub fn from_file(path: &Path) -> Result<App, AppError> {
         Ok(App {
-            config,
+            config: AppConfig::from_file(path)?,
             run_mode: RunMode::Unknown,
             mode: AppMode::Setup,
             rows: [Row::default(), Row::default()],
@@ -161,47 +102,30 @@ impl App {
         self.run_mode = mode;
     }
 
-    pub fn on_event(&mut self, event: Commands) {
+    pub fn handle_system_command(&mut self, event: SystemCommand) {
         match event {
-            Commands::NoteStart(note, row, force) => {
-                if row > 2 {
-                    panic!("Row out of bounds");
-                }
-
-                let note = self.rows[row as usize].get_note(note);
-                if self.rows[row as usize].instrument >= self.instruments.len() {
-                    log::warn!("Instrument out of bounds");
-                } else {
-                    self.instruments[self.rows[row as usize].instrument].start_note(note, force);
-                }
+            SystemCommand::Reset => {
+                log::error!("Not implemented System::Reset");
             }
-            Commands::NoteStop(note, row) => {
-                if row > 2 {
-                    panic!("Row out of bounds");
-                }
+        }
+    }
 
-                let note = self.rows[row as usize].get_note(note);
-                if self.rows[row as usize].instrument >= self.instruments.len() {
-                    log::warn!("Instrument out of bounds");
-                } else {
-                    self.instruments[self.rows[row as usize].instrument].stop_note(note);
-                }
-            }
-            Commands::OctaveDown(row) => {
-                if row > 2 {
-                    panic!("Row out of bounds");
-                }
-
-                self.rows[row as usize].octave -= 1;
-            }
-            Commands::OctaveUp(row) => {
-                if row > 2 {
-                    panic!("Row out of bounds");
-                }
-
+    pub fn handle_live_command(&mut self, event: LiveCommand) {
+        match event {
+            LiveCommand::OctaveUp(row) => {
                 self.rows[row as usize].octave += 1;
             }
+            LiveCommand::OctaveDown(row) => {
+                self.rows[row as usize].octave -= 1;
+            }
             _ => {}
+        }
+    }
+
+    pub fn on_event(&mut self, event: AppCommand) {
+        match event {
+            AppCommand::System(system_command) => self.handle_system_command(system_command),
+            AppCommand::Live(live_command) => self.handle_live_command(live_command),
         }
     }
 
@@ -227,6 +151,9 @@ impl App {
             RunMode::Live => {
                 info!("Starting live mode");
             }
+            RunMode::Graph => {
+                info!("Starting graph mode");
+            }
         }
     }
 
@@ -242,6 +169,9 @@ impl App {
             RunMode::Live => {
                 trace!("Live ticking");
                 self.live_tick();
+            }
+            RunMode::Graph => {
+                info!("Running graph mode");
             }
         }
     }

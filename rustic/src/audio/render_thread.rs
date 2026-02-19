@@ -1,15 +1,18 @@
 //! Audio render thread implementation
 
+use super::config::AudioConfig;
+use super::messages::{AudioMessage, InstrumentAudioMessage};
+use super::shared_state::SharedAudioState;
+use crate::core::graph::System;
 use crate::instruments::Instrument;
 use crossbeam::queue::ArrayQueue;
+use petgraph::graph::NodeIndex;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
-use super::config::AudioConfig;
-use super::messages::AudioMessage;
-use super::shared_state::SharedAudioState;
+use super::{GraphAudioMessage, RenderMode};
 
 /// Spawns the audio render thread that generates audio samples
 ///
@@ -17,6 +20,15 @@ use super::shared_state::SharedAudioState;
 /// - Processes control messages from the command thread
 /// - Generates audio by calling instrument methods
 /// - Writes audio to the ring buffer for the cpal callback to consume
+///
+/// # Examples
+///
+/// ```
+/// use rustic::audio::render_thread::spawn_audio_render_thread;
+///
+/// let result = spawn_audio_render_thread(shared_state, instruments, message_rx, audio_queue, config);
+/// assert!(result.is_ok());
+/// ```
 pub fn spawn_audio_render_thread(
     shared_state: Arc<SharedAudioState>,
     instruments: Vec<Box<dyn Instrument + Send + Sync>>,
@@ -28,12 +40,14 @@ pub fn spawn_audio_render_thread(
         .name("audio-render".to_string())
         .spawn(move || {
             let mut instruments = instruments;
+            let mut system: Option<System> = None;
             let mut chunk_buffer = vec![0.0f32; config.render_chunk_size];
+            let mut render_mode = RenderMode::Instruments; // Default to instrument render
 
             while !shared_state.shutdown.load(Ordering::Relaxed) {
                 // Process all pending control messages
                 while let Ok(msg) = message_rx.try_recv() {
-                    process_audio_message(&mut instruments, msg);
+                    process_audio_message(&mut instruments, &mut system, &mut render_mode, msg);
                 }
 
                 // Check if ring buffer has space
@@ -43,12 +57,34 @@ pub fn spawn_audio_render_thread(
                 }
 
                 // Generate audio chunk
-                for sample in chunk_buffer.iter_mut() {
-                    instruments.iter_mut().for_each(|inst| inst.tick());
-                    *sample = instruments
-                        .iter_mut()
-                        .map(|inst| inst.get_output())
-                        .sum::<f32>();
+                match render_mode {
+                    RenderMode::Instruments => {
+                        for sample in chunk_buffer.iter_mut() {
+                            instruments.iter_mut().for_each(|inst| inst.tick());
+                            *sample = instruments
+                                .iter_mut()
+                                .map(|inst| inst.get_output())
+                                .sum::<f32>();
+                        }
+                    }
+                    RenderMode::Graph => {
+                        if let Some(ref mut system) = system {
+                            system.run();
+                            if let Ok(sink) = system.get_sink(0) {
+                                let frames = sink.consume();
+                                chunk_buffer.clear();
+                                for frame in &frames {
+                                    // Push L then R for interleaved stereo
+                                    chunk_buffer.push(frame[0]);
+                                    chunk_buffer.push(frame[1]);
+                                }
+                            } else {
+                                chunk_buffer.fill(0.0);
+                            }
+                        } else {
+                            chunk_buffer.fill(0.0);
+                        }
+                    }
                 }
 
                 // Write to ring buffer (lock-free)
@@ -74,10 +110,12 @@ pub fn spawn_audio_render_thread(
         .expect("Failed to spawn audio render thread")
 }
 
-/// Process a single audio control message
-fn process_audio_message(instruments: &mut [Box<dyn Instrument + Send + Sync>], msg: AudioMessage) {
-    match msg {
-        AudioMessage::NoteStart {
+fn process_instrument_message(
+    command: InstrumentAudioMessage,
+    instruments: &mut [Box<dyn Instrument + Send + Sync>],
+) {
+    match command {
+        InstrumentAudioMessage::NoteStart {
             instrument_idx,
             note,
             velocity,
@@ -88,7 +126,7 @@ fn process_audio_message(instruments: &mut [Box<dyn Instrument + Send + Sync>], 
                 log::warn!("Invalid instrument index: {}", instrument_idx);
             }
         }
-        AudioMessage::NoteStop {
+        InstrumentAudioMessage::NoteStop {
             instrument_idx,
             note,
         } => {
@@ -98,14 +136,54 @@ fn process_audio_message(instruments: &mut [Box<dyn Instrument + Send + Sync>], 
                 log::warn!("Invalid instrument index: {}", instrument_idx);
             }
         }
-        AudioMessage::SetOctave { .. } => {
-            // Octave is managed by the command thread, not needed here
+    }
+}
+
+fn process_graph_message(command: GraphAudioMessage, system: &mut Option<System>) {
+    match command {
+        GraphAudioMessage::Swap(new_graph) => {
+            *system = Some(new_graph);
         }
-        AudioMessage::SetMasterVolume { .. } => {
-            // Volume is applied in the command thread
+        GraphAudioMessage::Clear => {
+            *system = None;
         }
-        AudioMessage::SetSampleRate { .. } => {
-            // Sample rate changes require restarting the audio system
+        GraphAudioMessage::StartSource { source_index } => {
+            if let Some(system) = system {
+                system.start_source(source_index);
+            }
+        }
+        GraphAudioMessage::StopSource { source_index } => {
+            if let Some(system) = system {
+                system.stop_source(source_index);
+            }
+        }
+        GraphAudioMessage::SetParameter {
+            node_index,
+            param_name,
+            value,
+        } => {
+            if let Some(system) = system
+                && let Some(f) = system.get_filter_mut(NodeIndex::new(node_index))
+            {
+                f.set_parameter(param_name.as_str(), value);
+            }
+        }
+    }
+}
+
+/// Process a single audio control message
+fn process_audio_message(
+    instruments: &mut [Box<dyn Instrument + Send + Sync>],
+    system: &mut Option<System>,
+    render_mode: &mut RenderMode,
+    msg: AudioMessage,
+) {
+    match msg {
+        AudioMessage::Instrument(cmd) => process_instrument_message(cmd, instruments),
+        AudioMessage::Graph(cmd) => process_graph_message(cmd, system),
+        AudioMessage::SetRenderMode(mode) => {
+            log::info!("Render mode changed to: {}", mode);
+            *render_mode = mode;
         }
         AudioMessage::Shutdown => {
             // Will be handled by the shutdown flag
