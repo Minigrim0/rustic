@@ -1,8 +1,4 @@
-use std::sync::{
-    Mutex,
-    atomic::AtomicU64,
-    mpsc::Sender,
-};
+use std::sync::{Mutex, atomic::AtomicU64, mpsc::Sender};
 
 use rustic::{audio::AudioHandle, prelude::Command};
 
