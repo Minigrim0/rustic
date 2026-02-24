@@ -3844,6 +3844,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustic-keyboard"
+version = "0.1.0"
+dependencies = [
+ "evdev",
+ "log",
+ "rustic",
+ "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "rustic-meta"
 version = "0.1.0"
 dependencies = [
