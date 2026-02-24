@@ -17,17 +17,15 @@ pub fn graph_add_node(
         .try_lock()
         .map_err(|_| AppError::LockPoisoned)?;
     let id = state.next_node_id.fetch_add(1, Ordering::Relaxed);
-    let tx = state
-        .command_tx
-        .try_lock()
-        .map_err(|_| AppError::LockPoisoned)?;
-    tx.send(Command::Graph(GraphCommand::AddNode {
-        id,
-        node_type,
-        kind,
-        position,
-    }))
-    .map_err(|_| AppError::ChannelClosed)?;
+    state
+        .app
+        .send(Command::Graph(GraphCommand::AddNode {
+            id,
+            node_type,
+            kind,
+            position,
+        }))
+        .map_err(|_| AppError::ChannelClosed)?;
     Ok(id)
 }
 
@@ -39,11 +37,9 @@ pub fn graph_remove_node(
     let state = rustic_state
         .try_lock()
         .map_err(|_| AppError::LockPoisoned)?;
-    let tx = state
-        .command_tx
-        .try_lock()
-        .map_err(|_| AppError::LockPoisoned)?;
-    tx.send(Command::Graph(GraphCommand::RemoveNode { id }))
+    state
+        .app
+        .send(Command::Graph(GraphCommand::RemoveNode { id }))
         .map_err(|_| AppError::ChannelClosed)?;
     Ok(())
 }
@@ -59,17 +55,15 @@ pub fn graph_connect(
     let state = rustic_state
         .try_lock()
         .map_err(|_| AppError::LockPoisoned)?;
-    let tx = state
-        .command_tx
-        .try_lock()
-        .map_err(|_| AppError::LockPoisoned)?;
-    tx.send(Command::Graph(GraphCommand::Connect {
-        from,
-        from_port,
-        to,
-        to_port,
-    }))
-    .map_err(|_| AppError::ChannelClosed)?;
+    state
+        .app
+        .send(Command::Graph(GraphCommand::Connect {
+            from,
+            from_port,
+            to,
+            to_port,
+        }))
+        .map_err(|_| AppError::ChannelClosed)?;
     Ok(())
 }
 
@@ -82,11 +76,9 @@ pub fn graph_disconnect(
     let state = rustic_state
         .try_lock()
         .map_err(|_| AppError::LockPoisoned)?;
-    let tx = state
-        .command_tx
-        .try_lock()
-        .map_err(|_| AppError::LockPoisoned)?;
-    tx.send(Command::Graph(GraphCommand::Disconnect { from, to }))
+    state
+        .app
+        .send(Command::Graph(GraphCommand::Disconnect { from, to }))
         .map_err(|_| AppError::ChannelClosed)?;
     Ok(())
 }
@@ -99,11 +91,9 @@ pub fn graph_start_node(
     let state = rustic_state
         .try_lock()
         .map_err(|_| AppError::LockPoisoned)?;
-    let tx = state
-        .command_tx
-        .try_lock()
-        .map_err(|_| AppError::LockPoisoned)?;
-    tx.send(Command::Graph(GraphCommand::StartNode { id }))
+    state
+        .app
+        .send(Command::Graph(GraphCommand::StartNode { id }))
         .map_err(|_| AppError::ChannelClosed)?;
     Ok(())
 }
@@ -116,11 +106,9 @@ pub fn graph_stop_node(
     let state = rustic_state
         .try_lock()
         .map_err(|_| AppError::LockPoisoned)?;
-    let tx = state
-        .command_tx
-        .try_lock()
-        .map_err(|_| AppError::LockPoisoned)?;
-    tx.send(Command::Graph(GraphCommand::StopNode { id }))
+    state
+        .app
+        .send(Command::Graph(GraphCommand::StopNode { id }))
         .map_err(|_| AppError::ChannelClosed)?;
     Ok(())
 }
@@ -135,15 +123,13 @@ pub fn graph_set_parameter(
     let state = rustic_state
         .try_lock()
         .map_err(|_| AppError::LockPoisoned)?;
-    let tx = state
-        .command_tx
-        .try_lock()
-        .map_err(|_| AppError::LockPoisoned)?;
-    tx.send(Command::Graph(GraphCommand::SetParameter {
-        node_id,
-        param_name,
-        value,
-    }))
-    .map_err(|_| AppError::ChannelClosed)?;
+    state
+        .app
+        .send(Command::Graph(GraphCommand::SetParameter {
+            node_id,
+            param_name,
+            value,
+        }))
+        .map_err(|_| AppError::ChannelClosed)?;
     Ok(())
 }

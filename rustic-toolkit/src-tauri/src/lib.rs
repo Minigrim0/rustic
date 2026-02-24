@@ -1,10 +1,9 @@
-use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{Mutex, RwLock, mpsc};
+use std::sync::Mutex;
 
-use rustic::audio::BackendEvent;
-use rustic::prelude::Command;
 use tauri::{Emitter, Manager};
 use tauri_plugin_fs::FsExt;
+
+use rustic::prelude::App;
 
 mod analysis;
 mod audio;
@@ -70,7 +69,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
-        .manage(RwLock::new(state::AudioState::default()))
+        .manage(std::sync::RwLock::new(state::AudioState::default()))
         .invoke_handler(tauri::generate_handler![
             commands::analyze::analyze_audio_file,
             commands::query::get_waveform,
@@ -96,25 +95,17 @@ pub fn run() {
             let scope = app.fs_scope();
             scope.allow_directory("/tmp", true)?;
 
-            // Set up communication channels with the rustic audio engine
-            log::info!("Creating communication channels");
-            let (frontend_sender, backend_receiver): (Sender<Command>, Receiver<Command>) =
-                mpsc::channel();
-            let (backend_sender, frontend_receiver): (
-                Sender<BackendEvent>,
-                Receiver<BackendEvent>,
-            ) = mpsc::channel();
-
-            // Start the rustic audio engine (skip logging — toolkit owns it)
-            log::info!("Starting audio engine");
-            let audio_handle = rustic::start_app(backend_sender, backend_receiver, true)?;
+            // Initialize the rustic audio engine
+            log::info!("Initializing rustic audio engine");
+            let mut rustic_app = App::new();
+            let event_rx = rustic_app.start()?;
 
             // Bridge backend events to Tauri frontend events
             log::info!("Starting event bridge thread");
             let tauri_handle = app.handle().clone();
             std::thread::spawn(move || {
                 log::info!("Rustic event bridge started");
-                while let Ok(event) = frontend_receiver.recv() {
+                while let Ok(event) = event_rx.recv() {
                     if let Err(e) = tauri_handle.emit("rustic-event", &event) {
                         log::error!("Failed to emit rustic event: {e}");
                     }
@@ -122,7 +113,7 @@ pub fn run() {
                 log::info!("Rustic event bridge shut down");
             });
 
-            app.manage(Mutex::new(RusticState::new(frontend_sender, audio_handle)));
+            app.manage(Mutex::new(RusticState::new(rustic_app)));
 
             log::info!("Setup complete");
             Ok(())

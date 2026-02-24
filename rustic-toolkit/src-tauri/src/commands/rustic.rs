@@ -15,26 +15,24 @@ pub fn change_render_mode(
     let state = rustic_state
         .try_lock()
         .map_err(|_| AppError::LockPoisoned)?;
-    let tx_channel = state
-        .command_tx
-        .try_lock()
-        .map_err(|_| AppError::LockPoisoned)?;
     match render_mode.as_str() {
         "graph" => {
             log::info!("Setting render mode to {}", RenderMode::Graph);
-            tx_channel
+            state
+                .app
                 .send(Command::Audio(AudioCommand::SetRenderMode(
                     RenderMode::Graph,
                 )))
-                .map_err(|_| AppError::ChannelClosed)?
+                .map_err(|_| AppError::ChannelClosed)?;
         }
         "instrument" => {
             log::info!("Setting render mode to {}", RenderMode::Instruments);
-            tx_channel
+            state
+                .app
                 .send(Command::Audio(AudioCommand::SetRenderMode(
                     RenderMode::Instruments,
                 )))
-                .map_err(|_| AppError::ChannelClosed)?
+                .map_err(|_| AppError::ChannelClosed)?;
         }
         _ => {
             log::warn!("Unknown render mode: {}", render_mode);
