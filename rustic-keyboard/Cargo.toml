@@ -4,6 +4,11 @@ description = "Keyboard instrument and input handling for Rustic"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "live"
+path = "src/bin/live.rs"
+required-features = ["input"]
+
 [dependencies]
 rustic = { path = "../rustic" }
 serde = { version = "1.0", features = ["derive"] }
