@@ -22,9 +22,6 @@ pub enum AppError {
     #[error("Invalid time rande")]
     InvalidTimeRange,
 
-    #[error("Unknown render mode {0}")]
-    UnknownRenderMode(String),
-
     #[error("communication channel closed unexpectedly")]
     ChannelClosed,
 
