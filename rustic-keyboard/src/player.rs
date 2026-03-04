@@ -37,8 +37,14 @@ impl KeyboardPlayer {
     pub fn new() -> Self {
         Self {
             rows: [
-                Row { instrument: 0, octave: 5 }, // row 0 — upper (QWERTY)
-                Row { instrument: 0, octave: 4 }, // row 1 — lower (ASDF)
+                Row {
+                    instrument: 0,
+                    octave: 5,
+                }, // row 0 — upper (QWERTY)
+                Row {
+                    instrument: 0,
+                    octave: 4,
+                }, // row 1 — lower (ASDF)
             ],
             octaves_linked: false,
             instruments_linked: false,
@@ -197,27 +203,27 @@ impl KeyboardPlayer {
         use evdev::Key;
         match key {
             // Row 0 — QWERTY (octave 5 by default)
-            Key::KEY_Q => Some((0, 0)),  // C
-            Key::KEY_W => Some((0, 1)),  // C#
-            Key::KEY_E => Some((0, 2)),  // D
-            Key::KEY_R => Some((0, 3)),  // D#
-            Key::KEY_T => Some((0, 4)),  // E
-            Key::KEY_Y => Some((0, 5)),  // F
-            Key::KEY_U => Some((0, 6)),  // F#
-            Key::KEY_I => Some((0, 7)),  // G
-            Key::KEY_O => Some((0, 8)),  // G#
-            Key::KEY_P => Some((0, 9)),  // A
+            Key::KEY_Q => Some((0, 0)), // C
+            Key::KEY_W => Some((0, 1)), // C#
+            Key::KEY_E => Some((0, 2)), // D
+            Key::KEY_R => Some((0, 3)), // D#
+            Key::KEY_T => Some((0, 4)), // E
+            Key::KEY_Y => Some((0, 5)), // F
+            Key::KEY_U => Some((0, 6)), // F#
+            Key::KEY_I => Some((0, 7)), // G
+            Key::KEY_O => Some((0, 8)), // G#
+            Key::KEY_P => Some((0, 9)), // A
 
             // Row 1 — ASDF (octave 4 by default)
-            Key::KEY_A => Some((1, 0)),  // C
-            Key::KEY_S => Some((1, 1)),  // C#
-            Key::KEY_D => Some((1, 2)),  // D
-            Key::KEY_F => Some((1, 3)),  // D#
-            Key::KEY_G => Some((1, 4)),  // E
-            Key::KEY_H => Some((1, 5)),  // F
-            Key::KEY_J => Some((1, 6)),  // F#
-            Key::KEY_K => Some((1, 7)),  // G
-            Key::KEY_L => Some((1, 8)),  // G#
+            Key::KEY_A => Some((1, 0)), // C
+            Key::KEY_S => Some((1, 1)), // C#
+            Key::KEY_D => Some((1, 2)), // D
+            Key::KEY_F => Some((1, 3)), // D#
+            Key::KEY_G => Some((1, 4)), // E
+            Key::KEY_H => Some((1, 5)), // F
+            Key::KEY_J => Some((1, 6)), // F#
+            Key::KEY_K => Some((1, 7)), // G
+            Key::KEY_L => Some((1, 8)), // G#
 
             _ => None,
         }

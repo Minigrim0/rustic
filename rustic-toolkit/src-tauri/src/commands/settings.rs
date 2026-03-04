@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 /// Mirrors `AppConfig` from the engine but only the user-facing fields.
 /// Kept in sync manually; the engine's `AppConfig` includes internal fields (fs paths)
 /// that the frontend should not touch.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct EngineConfig {
     #[serde(default)]
     pub system: SystemConfig,
@@ -15,16 +15,6 @@ pub struct EngineConfig {
     pub audio: AudioConfig,
     #[serde(default)]
     pub logging: LogConfig,
-}
-
-impl Default for EngineConfig {
-    fn default() -> Self {
-        Self {
-            system: SystemConfig::default(),
-            audio: AudioConfig::default(),
-            logging: LogConfig::default(),
-        }
-    }
 }
 
 fn config_file_path() -> Result<std::path::PathBuf, AppError> {

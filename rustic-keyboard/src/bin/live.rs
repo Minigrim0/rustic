@@ -5,8 +5,8 @@ use rustic::core::envelope::prelude::{ADSREnvelopeBuilder, LinearSegment};
 use rustic::instruments::prelude::KeyboardBuilder;
 use rustic::prelude::App;
 
-use rustic_keyboard::inputs::{list_input_devices, InputDevice};
 use rustic_keyboard::KeyboardPlayer;
+use rustic_keyboard::inputs::{InputDevice, list_input_devices};
 
 fn main() {
     let _ = rustic::init_logging(&LogConfig::default(), std::path::Path::new("."));
@@ -31,11 +31,16 @@ fn main() {
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("Failed to read input");
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read input");
 
         match input.trim().parse::<usize>() {
             Ok(n) if n < devices.len() => break n,
-            _ => println!("  Please enter a number between 0 and {}.", devices.len() - 1),
+            _ => println!(
+                "  Please enter a number between 0 and {}.",
+                devices.len() - 1
+            ),
         }
     };
 
@@ -58,9 +63,9 @@ fn main() {
         .with_voices(8)
         .with_note_envelope(
             ADSREnvelopeBuilder::new()
-                .attack(Box::new(LinearSegment::new(0.0, 1.0, 0.005)))  // 5 ms
-                .decay(Box::new(LinearSegment::new(1.0, 1.0, 0.001)))   // 1 ms, no drop → sustain at 1.0
-                .release(Box::new(LinearSegment::new(1.0, 0.0, 0.2)))   // 200 ms
+                .attack(Box::new(LinearSegment::new(0.0, 1.0, 0.005))) // 5 ms
+                .decay(Box::new(LinearSegment::new(1.0, 1.0, 0.001))) // 1 ms, no drop → sustain at 1.0
+                .release(Box::new(LinearSegment::new(1.0, 0.0, 0.2))) // 200 ms
                 .build(),
         )
         .build();

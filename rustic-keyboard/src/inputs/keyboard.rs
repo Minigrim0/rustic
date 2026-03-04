@@ -9,14 +9,9 @@ use std::path::Path;
 #[cfg(feature = "input")]
 pub enum InputDevice {
     /// Device was opened successfully.
-    Available {
-        label: String,
-        device: Device,
-    },
+    Available { label: String, device: Device },
     /// Device exists but could not be opened (e.g. permission denied).
-    Inaccessible {
-        label: String,
-    },
+    Inaccessible { label: String },
 }
 
 #[cfg(feature = "input")]
