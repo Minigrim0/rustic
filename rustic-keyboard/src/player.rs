@@ -13,8 +13,6 @@
 //! Row 0 defaults to octave 5, row 1 to octave 4.
 
 #[cfg(feature = "input")]
-use rustic::app::commands::{AudioCommand, Command};
-#[cfg(feature = "input")]
 use rustic::prelude::App;
 
 use crate::commands::live::LiveCommand;
@@ -122,21 +120,14 @@ impl KeyboardPlayer {
     fn note_on(&self, app: &App, row: usize, note_idx: u8) {
         let note = self.rows[row].get_note(note_idx);
         let instrument_idx = self.rows[row].instrument;
-        let _ = app.send(Command::Audio(AudioCommand::NoteStart {
-            instrument_idx,
-            note,
-            velocity: 1.0,
-        }));
+        let _ = app.note_on(instrument_idx, note, 1.0);
     }
 
     #[cfg(feature = "input")]
     fn note_off(&self, app: &App, row: usize, note_idx: u8) {
         let note = self.rows[row].get_note(note_idx);
         let instrument_idx = self.rows[row].instrument;
-        let _ = app.send(Command::Audio(AudioCommand::NoteStop {
-            instrument_idx,
-            note,
-        }));
+        let _ = app.note_off(instrument_idx, note);
     }
 
     /// Block on keyboard events and translate them into audio commands.
