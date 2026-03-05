@@ -9,7 +9,7 @@ import {
 import { markRaw } from "vue";
 import type { GraphMetadata } from "@/types";
 import type { Parameter } from "../../src-tauri/bindings/Parameter";
-import PlayButton from "@/components/graph/PlayButton.vue";
+import NodeControls from "@/components/graph/NodeControls.vue";
 
 type ParamStr = Parameter<string>;
 
@@ -122,9 +122,10 @@ export function registerNodesFromMetadata(editor: Editor, metadata: GraphMetadat
         const inputs = {
             backendNodeId: () => new NodeInterface<string>("Backend Node ID", "").setHidden(true),
             nodeTypeId: () => new NodeInterface<string>("Node Type ID", typeId).setHidden(true),
-            playing: () => new NodeInterface<boolean>("Play", false)
-                .setComponent(markRaw(PlayButton))
-                .setPort(false),
+            playing: () =>
+                new NodeInterface<string>("Controls", "idle")
+                    .setComponent(markRaw(NodeControls))
+                    .setPort(false),
             ...paramInputs,
         };
 
@@ -139,6 +140,58 @@ export function registerNodesFromMetadata(editor: Editor, metadata: GraphMetadat
 
     // Register filters
     for (const filter of metadata.filters) {
+        // Trigger node gets special treatment: no mix_mode, hidden ADSR params, NodeControls
+        if (filter.name === "Trigger") {
+            const inputs: Record<string, () => NodeInterface<any>> = {
+                backendNodeId: () =>
+                    new NodeInterface<string>("Backend Node ID", "").setHidden(true),
+                playing: () =>
+                    new NodeInterface<string>("Controls", "idle")
+                        .setComponent(markRaw(NodeControls))
+                        .setPort(false),
+            };
+
+            let audioPortIdx = 0;
+            for (const inp of filter.inputs) {
+                if (inp.parameter === null) {
+                    // Audio input port
+                    const idx = audioPortIdx++;
+                    const label = inp.label ?? `Input ${idx + 1}`;
+                    inputs[`in_${idx}`] = () => new NodeInterface(label, 0);
+                } else {
+                    // ADSR parameters — hidden (managed by envelope editor panel)
+                    const field = getFieldName(inp.parameter);
+                    if (ENVELOPE_PARAMS.has(field)) {
+                        const def =
+                            "Range" in inp.parameter
+                                ? inp.parameter.Range.default
+                                : "Float" in inp.parameter
+                                ? inp.parameter.Float.default
+                                : 0;
+                        inputs[field] = () =>
+                            new NodeInterface<number>(field, def)
+                                .setPort(false)
+                                .setHidden(true);
+                    }
+                    // gate is not in metadata — skip
+                }
+            }
+
+            const outputs: Record<string, () => NodeInterface<any>> = {
+                out_0: () => new NodeInterface("Output", 0),
+            };
+
+            const TriggerNode = defineNode({
+                type: "Trigger",
+                title: "Trigger",
+                inputs,
+                outputs,
+            });
+            editor.registerNodeType(TriggerNode, { category: "Filters" });
+            continue;
+        }
+
+        // Normal filter registration
         const inputs: Record<string, () => NodeInterface<any>> = {
             backendNodeId: () => new NodeInterface<string>("Backend Node ID", "").setHidden(true),
             mix_mode: () =>

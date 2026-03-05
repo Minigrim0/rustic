@@ -133,9 +133,29 @@ export async function graphStartNode(id: number): Promise<void> {
     return invoke<void>("graph_start_node", { id });
 }
 
-/** Stop a specific generator node in the audio graph. */
+/** Stop a specific generator node in the audio graph (graceful — lets release envelope finish). */
 export async function graphStopNode(id: number): Promise<void> {
     return invoke<void>("graph_stop_node", { id });
+}
+
+/** Kill a specific generator node immediately (bypasses release envelope). */
+export async function graphKillNode(id: number): Promise<void> {
+    return invoke<void>("graph_kill_node", { id });
+}
+
+/** Trigger a Trigger filter node: sets gate=1.0 (starts attack). */
+export async function graphTriggerPlay(id: number): Promise<void> {
+    return invoke<void>("graph_trigger_play", { id });
+}
+
+/** Release a Trigger filter node: sets gate=0.0 (starts release). */
+export async function graphTriggerStop(id: number): Promise<void> {
+    return invoke<void>("graph_trigger_stop", { id });
+}
+
+/** Kill a Trigger filter node immediately: sets gate=-1.0. */
+export async function graphTriggerKill(id: number): Promise<void> {
+    return invoke<void>("graph_trigger_kill", { id });
 }
 
 /** Recompile the current graph and hot-swap it into the render thread. */

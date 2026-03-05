@@ -88,10 +88,14 @@ pub fn run() {
             commands::graph::graph_disconnect,
             commands::graph::graph_start_node,
             commands::graph::graph_stop_node,
+            commands::graph::graph_kill_node,
             commands::graph::graph_set_parameter,
             commands::graph::graph_compile,
             commands::graph::graph_modulate,
             commands::graph::graph_demodulate,
+            commands::graph::graph_trigger_play,
+            commands::graph::graph_trigger_stop,
+            commands::graph::graph_trigger_kill,
         ])
         .setup(|app| {
             // File system scope

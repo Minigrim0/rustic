@@ -85,34 +85,23 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from "vue";
+import { onMounted, computed, watch } from "vue";
 import { BaklavaEditor, useBaklava } from "@baklavajs/renderer-vue";
 import "@baklavajs/themes/dist/syrup-dark.css";
 import {
     getGraphMetadata,
-    graphAddNode,
-    graphRemoveNode,
-    graphConnect,
-    graphDisconnect,
-    graphStartNode,
-    graphStopNode,
-    graphSetParameter,
     graphCompile,
-    graphModulateParameter,
-    graphDemodulateParameter,
 } from "@/utils/tauri-api";
-import { registerNodesFromMetadata, getNodeKind, getPortIndex } from "@/graph/nodes";
+import { registerNodesFromMetadata, getNodeKind } from "@/graph/nodes";
+import { useGraphBridge } from "@/graph/useGraphBridge";
 import { notifications } from "@/stores/notifications";
-import type { AbstractNode, NodeInterface } from "@baklavajs/core";
+import type { AbstractNode } from "@baklavajs/core";
 import EnvelopeEditor from "@/components/graph/EnvelopeEditor.vue";
 
 const baklava = useBaklava();
-const isDirty = ref(false);
+const { isDirty, envelopeNode } = useGraphBridge(baklava);
 
 // ─── Envelope panel state ────────────────────────────────────────────────────
-
-/** The generator node currently shown in the envelope panel (null = hidden). */
-const envelopeNode = ref<AbstractNode | null>(null);
 
 /** Read a numeric node interface value, falling back to `def` when the interface is absent. */
 function nodeParam(paramName: string, def: number): number {
@@ -132,7 +121,7 @@ const envReleaseCpT   = computed(() => nodeParam("release_cp_t",  0.5 ));
 
 /**
  * Write a value into a node interface by name.
- * The existing `setValue` subscription in onMounted will pick it up and forward
+ * The existing `setValue` subscription in useGraphBridge will pick it up and forward
  * it to the backend via `graphSetParameter`, so no extra IPC call is needed here.
  */
 function setEnvParam(paramName: string, value: number) {
@@ -140,18 +129,7 @@ function setEnvParam(paramName: string, value: number) {
     (envelopeNode.value.inputs as any)[paramName].value = value;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Find the interface key (e.g. "out_0", "in_1") for a given NodeInterface within its owning node. */
-function findInterfaceKey(node: AbstractNode, iface: NodeInterface): string | undefined {
-    for (const [key, ni] of Object.entries(node.outputs)) {
-        if (ni.id === iface.id) return key;
-    }
-    for (const [key, ni] of Object.entries(node.inputs)) {
-        if (ni.id === iface.id) return key;
-    }
-    return undefined;
-}
+// ─── Playback ────────────────────────────────────────────────────────────────
 
 /** Compile the current graph and push it to the render thread. */
 async function compile() {
@@ -164,185 +142,38 @@ async function compile() {
     }
 }
 
-/** Start all selected generator nodes. */
+/** Start all selected generator / Trigger nodes. */
 async function playSelected() {
     for (const node of baklava.displayedGraph.selectedNodes) {
-        if (getNodeKind(node) !== "Generator") continue;
-        const id = Number((node.inputs as any).backendNodeId?.value);
-        if (id) {
-            try {
-                (node.inputs as any).playing.value = true;
-                await graphStartNode(id);
-            } catch (e) {
-                notifications.error(`Failed to start node: ${e}`);
-            }
-        }
+        if (getNodeKind(node) !== "Generator" && node.title !== "Trigger") continue;
+        (node.inputs as any).playing.value = "playing";
     }
 }
 
-/** Stop all selected generator nodes. */
+/** Stop (graceful release) all selected generator / Trigger nodes. */
 async function stopSelected() {
     for (const node of baklava.displayedGraph.selectedNodes) {
-        if (getNodeKind(node) !== "Generator") continue;
-        const id = Number((node.inputs as any).backendNodeId?.value);
-        if (id) {
-            try {
-                (node.inputs as any).playing.value = false;
-                await graphStopNode(id);
-            } catch (e) {
-                notifications.error(`Failed to stop node: ${e}`);
-            }
-        }
+        if (getNodeKind(node) !== "Generator" && node.title !== "Trigger") continue;
+        (node.inputs as any).playing.value = "releasing";
     }
 }
 
 onMounted(async () => {
     const metadata = await getGraphMetadata();
     registerNodesFromMetadata(baklava.editor, metadata);
-
-    const graph = baklava.editor.graph;
-
-    // --- Node added ---
-    graph.events.addNode.subscribe("graph-bridge", async (node) => {
-        const kind = getNodeKind(node);
-        // Use the machine-readable type_id for generators; fall back to title for filters/sinks
-        const typeId = (node.inputs as any).nodeTypeId?.value ?? node.title;
-        try {
-            const backendId = await graphAddNode(typeId, kind, [0, 0]);
-            node.inputs.backendNodeId!.value = String(backendId);
-            isDirty.value = true;
-        } catch (e) {
-            notifications.error(`Failed to add node "${node.title}": ${e}`);
-            return;
-        }
-
-        // Subscribe to playing toggle for generators
-        if (kind === "Generator" && node.inputs.playing) {
-            node.inputs.playing.events.setValue.subscribe("graph-bridge-play", (value) => {
-                const backendId = Number(node.inputs.backendNodeId?.value);
-                if (backendId) {
-                    if (value) {
-                        graphStartNode(backendId).catch((e) =>
-                            notifications.error(`Failed to start node: ${e}`)
-                        );
-                    } else {
-                        graphStopNode(backendId).catch((e) =>
-                            notifications.error(`Failed to stop node: ${e}`)
-                        );
-                    }
-                }
-            });
-
-            // Open envelope editor when double-clicking a generator node
-            // We watch for node selection changes instead
-        }
-
-        // Subscribe to parameter changes
-        const MIX_MODE_MAP: Record<string, number> = { Sum: 0, Average: 1, Max: 2, Min: 3 };
-        for (const [key, iface] of Object.entries(node.inputs)) {
-            if (key === "backendNodeId" || key === "nodeTypeId" || key === "playing"
-                || key.startsWith("in_") || key.startsWith("mod_")) continue;
-            iface.events.setValue.subscribe("graph-bridge-param", (value: any) => {
-                const nodeId = Number(node.inputs.backendNodeId?.value);
-                if (nodeId) {
-                    // mix_mode arrives as a string ("Sum", "Average", …); map to ordinal.
-                    const numValue =
-                        typeof value === "string" && value in MIX_MODE_MAP
-                            ? MIX_MODE_MAP[value]!
-                            : Number(value);
-                    if (!isNaN(numValue)) {
-                        graphSetParameter(nodeId, key, numValue).catch((e) =>
-                            notifications.error(`Failed to set parameter "${key}": ${e}`)
-                        );
-                    }
-                }
-            });
-        }
-    });
-
-    // --- Node removed ---
-    graph.events.removeNode.subscribe("graph-bridge", (node) => {
-        const backendId = Number(node.inputs.backendNodeId?.value);
-        if (backendId) {
-            isDirty.value = true;
-            graphRemoveNode(backendId).catch((e) =>
-                notifications.error(`Failed to remove node: ${e}`)
-            );
-        }
-        // Close envelope panel if the removed node was being edited
-        if (envelopeNode.value && envelopeNode.value.id === node.id) {
-            envelopeNode.value = null;
-        }
-    });
-
-    // --- Connection added ---
-    graph.events.addConnection.subscribe("graph-bridge", (conn) => {
-        const fromIface = conn.from;
-        const toIface = conn.to;
-
-        const fromNode = graph.nodes.find((n) => n.id === fromIface.nodeId);
-        const toNode = graph.nodes.find((n) => n.id === toIface.nodeId);
-        if (!fromNode || !toNode) return;
-
-        const fromKey = findInterfaceKey(fromNode, fromIface);
-        const toKey = findInterfaceKey(toNode, toIface);
-        if (!fromKey || !toKey) return;
-
-        const fromBackendId = Number(fromNode.inputs.backendNodeId?.value);
-        const toBackendId = Number(toNode.inputs.backendNodeId?.value);
-        if (!fromBackendId || !toBackendId) return;
-
-        isDirty.value = true;
-        if (toKey.startsWith("mod_")) {
-            // CV modulation connection
-            const paramName = toKey.slice(4);
-            graphModulateParameter(fromBackendId, toBackendId, paramName).catch(
-                (e) => notifications.error(`Failed to add modulation: ${e}`)
-            );
-        } else {
-            graphConnect(fromBackendId, getPortIndex(fromKey), toBackendId, getPortIndex(toKey)).catch(
-                (e) => notifications.error(`Failed to connect nodes: ${e}`)
-            );
-        }
-    });
-
-    // --- Connection removed ---
-    graph.events.removeConnection.subscribe("graph-bridge", (conn) => {
-        const fromIface = conn.from;
-        const toIface = conn.to;
-
-        const fromNode = graph.nodes.find((n) => n.id === fromIface.nodeId);
-        const toNode = graph.nodes.find((n) => n.id === toIface.nodeId);
-        if (!fromNode || !toNode) return;
-
-        const fromBackendId = Number(fromNode.inputs.backendNodeId?.value);
-        const toBackendId = Number(toNode.inputs.backendNodeId?.value);
-        if (!fromBackendId || !toBackendId) return;
-
-        const toKey = findInterfaceKey(toNode, toIface);
-        isDirty.value = true;
-        if (toKey?.startsWith("mod_")) {
-            const paramName = toKey.slice(4);
-            graphDemodulateParameter(fromBackendId, toBackendId, paramName).catch((e) =>
-                notifications.error(`Failed to remove modulation: ${e}`)
-            );
-        } else {
-            graphDisconnect(fromBackendId, toBackendId).catch((e) =>
-                notifications.error(`Failed to disconnect nodes: ${e}`)
-            );
-        }
-    });
-
 });
 
 // Watch selectedNodes from the renderer (reactive via baklava's view model)
 watch(
     () => (baklava.displayedGraph as any).selectedNodes as AbstractNode[],
     (selected) => {
-        const firstGenerator = selected?.find((n) => getNodeKind(n) === "Generator") ?? null;
+        const firstEnvNode =
+            selected?.find(
+                (n) => getNodeKind(n) === "Generator" || n.title === "Trigger"
+            ) ?? null;
         // Keep panel open if the same node is still selected
-        if (firstGenerator) {
-            envelopeNode.value = firstGenerator;
+        if (firstEnvNode) {
+            envelopeNode.value = firstEnvNode;
         } else if (!selected?.some((n) => n.id === envelopeNode.value?.id)) {
             // Previously displayed node was deselected
             envelopeNode.value = null;
