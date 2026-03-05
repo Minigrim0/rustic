@@ -6,6 +6,10 @@ use rustic::app::commands::{GraphCommand, NodeKind};
 use rustic::prelude::Command;
 use tauri::State;
 
+fn rustic_err(e: impl std::fmt::Display) -> AppError {
+    AppError::ConfigError(e.to_string())
+}
+
 #[tauri::command]
 pub fn graph_add_node(
     node_type: String,
@@ -25,7 +29,7 @@ pub fn graph_add_node(
             kind,
             position,
         }))
-        .map_err(|_| AppError::ChannelClosed)?;
+        .map_err(rustic_err)?;
     Ok(id)
 }
 
@@ -40,8 +44,7 @@ pub fn graph_remove_node(
     state
         .app
         .send(Command::Graph(GraphCommand::RemoveNode { id }))
-        .map_err(|_| AppError::ChannelClosed)?;
-    Ok(())
+        .map_err(rustic_err)
 }
 
 #[tauri::command]
@@ -63,8 +66,7 @@ pub fn graph_connect(
             to,
             to_port,
         }))
-        .map_err(|_| AppError::ChannelClosed)?;
-    Ok(())
+        .map_err(rustic_err)
 }
 
 #[tauri::command]
@@ -79,8 +81,7 @@ pub fn graph_disconnect(
     state
         .app
         .send(Command::Graph(GraphCommand::Disconnect { from, to }))
-        .map_err(|_| AppError::ChannelClosed)?;
-    Ok(())
+        .map_err(rustic_err)
 }
 
 #[tauri::command]
@@ -94,8 +95,7 @@ pub fn graph_start_node(
     state
         .app
         .send(Command::Graph(GraphCommand::StartNode { id }))
-        .map_err(|_| AppError::ChannelClosed)?;
-    Ok(())
+        .map_err(rustic_err)
 }
 
 #[tauri::command]
@@ -109,8 +109,7 @@ pub fn graph_stop_node(
     state
         .app
         .send(Command::Graph(GraphCommand::StopNode { id }))
-        .map_err(|_| AppError::ChannelClosed)?;
-    Ok(())
+        .map_err(rustic_err)
 }
 
 #[tauri::command]
@@ -130,6 +129,51 @@ pub fn graph_set_parameter(
             param_name,
             value,
         }))
-        .map_err(|_| AppError::ChannelClosed)?;
-    Ok(())
+        .map_err(rustic_err)
+}
+
+/// Connect a source as a modulator for a named parameter on another node.
+#[tauri::command]
+pub fn graph_modulate(
+    from: u64,
+    to: u64,
+    param_name: String,
+    rustic_state: State<'_, Mutex<RusticState>>,
+) -> Result<(), AppError> {
+    let state = rustic_state
+        .try_lock()
+        .map_err(|_| AppError::LockPoisoned)?;
+    state
+        .app
+        .send(Command::Graph(GraphCommand::Modulate { from, to, param_name }))
+        .map_err(rustic_err)
+}
+
+/// Remove a modulation wire.
+#[tauri::command]
+pub fn graph_demodulate(
+    from: u64,
+    to: u64,
+    param_name: String,
+    rustic_state: State<'_, Mutex<RusticState>>,
+) -> Result<(), AppError> {
+    let state = rustic_state
+        .try_lock()
+        .map_err(|_| AppError::LockPoisoned)?;
+    state
+        .app
+        .send(Command::Graph(GraphCommand::Demodulate { from, to, param_name }))
+        .map_err(rustic_err)
+}
+
+/// Recompile the current graph topology and hot-swap it into the render thread.
+#[tauri::command]
+pub fn graph_compile(rustic_state: State<'_, Mutex<RusticState>>) -> Result<(), AppError> {
+    let state = rustic_state
+        .try_lock()
+        .map_err(|_| AppError::LockPoisoned)?;
+    state
+        .app
+        .send(Command::Graph(GraphCommand::Compile))
+        .map_err(rustic_err)
 }

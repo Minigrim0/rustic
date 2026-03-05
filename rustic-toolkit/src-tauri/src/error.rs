@@ -22,9 +22,6 @@ pub enum AppError {
     #[error("Invalid time rande")]
     InvalidTimeRange,
 
-    #[error("communication channel closed unexpectedly")]
-    ChannelClosed,
-
     #[error("Configuration error: {0}")]
     ConfigError(String),
 }

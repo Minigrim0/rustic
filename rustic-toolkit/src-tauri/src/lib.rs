@@ -3,6 +3,7 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 use tauri_plugin_fs::FsExt;
 
+use rustic::audio::EventFilter;
 use rustic::prelude::App;
 
 mod analysis;
@@ -88,6 +89,9 @@ pub fn run() {
             commands::graph::graph_start_node,
             commands::graph::graph_stop_node,
             commands::graph::graph_set_parameter,
+            commands::graph::graph_compile,
+            commands::graph::graph_modulate,
+            commands::graph::graph_demodulate,
         ])
         .setup(|app| {
             // File system scope
@@ -97,7 +101,7 @@ pub fn run() {
             // Initialize the rustic audio engine
             log::info!("Initializing rustic audio engine");
             let mut rustic_app = App::new();
-            let event_rx = rustic_app.start()?;
+            let event_rx = rustic_app.start(EventFilter::default())?;
 
             // Bridge backend events to Tauri frontend events
             log::info!("Starting event bridge thread");
