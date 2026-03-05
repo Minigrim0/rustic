@@ -97,12 +97,6 @@ export function onMenuEvent(
     return listen(menuId, handler);
 }
 
-export async function setRenderMode(
-    render_mode: "graph" | "instrument"
-): Promise<void> {
-    return invoke<void>("change_render_mode", {renderMode: render_mode});
-}
-
 // ── Graph commands ──────────────────────────────────────────────────
 
 /** Add a node to the backend audio graph. Returns the assigned backend ID. */
@@ -142,6 +136,29 @@ export async function graphStartNode(id: number): Promise<void> {
 /** Stop a specific generator node in the audio graph. */
 export async function graphStopNode(id: number): Promise<void> {
     return invoke<void>("graph_stop_node", { id });
+}
+
+/** Recompile the current graph and hot-swap it into the render thread. */
+export async function graphCompile(): Promise<void> {
+    return invoke<void>("graph_compile");
+}
+
+/** Connect a source as a CV modulator for a named parameter on another node. */
+export async function graphModulateParameter(
+    from: number,
+    to: number,
+    paramName: string,
+): Promise<void> {
+    return invoke<void>("graph_modulate", { from, to, paramName });
+}
+
+/** Disconnect a CV modulation wire. */
+export async function graphDemodulateParameter(
+    from: number,
+    to: number,
+    paramName: string,
+): Promise<void> {
+    return invoke<void>("graph_demodulate", { from, to, paramName });
 }
 
 /** Set a parameter on a node in the backend audio graph. */

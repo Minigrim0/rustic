@@ -4,6 +4,7 @@ import {
     SliderInterface,
     CheckboxInterface,
     IntegerInterface,
+    SelectInterface,
 } from "@baklavajs/renderer-vue";
 import { markRaw } from "vue";
 import type { GraphMetadata } from "@/types";
@@ -52,6 +53,44 @@ function buildParameterInputs(params: ParamStr[]): Record<string, () => NodeInte
     return inputs;
 }
 
+/**
+ * Parameters managed exclusively by the envelope editor panel.
+ * They must exist as node interface entries so the setValue subscription bridge
+ * can forward changes to the backend, but they must not render as visible controls
+ * inside the node itself — that would duplicate the panel's interactive SVG.
+ */
+const ENVELOPE_PARAMS = new Set([
+    "attack", "decay", "sustain", "release",
+    "attack_curve", "decay_curve", "release_curve",
+    "attack_cp_t", "decay_cp_t", "release_cp_t",
+]);
+
+/**
+ * Like buildParameterInputs but for generator nodes.
+ * Params listed in ENVELOPE_PARAMS become hidden NodeInterface<number> entries
+ * instead of visible sliders; everything else goes through createParameterInterface
+ * and also gets a connectable `mod_<field>` CV input port.
+ */
+function buildGeneratorInputs(params: ParamStr[]): Record<string, () => NodeInterface<any>> {
+    const inputs: Record<string, () => NodeInterface<any>> = {};
+    for (const param of params) {
+        if ("List" in param) continue;
+        const field = getFieldName(param);
+        if (ENVELOPE_PARAMS.has(field)) {
+            // Default value: use whatever the metadata says so the backend starts in sync.
+            const def = "Range" in param ? param.Range.default
+                      : "Float" in param ? param.Float.default
+                      : 0;
+            inputs[field] = () => new NodeInterface<number>(field, def).setPort(false).setHidden(true);
+        } else {
+            inputs[field] = createParameterInterface(param);
+            // CV modulation input port (connectable socket, not a value control)
+            inputs[`mod_${field}`] = () => new NodeInterface<number>(`↗ ${field}`, 0);
+        }
+    }
+    return inputs;
+}
+
 /** Infer the node kind from its interface keys. */
 export function getNodeKind(node: any): "Generator" | "Filter" | "Sink" {
     const outputKeys = Object.keys(node.outputs ?? {});
@@ -78,9 +117,11 @@ export function registerNodesFromMetadata(editor: Editor, metadata: GraphMetadat
             outputs[`out_${i}`] = () => new NodeInterface(label, 0);
         }
 
-        const paramInputs = buildParameterInputs(gen.parameters);
+        const paramInputs = buildGeneratorInputs(gen.parameters);
+        const typeId = gen.type_id;
         const inputs = {
             backendNodeId: () => new NodeInterface<string>("Backend Node ID", "").setHidden(true),
+            nodeTypeId: () => new NodeInterface<string>("Node Type ID", typeId).setHidden(true),
             playing: () => new NodeInterface<boolean>("Play", false)
                 .setComponent(markRaw(PlayButton))
                 .setPort(false),
@@ -100,22 +141,41 @@ export function registerNodesFromMetadata(editor: Editor, metadata: GraphMetadat
     for (const filter of metadata.filters) {
         const inputs: Record<string, () => NodeInterface<any>> = {
             backendNodeId: () => new NodeInterface<string>("Backend Node ID", "").setHidden(true),
+            mix_mode: () =>
+                new SelectInterface("Mix Mode", "Sum", ["Sum", "Average", "Max", "Min"]).setPort(
+                    false
+                ),
         };
-        for (let i = 0; i < filter.source_amount; i++) {
-            const label = filter.source_amount === 1 ? "Input" : `Input ${i + 1}`;
-            inputs[`in_${i}`] = () => new NodeInterface(label, 0);
+
+        const audioInputCount = filter.inputs.filter((inp) => inp.parameter === null).length;
+        let audioPortIdx = 0;
+        for (const input of filter.inputs) {
+            if (input.parameter === null) {
+                const idx = audioPortIdx++;
+                const label = input.label ?? (audioInputCount === 1 ? "Input" : `Input ${idx + 1}`);
+                inputs[`in_${idx}`] = () => new NodeInterface(label, 0);
+            } else {
+                const fieldName = getFieldName(input.parameter);
+                inputs[fieldName] = createParameterInterface(input.parameter);
+                // CV modulation input port (skip mix_mode — it's an enum selector, not a number)
+                if (fieldName !== "mix_mode") {
+                    inputs[`mod_${fieldName}`] = () =>
+                        new NodeInterface<number>(`↗ ${fieldName}`, 0);
+                }
+            }
         }
 
-        const paramInputs = buildParameterInputs(filter.parameters);
-        Object.assign(inputs, paramInputs);
+        const outputs: Record<string, () => NodeInterface<any>> = {};
+        for (let i = 0; i < filter.outputs; i++) {
+            const label = filter.outputs === 1 ? "Output" : `Output ${i + 1}`;
+            outputs[`out_${i}`] = () => new NodeInterface(label, 0);
+        }
 
         const FilterNode = defineNode({
             type: sanitizeType(filter.name),
             title: filter.name,
             inputs,
-            outputs: {
-                out_0: () => new NodeInterface("Output", 0),
-            },
+            outputs,
         });
         editor.registerNodeType(FilterNode, { category: "Filters" });
     }

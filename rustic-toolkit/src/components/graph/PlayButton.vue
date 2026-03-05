@@ -11,11 +11,10 @@
 <script setup lang="ts">
 defineProps<{
     modelValue: boolean;
-    nodeId: number;
 }>();
 
 defineEmits<{
-    "update:modelValue": [value: boolean, nodeId: number];
+    "update:modelValue": [value: boolean];
 }>();
 </script>
 
