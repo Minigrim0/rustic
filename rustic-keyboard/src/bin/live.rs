@@ -71,7 +71,8 @@ fn main() {
         .build();
 
     app.add_instrument(Box::new(keyboard));
-    app.start(EventFilter::default()).expect("Failed to start audio engine");
+    app.start(EventFilter::default())
+        .expect("Failed to start audio engine");
 
     println!("Q-P → octave 5 (C–A)   |   A-L → octave 4 (C–G#)   |   Ctrl+C to quit");
 
