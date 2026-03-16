@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["init_logging","start_app"],"macro":["filters","note"],"mod":["app","audio","core","inputs","instruments","meta","prelude","score"],"struct":["AudioHandle","AudioMetrics"]};
+window.SIDEBAR_ITEMS = {"constant":["APP_ID"],"fn":["init_logging"],"macro":["note"],"mod":["app","audio","core","instruments","meta","prelude","score"]};

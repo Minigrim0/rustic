@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["bandpass","highpass","lowpass","moving_average","resonant_bandpass"]};

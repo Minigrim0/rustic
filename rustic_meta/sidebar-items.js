@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Parameter"]};
+window.SIDEBAR_ITEMS = {"enum":["ListSize","Literal","MixMode","Parameter"],"struct":["FilterInfo","FilterInput","MetaGenerator","MetaSink"],"trait":["MetaFilter"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["pass","prelude"]};
+window.SIDEBAR_ITEMS = {"mod":["dynamics","frequency","modulation","prelude","trigger","utility"]};

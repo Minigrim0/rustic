@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CHANNELS"],"fn":["mono_to_frame","silent_block"],"type":["Block","Frame"]};

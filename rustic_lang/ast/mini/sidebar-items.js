@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Atom","Modifier"],"struct":["Alternation","Group","MiniNotation","Note","Sequence","Step"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["MessageType","ThemeChoice"],"fn":["_configure_fonts","apply_scaling","configure_theme"],"mod":["prelude"],"struct":["ButtonGroup","DataGrid","LabeledCombo","LabeledSlider","SectionContainer","StatusMessage"]};

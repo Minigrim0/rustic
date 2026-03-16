@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["AudioMessage"]};
+window.SIDEBAR_ITEMS = {"enum":["AudioMessage","GraphAudioMessage","InstrumentAudioMessage"]};

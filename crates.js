@@ -1,2 +1,2 @@
-window.ALL_CRATES = ["frontend","rustic","rustic_derive","rustic_meta","rustic_toolkit","rustic_toolkit_lib"];
-//{"start":21,"fragment_lengths":[10,9,16,14,17,21]}
+window.ALL_CRATES = ["rustic","rustic_derive","rustic_keyboard","rustic_lang","rustic_meta","rustic_toolkit","rustic_toolkit_lib","rustic_tui"];
+//{"start":21,"fragment_lengths":[8,16,18,14,14,17,21,13]}

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["envelope","filters","generator","graph","utils"]};
+window.SIDEBAR_ITEMS = {"mod":["audio","envelope","filters","generator","graph","utils"]};

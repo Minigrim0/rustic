@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["get_filters"],"mod":["structs","traits"]};
+window.SIDEBAR_ITEMS = {"fn":["get_filters","get_generators","get_sinks"],"mod":["traits"],"struct":["FilterRegistration"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["simple_source"],"struct":["SimpleSink","SimpleSource","System"],"trait":["AudioGraphElement","Entry","Filter","Sink","Source"]};
+window.SIDEBAR_ITEMS = {"enum":["ModTarget"],"fn":["simple_source"],"mod":["error","sources"],"struct":["AudioOutputSink","ModWire","SimpleSink","SimpleSource","System"],"trait":["Entry","Filter","Sink","Source"]};

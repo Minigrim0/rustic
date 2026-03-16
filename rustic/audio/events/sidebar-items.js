@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["BackendEvent"]};
+window.SIDEBAR_ITEMS = {"enum":["AudioEvent","BackendEvent","DiagnosticsEvent","ErrorEvent","EventCategory","StatusEvent"],"struct":["EventFilter"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["callback","command_thread","config","error","events","messages","render_thread","shared_state"]};
+window.SIDEBAR_ITEMS = {"mod":["callback","config","error","events","messages","shared_state"],"struct":["AudioHandle","AudioMetrics"]};
