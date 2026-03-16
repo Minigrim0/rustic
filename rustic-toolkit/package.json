@@ -18,6 +18,7 @@
     "@tauri-apps/plugin-fs": "^2.3.0",
     "@tauri-apps/plugin-opener": "^2",
     "@vueform/slider": "^2.1.10",
+    "baklavajs": "^2.8.1",
     "echarts": "^6.0.0",
     "tailwindcss": "^4.1.18",
     "vue": "^3.5.13",

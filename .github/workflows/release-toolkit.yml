@@ -1,0 +1,262 @@
+name: Release Toolkit
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version component to bump (patch / minor / major)"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      pre:
+        description: "Pre-release label (e.g. alpha, beta, rc, rc.1). Leave empty for a stable release."
+        required: false
+        default: ""
+
+# Allow the workflow to push commits and tags, and to create releases.
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: Bump, tag, and release rustic-toolkit
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Guard — only allow releases from core/dev or main. Feature branches
+      # must not trigger releases.
+      # -----------------------------------------------------------------------
+      - name: Verify branch
+        run: |
+          REF="${{ github.ref }}"
+          if [ "$REF" != "refs/heads/core/dev" ] && [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Releases must be triggered from 'core/dev' or 'main' (got '$REF')."
+            exit 1
+          fi
+
+      # -----------------------------------------------------------------------
+      # 1. Checkout — full history so the push-back works correctly.
+      # -----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Use a PAT / fine-grained token so that the pushed tag triggers the
+          # build-toolkit.yml release workflow (the default GITHUB_TOKEN push
+          # does not fire other workflow triggers).
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # -----------------------------------------------------------------------
+      # 2. Rust toolchain
+      # -----------------------------------------------------------------------
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # -----------------------------------------------------------------------
+      # 3. Cargo cache — keyed on the lock file, same pattern as ci.yml
+      # -----------------------------------------------------------------------
+      - name: Cache cargo registry and target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-release-
+
+      # -----------------------------------------------------------------------
+      # 4. Linux system dependencies required by the Tauri / WebKit stack
+      # -----------------------------------------------------------------------
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libgtk-3-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libasound2-dev
+
+      # -----------------------------------------------------------------------
+      # 5. Verify compilation BEFORE touching any files — fail fast if broken.
+      # -----------------------------------------------------------------------
+      - name: Verify workspace compiles
+        run: cargo check --workspace
+
+      # -----------------------------------------------------------------------
+      # 6. Compute the new version.
+      #
+      #    Logic:
+      #      a) Read current version from [package] section of Cargo.toml.
+      #      b) Strip any existing pre-release suffix (everything after the
+      #         first '-') so bumping always operates on a clean x.y.z base.
+      #      c) Apply the requested bump (major / minor / patch).
+      #      d) Re-append the new pre-release label if `pre` input is set.
+      #
+      #    Outputs: current, new, tag
+      # -----------------------------------------------------------------------
+      - name: Compute new version
+        id: ver
+        run: |
+          # ---- read current version from the [package] section only --------
+          # Stop reading at the first blank line after [package] to avoid
+          # picking up a version key from a [dependencies] table.
+          CURRENT=$(awk '
+            /^\[package\]/ { in_pkg=1; next }
+            in_pkg && /^\[/ { exit }
+            in_pkg && /^version[[:space:]]*=/ {
+              gsub(/^version[[:space:]]*=[[:space:]]*"|"[[:space:]]*$/, "")
+              print
+              exit
+            }
+          ' rustic-toolkit/src-tauri/Cargo.toml)
+
+          echo "Current version: $CURRENT"
+
+          # ---- strip any existing pre-release suffix -----------------------
+          BASE=${CURRENT%%-*}
+
+          # ---- split into components ---------------------------------------
+          MAJOR=$(echo "$BASE" | cut -d. -f1)
+          MINOR=$(echo "$BASE" | cut -d. -f2)
+          PATCH=$(echo "$BASE" | cut -d. -f3)
+
+          # ---- apply the requested bump ------------------------------------
+          case "${{ inputs.bump }}" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_BASE="${MAJOR}.${MINOR}.${PATCH}"
+
+          # ---- append pre-release label if provided ------------------------
+          if [ -n "${{ inputs.pre }}" ]; then
+            NEW="${NEW_BASE}-${{ inputs.pre }}"
+          else
+            NEW="$NEW_BASE"
+          fi
+
+          TAG="release_toolkit-v${NEW}"
+
+          echo "New version:     $NEW"
+          echo "Tag:             $TAG"
+
+          # ---- expose as step outputs --------------------------------------
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "new=$NEW"         >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG"         >> "$GITHUB_OUTPUT"
+
+      # -----------------------------------------------------------------------
+      # 7. Bump the version string in all three files.
+      #
+      #    - Cargo.toml : awk scoped to the [package] block so that dependency
+      #                   version pins are never touched.
+      #    - package.json / tauri.conf.json : jq in-place rewrite.
+      # -----------------------------------------------------------------------
+      - name: Bump version in Cargo.toml
+        env:
+          CURRENT: ${{ steps.ver.outputs.current }}
+          NEW: ${{ steps.ver.outputs.new }}
+        run: |
+          # Replace the version line only within the [package] section.
+          # The script sets a flag when [package] is encountered and clears it
+          # on the next section header, ensuring dependency pins are untouched.
+          awk -v old="$CURRENT" -v new="$NEW" '
+            /^\[package\]/ { in_pkg=1 }
+            /^\[/ && !/^\[package\]/ { in_pkg=0 }
+            in_pkg && /^version[[:space:]]*=/ {
+              sub(old, new)
+            }
+            { print }
+          ' rustic-toolkit/src-tauri/Cargo.toml > /tmp/Cargo.toml.tmp
+          mv /tmp/Cargo.toml.tmp rustic-toolkit/src-tauri/Cargo.toml
+
+      - name: Bump version in package.json
+        env:
+          NEW: ${{ steps.ver.outputs.new }}
+        run: |
+          jq --arg v "$NEW" '.version = $v' \
+            rustic-toolkit/package.json > /tmp/package.json.tmp
+          mv /tmp/package.json.tmp rustic-toolkit/package.json
+
+      - name: Bump version in tauri.conf.json
+        env:
+          NEW: ${{ steps.ver.outputs.new }}
+        run: |
+          jq --arg v "$NEW" '.version = $v' \
+            rustic-toolkit/src-tauri/tauri.conf.json > /tmp/tauri.conf.json.tmp
+          mv /tmp/tauri.conf.json.tmp rustic-toolkit/src-tauri/tauri.conf.json
+
+      # -----------------------------------------------------------------------
+      # 8. Regenerate Cargo.lock so it reflects the new crate version.
+      # -----------------------------------------------------------------------
+      - name: Update Cargo.lock
+        run: cargo fetch
+
+      # -----------------------------------------------------------------------
+      # 9. Commit the four changed files and push back to the source branch.
+      # -----------------------------------------------------------------------
+      - name: Commit and push version bump
+        env:
+          NEW: ${{ steps.ver.outputs.new }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            rustic-toolkit/src-tauri/Cargo.toml \
+            rustic-toolkit/package.json \
+            rustic-toolkit/src-tauri/tauri.conf.json \
+            Cargo.lock
+
+          git commit -m "[Chore] bump rustic-toolkit to ${NEW}"
+          git push
+
+      # -----------------------------------------------------------------------
+      # 10. Create and push the annotated release tag.
+      #     build-toolkit.yml listens for release: created events whose tag
+      #     starts with "release_toolkit-v" and will pick this up automatically.
+      # -----------------------------------------------------------------------
+      - name: Create and push annotated tag
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+          NEW: ${{ steps.ver.outputs.new }}
+        run: |
+          git tag -a "$TAG" -m "rustic-toolkit v${NEW}"
+          git push origin "$TAG"
+
+      # -----------------------------------------------------------------------
+      # 11. Create the GitHub release.
+      #     The release event fired here triggers build-toolkit.yml.
+      # -----------------------------------------------------------------------
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: "rustic-toolkit v${{ steps.ver.outputs.new }}"
+          # Mark as pre-release only when a pre-release label was supplied.
+          prerelease: ${{ inputs.pre != '' }}
+          generate_release_notes: true

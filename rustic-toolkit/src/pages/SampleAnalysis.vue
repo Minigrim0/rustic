@@ -68,7 +68,7 @@
                 </div>
 
                 <!-- Visualizers -->
-                <Visualizers v-if="analysisResult !== null" :audio_summary="analysisResult" />
+                <Visualizers v-if="analysisResult != null" :audio_summary="analysisResult" />
             </div>
         </div>
     </div>
@@ -82,7 +82,7 @@ import FileUpload from "../components/FileUpload.vue";
 import { analyzeAudioFile } from "../utils/tauri-api";
 import { notifications } from "../stores/notifications";
 
-import { type AudioSummary, type AudioFileInfo } from "../types";
+import { type AudioSummary, type AudioFileInfo } from "@/types";
 import Visualizers from "../components/Visualizers.vue";
 
 export default {
@@ -128,9 +128,7 @@ export default {
                 this.setAudioFileInfo(file);
 
                 const filePath = await this.saveFileTemporarily(file);
-
-                const analysisResult: AudioSummary = await analyzeAudioFile(filePath);
-                this.analysisResult = analysisResult;
+                this.analysisResult = await analyzeAudioFile(filePath);
             } catch (err: any) {
                 console.error("=== FILE UPLOAD FAILED ===");
                 console.error("Error details:", err);

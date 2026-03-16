@@ -1,0 +1,10 @@
+[package]
+name = "rustic-lang"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+nom = "8.0"
+
+[dev-dependencies]
+pretty_assertions = "1.4"

@@ -1,28 +1,76 @@
-use std::sync::RwLock;
+use std::sync::Mutex;
 
-use log::info;
-use tauri::Emitter;
-use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
+use tauri::{Emitter, Manager};
 use tauri_plugin_fs::FsExt;
+
+use rustic::audio::EventFilter;
+use rustic::prelude::App;
 
 mod analysis;
 mod audio;
 mod commands;
 mod error;
+mod rustic_state;
 mod state;
 mod types;
 
+use rustic_state::RusticState;
+
+/// Initialize toolkit-owned logging with colored terminal output and file logging.
+fn init_toolkit_logging() {
+    use simplelog::*;
+    use std::fs;
+
+    let cache_dir = directories::ProjectDirs::from("xyz", "minigrim0", "rustic")
+        .map(|d: directories::ProjectDirs| d.cache_dir().to_path_buf().join("toolkit"))
+        .unwrap_or_else(|| std::path::PathBuf::from("/tmp/rustic-toolkit"));
+
+    let _ = fs::create_dir_all(&cache_dir);
+
+    let log_file_path = cache_dir.join("rustic-toolkit.log");
+
+    let term_config = ConfigBuilder::new()
+        .set_time_format_rfc3339()
+        .set_target_level(LevelFilter::Info)
+        .set_location_level(LevelFilter::Debug)
+        .build();
+
+    let term_logger = TermLogger::new(
+        LevelFilter::Info,
+        term_config,
+        TerminalMode::Mixed,
+        ColorChoice::Auto,
+    );
+
+    let mut loggers: Vec<Box<dyn SharedLogger>> = vec![term_logger];
+
+    if let Ok(file) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_file_path)
+    {
+        let file_config = ConfigBuilder::new()
+            .set_time_format_rfc3339()
+            .set_target_level(LevelFilter::Trace)
+            .set_location_level(LevelFilter::Trace)
+            .build();
+
+        loggers.push(WriteLogger::new(LevelFilter::Trace, file_config, file));
+    }
+
+    let _ = CombinedLogger::init(loggers);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    colog::init();
-    log::set_max_level(log::LevelFilter::Info);
+    init_toolkit_logging();
 
-    info!("Starting Rustic Sample Analyser");
+    log::info!("Starting Rustic Toolkit");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
-        .manage(RwLock::new(state::AudioState::default()))
+        .manage(std::sync::RwLock::new(state::AudioState::default()))
         .invoke_handler(tauri::generate_handler![
             commands::analyze::analyze_audio_file,
             commands::query::get_waveform,
@@ -31,37 +79,50 @@ pub fn run() {
             commands::query::get_spectrogram,
             commands::utils::frequency_to_note_command,
             commands::utils::save_analysis,
+            commands::meta::get_graph_metadata,
+            commands::settings::get_engine_config,
+            commands::settings::set_engine_config,
+            commands::graph::graph_add_node,
+            commands::graph::graph_remove_node,
+            commands::graph::graph_connect,
+            commands::graph::graph_disconnect,
+            commands::graph::graph_start_node,
+            commands::graph::graph_stop_node,
+            commands::graph::graph_kill_node,
+            commands::graph::graph_set_parameter,
+            commands::graph::graph_compile,
+            commands::graph::graph_modulate,
+            commands::graph::graph_demodulate,
+            commands::graph::graph_trigger_play,
+            commands::graph::graph_trigger_stop,
+            commands::graph::graph_trigger_kill,
         ])
         .setup(|app| {
             // File system scope
             let scope = app.fs_scope();
             scope.allow_directory("/tmp", true)?;
 
-            // Native menu
-            let file_menu = SubmenuBuilder::new(app, "File")
-                .item(
-                    &MenuItemBuilder::with_id("open", "Open File")
-                        .accelerator("CmdOrCtrl+O")
-                        .build(app)?,
-                )
-                .separator()
-                .item(&PredefinedMenuItem::quit(app, Some("Quit"))?)
-                .build()?;
+            // Initialize the rustic audio engine
+            log::info!("Initializing rustic audio engine");
+            let mut rustic_app = App::new();
+            let event_rx = rustic_app.start(EventFilter::default())?;
 
-            let help_menu = SubmenuBuilder::new(app, "Help")
-                .item(&MenuItemBuilder::with_id("about", "About Rustic").build(app)?)
-                .build()?;
-
-            let menu = MenuBuilder::new(app)
-                .items(&[&file_menu, &help_menu])
-                .build()?;
-
-            app.set_menu(menu)?;
-
-            app.on_menu_event(|app, event| {
-                let _ = app.emit(event.id().as_ref(), ());
+            // Bridge backend events to Tauri frontend events
+            log::info!("Starting event bridge thread");
+            let tauri_handle = app.handle().clone();
+            std::thread::spawn(move || {
+                log::info!("Rustic event bridge started");
+                while let Ok(event) = event_rx.recv() {
+                    if let Err(e) = tauri_handle.emit("rustic-event", &event) {
+                        log::error!("Failed to emit rustic event: {e}");
+                    }
+                }
+                log::info!("Rustic event bridge shut down");
             });
 
+            app.manage(Mutex::new(RusticState::new(rustic_app)));
+
+            log::info!("Setup complete");
             Ok(())
         })
         .run(tauri::generate_context!())

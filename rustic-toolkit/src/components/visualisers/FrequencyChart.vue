@@ -116,10 +116,10 @@ import "echarts";
 import type { EChartsOption } from "echarts";
 
 import RangeSelector from "../RangeSelector.vue";
-import { notifications } from "../../stores/notifications";
-import { type SpectrumData, type FrequencyData } from "../../types";
-import { getSpectrum, getTopFrequencies } from "../../utils/tauri-api";
-import { spectrumSettings, appliedSettings } from "../../composables/useSpectrumSettings";
+import { notifications } from "@/stores/notifications.ts";
+import { type SpectrumData, type FrequencyData } from "@/types";
+import { getSpectrum, getTopFrequencies } from "@/utils/tauri-api.ts";
+import { spectrumSettings, appliedSettings } from "@/composables/useSpectrumSettings.ts";
 
 const props = defineProps<{
     start: number;
@@ -216,8 +216,7 @@ watch(
         topFreqsLoading.value = true;
         try {
             const [lo, hi] = freqRange.value;
-            const result = await getTopFrequencies(props.start, props.end, lo, hi, appliedSettings.topCount, appliedSettings.minPeakDistance);
-            topFrequencies.value = result;
+            topFrequencies.value = await getTopFrequencies(props.start, props.end, lo, hi, appliedSettings.topCount, appliedSettings.minPeakDistance);
         } catch (err: any) {
             notifications.error(`Unable to load top frequencies: ${err.message || err}`);
         } finally {
