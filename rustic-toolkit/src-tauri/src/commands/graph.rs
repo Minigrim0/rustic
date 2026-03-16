@@ -166,7 +166,11 @@ pub fn graph_modulate(
         .map_err(|_| AppError::LockPoisoned)?;
     state
         .app
-        .send(Command::Graph(GraphCommand::Modulate { from, to, param_name }))
+        .send(Command::Graph(GraphCommand::Modulate {
+            from,
+            to,
+            param_name,
+        }))
         .map_err(rustic_err)
 }
 
@@ -183,7 +187,11 @@ pub fn graph_demodulate(
         .map_err(|_| AppError::LockPoisoned)?;
     state
         .app
-        .send(Command::Graph(GraphCommand::Demodulate { from, to, param_name }))
+        .send(Command::Graph(GraphCommand::Demodulate {
+            from,
+            to,
+            param_name,
+        }))
         .map_err(rustic_err)
 }
 
