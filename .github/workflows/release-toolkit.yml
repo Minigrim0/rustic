@@ -31,14 +31,14 @@ jobs:
 
     steps:
       # -----------------------------------------------------------------------
-      # Guard — only allow releases from core/dev or main. Feature branches
-      # must not trigger releases.
+      # Guard — only allow releases from core/dev. Feature branches and main
+      # must not trigger releases directly.
       # -----------------------------------------------------------------------
       - name: Verify branch
         run: |
           REF="${{ github.ref }}"
-          if [ "$REF" != "refs/heads/core/dev" ] && [ "$REF" != "refs/heads/main" ]; then
-            echo "::error::Releases must be triggered from 'core/dev' or 'main' (got '$REF')."
+          if [ "$REF" != "refs/heads/core/dev" ]; then
+            echo "::error::Releases must be triggered from 'core/dev' (got '$REF')."
             exit 1
           fi
 
