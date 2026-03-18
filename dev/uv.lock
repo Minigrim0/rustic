@@ -2174,6 +2174,9 @@ dependencies = [
 [package.metadata]
 requires-dist = [{ name = "numpy", specifier = ">=1.24" }]
 
+[package.metadata.requires-dev]
+dev = [{ name = "maturin", specifier = ">=1.5,<2.0" }]
+
 [[package]]
 name = "scipy"
 version = "1.15.3"
