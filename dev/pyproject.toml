@@ -2,7 +2,7 @@
 name = "rustic-devel"
 description = "A development environment for prototyping rustic features"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12,<3.13"
 version = "0.1.0"
 dependencies = [
     "jupyter>=1.1.1",
@@ -11,15 +11,27 @@ dependencies = [
     "scipy>=1.14.1",
     "typing-extensions>=4.12.2",
     "rustic-py",
+    "librosa>=0.11.0",
+    "mlflow>=3.10.1",
+    "tqdm>=4.0",
+    "torch>=2.10.0",
+    "triton-rocm==3.6.0"
 ]
 
-[project.optional-dependencies]
-amd = ["torch>=2.3"]
+[tool.uv]
+override-dependencies = [
+    "pytorch-triton-rocm; python_full_version < '0'",
+    "triton; python_full_version < '0'",
+]
 
 [tool.uv.sources]
 rustic-py = { path = "../rustic-py", editable = true }
+torch = [{ index = "pytorch-rocm" }]
+pytorch-triton-rocm = [{ index = "pytorch-rocm" }]
+triton-rocm = [{ index = "pytorch-rocm" }]
 
 [[tool.uv.index]]
 name = "pytorch-rocm"
-url = "https://download.pytorch.org/whl/rocm6.2"
+url = "https://download.pytorch.org/whl/rocm7.1"
+explicit = true
 
