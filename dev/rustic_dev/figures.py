@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def spectrogram(signal: list, sample_rate: int, NFFT: int = None, title=None):
+def spectrogram(signal: np.ndarray, sample_rate: int, NFFT: int = None, title=None):
+    if signal.ndim == 2:
+        signal = signal.mean(axis=1)
     NFFT = min(
         1024 if NFFT is None else NFFT,
         len(signal)
@@ -47,6 +49,51 @@ def freq_compare(sig1: list, sig2: list, sr: int, sig1_name="Signal 1", sig2_nam
 
     fig.suptitle(f"Comparison of frequencies [{focus_window[0]};{focus_window[1]}]")
     plt.show()
+
+
+def plot_waveform(audio: np.ndarray, sr: int, title: str = None):
+    """Time-domain plot. Handles stereo (N, 2) or mono (N,)."""
+    mono = audio.mean(axis=1) if audio.ndim == 2 else audio
+    t = np.arange(len(mono)) / sr
+
+    fig, ax = plt.subplots(figsize=(10, 3))
+    ax.plot(t, mono)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Amplitude")
+    if title:
+        ax.set_title(title)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_diff(a: np.ndarray, b: np.ndarray, sr: int, a_name="A", b_name="B"):
+    """Overlay two signals and show their difference in a second panel."""
+    from .utils import mix_to_mono, diff
+
+    a_mono = mix_to_mono(a)
+    b_mono = mix_to_mono(b)
+    d = mix_to_mono(diff(a, b))
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 5), sharex=True)
+
+    ax1.plot(np.arange(len(a_mono)) / sr, a_mono, label=a_name)
+    ax1.plot(np.arange(len(b_mono)) / sr, b_mono, label=b_name, alpha=0.7)
+    ax1.set_ylabel("Amplitude")
+    ax1.legend()
+
+    ax2.plot(np.arange(len(d)) / sr, d, color="red")
+    ax2.set_xlabel("Time (s)")
+    ax2.set_ylabel("Difference")
+
+    plt.tight_layout()
+    plt.show()
+
+
+def play(audio: np.ndarray, sr: int):
+    """Play audio inline in a Jupyter notebook."""
+    from IPython.display import Audio, display
+    # Audio expects (channels, samples) for stereo
+    display(Audio(audio.T if audio.ndim == 2 else audio, rate=sr))
 
 
 def freq_display(sig: list, sr: int, sig_name="Signal 1", focus_window=(0, 20e3), draw_line_at=None):

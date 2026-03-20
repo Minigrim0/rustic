@@ -4,7 +4,7 @@ import type { FilterInput } from "./FilterInput";
 /**
  * Static metadata describing a filter type.
  */
-export type FilterInfo = { name: string, description: string, 
+export type FilterInfo = { name: string, type_id: string, description: string, 
 /**
  * All input ports in port-index orde: audio inputs first, then parameter ports
  */
