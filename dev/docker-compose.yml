@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: mlflow
       POSTGRES_DB: mlflow
     volumes:
-      - /data/mlflow/postgres:/var/lib/postgresql/data
+      - /storage/mlflow/postgres:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mlflow"]
@@ -18,15 +18,29 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - /data/mlflow/artifacts:/data/artifacts
+      - /storage/mlflow/artifacts:/mlflow/artifacts
     command: >
       mlflow server
       --backend-store-uri postgresql://mlflow:mlflow@postgres/mlflow
-      --default-artifact-root /data/artifacts
-      --allowed-hosts '*'
+      --default-artifact-root /mlflow/artifacts
       --host 0.0.0.0
       --port 5000
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
+
+  jupyter:
+    image: python:3.12-slim
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/workspace
+      - ./.venv:/workspace/.venv
+    working_dir: /workspace
+    command: >
+      /workspace/.venv/bin/jupyter notebook
+      --ip=0.0.0.0 --port=8888 --no-browser
+      --NotebookApp.token='' --NotebookApp.password=''
+      --notebook-dir=/workspace
     restart: unless-stopped

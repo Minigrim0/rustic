@@ -14,9 +14,16 @@ dependencies = [
     "librosa>=0.11.0",
     "mlflow>=3.10.1",
     "tqdm>=4.0",
-    "torch>=2.10.0",
-    "triton-rocm==3.6.0",
 ]
+
+[project.optional-dependencies]
+rocm = [
+    "torch>=2.4.0,<2.5.0",
+]
+# cuda: torch is installed post-sync via `make sync-cuda`
+# uv cannot lock the same package from two different explicit indexes,
+# so torch for CUDA (cu124) is managed outside the lockfile.
+cuda = []
 
 [tool.uv]
 override-dependencies = [
@@ -26,12 +33,10 @@ override-dependencies = [
 
 [tool.uv.sources]
 rustic-py = { path = "../rustic-py", editable = true }
-torch = [{ index = "pytorch-rocm" }]
-pytorch-triton-rocm = [{ index = "pytorch-rocm" }]
-triton-rocm = [{ index = "pytorch-rocm" }]
+torch = { index = "pytorch-rocm", extra = "rocm" }
 
 [[tool.uv.index]]
 name = "pytorch-rocm"
-url = "https://download.pytorch.org/whl/rocm7.1"
+url = "https://download.pytorch.org/whl/rocm6.1"
 explicit = true
 
