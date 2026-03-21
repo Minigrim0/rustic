@@ -17,14 +17,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Install project dependencies
+# Install deps from pyproject.toml, excluding rustic-py (no Cargo.toml — injected at runtime via PYTHONPATH)
 RUN uv pip install --system --no-cache-dir \
     "jupyter>=1.1.1" \
     "matplotlib>=3.9.2" \
-    "notebook>=7.5.5" \
     "numpy>=2.1.3" \
     "scipy>=1.14.1" \
-    "typing-extensions>=4.12.2"
+    "typing-extensions>=4.12.2" \
+    "librosa>=0.11.0" \
+    "mlflow>=3.10.1" \
+    "tqdm>=4.0"
 
 # Install PyTorch for CUDA 12.2 (cu121 is the closest available wheel)
 RUN uv pip install --system --no-cache-dir \

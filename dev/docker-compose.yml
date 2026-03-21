@@ -40,6 +40,9 @@ services:
       - "8888:8888"
     volumes:
       - .:/workspace
+      - ../rustic-py/python:/rustic-py
+    environment:
+      - PYTHONPATH=/rustic-py
     working_dir: /workspace
     deploy:
       resources:
