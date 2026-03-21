@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["dynamics","frequency","modulation","prelude","utility"]};

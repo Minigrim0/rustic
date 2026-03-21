@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["rustic",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"rustic/audio/error/enum.AudioError.html\" title=\"enum rustic::audio::error::AudioError\">AudioError</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"rustic/audio/error/enum.CommandError.html\" title=\"enum rustic::audio::error::CommandError\">CommandError</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"rustic/core/graph/error/enum.AudioGraphError.html\" title=\"enum rustic::core::graph::error::AudioGraphError\">AudioGraphError</a>",0]]],["rustic_keyboard",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"rustic_keyboard/error/enum.KeyboardError.html\" title=\"enum rustic_keyboard::error::KeyboardError\">KeyboardError</a>",0]]],["rustic_lang",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.94.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"struct\" href=\"rustic_lang/error/struct.CompileError.html\" title=\"struct rustic_lang::error::CompileError\">CompileError</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[881,315,306]}
