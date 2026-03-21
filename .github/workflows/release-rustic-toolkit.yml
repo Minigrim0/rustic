@@ -1,0 +1,118 @@
+name: Release rustic-toolkit
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      bumped: ${{ steps.detect.outputs.bumped }}
+      version: ${{ steps.detect.outputs.current }}
+      release_id: ${{ steps.create-release.outputs.release_id }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect version bump
+        id: detect
+        run: |
+          CURRENT=$(python3 -c "import json; d=json.load(open('rustic-toolkit/src-tauri/tauri.conf.json')); print(d['version'])")
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            PREV=$(git show "$LAST_TAG:rustic-toolkit/src-tauri/tauri.conf.json" 2>/dev/null \
+              | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('version',''))" \
+              || echo "")
+          else
+            PREV=""
+          fi
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          if [ "$CURRENT" != "$PREV" ]; then
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create draft release
+        id: create-release
+        if: steps.detect.outputs.bumped == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.detect.outputs.current }}
+        run: |
+          gh release create "rustic-toolkit/v${VERSION}" \
+            --title "rustic-toolkit v${VERSION}" \
+            --generate-notes \
+            --draft
+          RELEASE_ID=$(gh api \
+            "/repos/${{ github.repository }}/releases/tags/rustic-toolkit%2Fv${VERSION}" \
+            --jq '.id')
+          echo "release_id=${RELEASE_ID}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.bumped == 'true'
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: windows-latest
+          - os: macos-latest
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system libs (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential curl wget file \
+            libxdo-dev libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build and attach to release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          projectPath: rustic-toolkit
+          releaseId: ${{ needs.detect.outputs.release_id }}
+
+  publish:
+    needs: [detect, build]
+    if: needs.detect.outputs.bumped == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.detect.outputs.version }}
+        run: |
+          gh release edit "rustic-toolkit/v${VERSION}" \
+            --repo "${{ github.repository }}" \
+            --draft=false

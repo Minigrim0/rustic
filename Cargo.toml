@@ -6,6 +6,6 @@ members = [
     "rustic-meta",
     "rustic-keyboard",
     "rustic-tui",
-    "rustic-lang",
+    "rustic-lang", "rustic-py",
 ]
 resolver = "2"
