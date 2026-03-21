@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: false
+
 jobs:
   publish-docs:
     runs-on: ubuntu-latest
@@ -13,6 +17,49 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+      - name: Detect version bumps
+        id: detect
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          RUST_CURRENT=$(grep '^version' rustic/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          if [ -n "$LAST_TAG" ]; then
+            RUST_PREV=$(git show "$LAST_TAG:rustic/Cargo.toml" 2>/dev/null \
+              | grep '^version' | head -1 | sed 's/version = "\(.*\)"/\1/' || echo "")
+          else
+            RUST_PREV=""
+          fi
+
+          PY_CURRENT=$(grep '^version' rustic-py/pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          if [ -n "$LAST_TAG" ]; then
+            PY_PREV=$(git show "$LAST_TAG:rustic-py/pyproject.toml" 2>/dev/null \
+              | grep '^version' | sed 's/version = "\(.*\)"/\1/' || echo "")
+          else
+            PY_PREV=""
+          fi
+
+          echo "rust_version=$RUST_CURRENT" >> "$GITHUB_OUTPUT"
+          echo "py_version=$PY_CURRENT" >> "$GITHUB_OUTPUT"
+
+          if [ "$RUST_CURRENT" != "$RUST_PREV" ]; then
+            echo "rust_bumped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "rust_bumped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ "$PY_CURRENT" != "$PY_PREV" ]; then
+            echo "py_bumped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "py_bumped=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Cache cargo registry and target
         uses: actions/cache@v4
@@ -28,13 +75,10 @@ jobs:
       - name: Install system libraries
         run: |
           sudo apt-get update
-          sudo apt install -y libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential curl wget file \
+            libxdo-dev libssl-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
             libasound2-dev
@@ -42,14 +86,62 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Generate documentation
-        run: |
-          cargo doc --no-deps
-          echo "<meta http-equiv=\"refresh\" content=\"0; url=rustic\">" > target/doc/index.html
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
-      - name: Deploy to GitHub Pages
+      - name: Install Python tools
+        run: pip install maturin mkdocs-material "mkdocstrings[python]" mike
+
+      - name: Build Rust docs
+        run: RUSTDOCFLAGS="--default-theme ayu" cargo doc --no-deps
+
+      - name: Deploy Rust docs → latest
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: target/doc
-          commit-message: "docs: Update documentation for ${{ github.sha }}"
+          target-folder: doc/rust/latest
+          clean: false
+          clean-exclude: |
+            doc/rust/v*/
+            doc/python/
+            dev/
+          commit-message: "docs: update rust/latest for ${{ github.sha }}"
+
+      - name: Deploy Rust docs → versioned snapshot
+        if: steps.detect.outputs.rust_bumped == 'true'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: target/doc
+          target-folder: doc/rust/v${{ steps.detect.outputs.rust_version }}
+          clean: false
+          clean-exclude: |
+            doc/rust/latest/
+            doc/rust/v*/
+            doc/python/
+            dev/
+          commit-message: "docs: snapshot rust/v${{ steps.detect.outputs.rust_version }}"
+
+      - name: Build and deploy Python docs
+        run: |
+          cd rustic-py
+          maturin develop -q
+          mike deploy \
+            --config-file mkdocs.yml \
+            --prefix doc/python \
+            --push \
+            ${{ steps.detect.outputs.py_version }} latest
+
+      - name: Deploy portal homepage
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: .github/pages
+          clean: true
+          clean-exclude: |
+            doc/
+            dev/
+          commit-message: "docs: update portal for ${{ github.sha }}"

@@ -1,0 +1,66 @@
+name: Release rustic-py
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect version bump
+        id: detect
+        run: |
+          CURRENT=$(grep '^version' rustic-py/pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            PREV=$(git show "$LAST_TAG:rustic-py/pyproject.toml" 2>/dev/null \
+              | grep '^version' | sed 's/version = "\(.*\)"/\1/' || echo "")
+          else
+            PREV=""
+          fi
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          if [ "$CURRENT" != "$PREV" ]; then
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Rust
+        if: steps.detect.outputs.bumped == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Python
+        if: steps.detect.outputs.bumped == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install maturin
+        if: steps.detect.outputs.bumped == 'true'
+        run: pip install maturin
+
+      - name: Build wheel
+        if: steps.detect.outputs.bumped == 'true'
+        run: |
+          cd rustic-py
+          maturin build --release
+
+      - name: Create GitHub release
+        if: steps.detect.outputs.bumped == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.detect.outputs.current }}
+        run: |
+          gh release create "rustic-py/v${VERSION}" \
+            --title "rustic-py v${VERSION}" \
+            --generate-notes \
+            target/wheels/*.whl
