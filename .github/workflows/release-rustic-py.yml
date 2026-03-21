@@ -44,6 +44,12 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install dependencies
+        if: steps.detect.outputs.bumped == 'true'
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update && apt-get install -y --no-install-recommends alsa-dev
+
       - name: Install maturin
         if: steps.detect.outputs.bumped == 'true'
         run: pip install maturin
