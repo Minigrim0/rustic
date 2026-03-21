@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AppMode"],"mod":["audio_graph","commands","prelude","state"]};

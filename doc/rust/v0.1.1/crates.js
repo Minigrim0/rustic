@@ -1,0 +1,2 @@
+window.ALL_CRATES = ["rustic","rustic_derive","rustic_keyboard","rustic_lang","rustic_meta","rustic_py","rustic_toolkit","rustic_toolkit_lib","rustic_tui"];
+//{"start":21,"fragment_lengths":[8,16,18,14,14,12,17,21,13]}

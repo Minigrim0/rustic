@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FrequencyRelation","MixMode","Waveform"],"mod":["builder"],"struct":["MultiToneGenerator","SingleToneGenerator"]};
