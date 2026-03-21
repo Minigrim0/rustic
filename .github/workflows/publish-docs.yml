@@ -92,7 +92,9 @@ jobs:
           python-version: "3.x"
 
       - name: Install Python tools
-        run: pip install maturin mkdocs-material "mkdocstrings[python]" mike
+        run: |
+          python -m venv .venv  # Required for maturin
+          pip install maturin mkdocs-material "mkdocstrings[python]" mike
 
       - name: Build Rust docs
         run: RUSTDOCFLAGS="--default-theme ayu" cargo doc --no-deps
