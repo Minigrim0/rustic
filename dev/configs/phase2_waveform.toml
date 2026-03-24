@@ -1,0 +1,9 @@
+# Phase 2 — NoteWaveformPredictor (joint note + waveform classification).
+
+[run]
+experiment = "Phase2_NoteWaveform"
+model = "NoteWaveformPredictor"
+
+[training]
+n_epochs = 120
+lambda_waveform = 1.0

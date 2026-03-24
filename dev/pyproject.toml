@@ -16,6 +16,10 @@ dependencies = [
     "tqdm>=4.0",
 ]
 
+[project.scripts]
+rustic-train = "rustic_ml.cli.train:main"
+rustic-generate = "rustic_ml.cli.generate:main"
+
 [project.optional-dependencies]
 rocm = [
     "torch>=2.4.0,<2.5.0",
@@ -34,6 +38,9 @@ override-dependencies = [
 [tool.uv.sources]
 rustic-py = { path = "../rustic-py", editable = true }
 torch = { index = "pytorch-rocm", extra = "rocm" }
+
+[tool.setuptools.packages.find]
+include = ["rustic_ml*"]
 
 [[tool.uv.index]]
 name = "pytorch-rocm"

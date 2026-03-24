@@ -1,0 +1,5 @@
+# Phase 1 — ADSRPredictor (ADSR regression conditioned on GT note).
+
+[run]
+experiment = "Phase1_ADSR"
+model = "ADSRPredictor"
