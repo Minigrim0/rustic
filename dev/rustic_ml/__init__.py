@@ -1,3 +1,3 @@
-from rustic_ml import encoding, dataset, loss, analysis, evaluation, mlflow_ui
+from rustic_ml import comparison, encoding, dataset, loss, analysis, evaluation, mlflow_ui, training
 
-__all__ = ["encoding", "dataset", "loss", "analysis", "evaluation", "mlflow_ui"]
+__all__ = ["comparison", "encoding", "dataset", "loss", "analysis", "evaluation", "mlflow_ui", "training"]

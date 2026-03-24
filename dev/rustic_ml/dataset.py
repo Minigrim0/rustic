@@ -14,7 +14,7 @@ import numpy as np
 import librosa
 from tqdm import tqdm
 
-from .encoding import encode_adsr, NOTE_MIN, NOTE_MAX, ADSR_MIN, ADSR_MAX
+from .encoding import encode_adsr, encode_waveform, NOTE_MIN, NOTE_MAX, ADSR_MIN, ADSR_MAX, WAVEFORMS
 
 # Fixed render constants (match ML_PLAN)
 NOTE_ON = 0.05
@@ -26,16 +26,19 @@ N_FFT = 2048
 HOP_LENGTH = 512
 
 
-def random_spec(waveform: str = "sine") -> dict:
+def random_spec(waveform: str | None = None) -> dict:
     """Generate a random GraphSpec-compatible dict.
 
     Samples:
         note: uniform integer from [NOTE_MIN, NOTE_MAX]
         attack/decay/release: log-uniform from [ADSR_MIN, ADSR_MAX]
         sustain: uniform from [0.0, 1.0]
+        waveform: uniform from WAVEFORMS if None, otherwise uses the given value
 
     Returns a dict compatible with rustic_py.render().
     """
+    if waveform is None:
+        waveform = WAVEFORMS[int(np.random.randint(0, len(WAVEFORMS)))]
     note = int(np.random.randint(NOTE_MIN, NOTE_MAX + 1))
     log_min = np.log(ADSR_MIN)
     log_max = np.log(ADSR_MAX)
@@ -94,7 +97,7 @@ def render_mel(spec_dict: dict) -> np.ndarray:
 def _generate_batch(
     batch_size: int,
     output_path: Path,
-    waveform: str,
+    waveform: str | None,
     progress_queue: MPQueue | None = None,
     slot_id: int = 0,
 ) -> Path:
@@ -106,7 +109,7 @@ def _generate_batch(
     Args:
         batch_size:      Number of samples to generate.
         output_path:     Full path for the output .npz file.
-        waveform:        Source waveform type.
+        waveform:        Source waveform type, or None for uniform random sampling.
         progress_queue:  Optional multiprocessing.Queue. If provided, sends
                          slot_id after each sample so the main process can
                          update progress bars.
@@ -116,7 +119,7 @@ def _generate_batch(
     Returns:
         The output_path, so callers can track which batches completed.
     """
-    mel_batch, note_batch, adsr_batch = [], [], []
+    mel_batch, note_batch, adsr_batch, waveform_batch = [], [], [], []
 
     for _ in range(batch_size):
         spec = random_spec(waveform=waveform)
@@ -127,6 +130,7 @@ def _generate_batch(
         adsr_batch.append(
             encode_adsr(src["attack"], src["decay"], src["sustain"], src["release"])
         )
+        waveform_batch.append(encode_waveform(src["waveform"]))
         if progress_queue is not None:
             progress_queue.put(slot_id)
 
@@ -140,6 +144,7 @@ def _generate_batch(
         mel=padded,
         note=np.array(note_batch, dtype=np.int32),
         adsr=np.stack(adsr_batch).astype(np.float32),
+        waveform=np.array(waveform_batch, dtype=np.int32),
     )
     return output_path
 
@@ -208,16 +213,17 @@ def generate_dataset(
     n_samples: int,
     output_dir: str | Path,
     batch_size: int = 1000,
-    waveform: str = "sine",
+    waveform: str | None = None,
     start_batch: int = 0,
     n_workers: int = 1,
 ) -> None:
     """Generate a dataset of random specs and save as batched .npz files.
 
     Each .npz file contains:
-        'mel':  (B, MEL_BINS, T)   float32
-        'note': (B,)               int32
-        'adsr': (B, 4)             float32
+        'mel':      (B, MEL_BINS, T)   float32
+        'note':     (B,)               int32
+        'adsr':     (B, 4)             float32
+        'waveform': (B,)               int32
 
     When n_workers > 1, batches are generated in parallel using
     ProcessPoolExecutor. Progress is displayed as ipywidgets bars when running
@@ -305,21 +311,93 @@ def generate_dataset(
     manager.shutdown()
 
 
+def prepare_dataloaders(
+    data_dir: str | Path,
+    n_samples: int,
+    batch_size_gen: int,
+    batch_size: int,
+    val_fraction: float = 0.2,
+    seed: int | None = None,
+    with_waveform: bool = False,
+) -> tuple:
+    """Ensure a dataset exists, then build train/val DataLoaders.
+
+    1. Counts samples already in *data_dir* (*.npz files).
+    2. If fewer than *n_samples* exist, generates the missing ones via
+       :func:`generate_dataset` (appends, never overwrites).
+    3. Randomly selects ``round(n_samples / batch_size_gen)`` batch files,
+       splits them into train / val at *val_fraction*, wraps in
+       :class:`NpzDataset` and ``DataLoader``.
+
+    Args:
+        data_dir:       Directory containing (or to receive) .npz batch files.
+        n_samples:      Target total number of samples.
+        batch_size_gen: Samples per .npz file used during generation.
+        batch_size:     Mini-batch size for the DataLoaders.
+        val_fraction:   Fraction of files reserved for validation (default 0.2).
+        seed:           Optional seed for the file-selection shuffle — does not
+                        affect global random state.
+        with_waveform:  If True, DataLoader batches include a waveform int as
+                        the 4th element. Also ensures generated data includes
+                        waveform labels (random waveform per sample).
+
+    Returns:
+        (train_loader, val_loader, train_ds, val_ds)
+    """
+    import random as _random
+    import torch
+    from torch.utils.data import DataLoader
+
+    data_dir = Path(data_dir)
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    # Count existing samples
+    existing_files = sorted(data_dir.glob("*.npz"))
+    existing_samples = sum(np.load(p)["note"].shape[0] for p in existing_files)
+
+    if existing_samples < n_samples:
+        missing = n_samples - existing_samples
+        print(f"Found {existing_samples} samples, generating {missing} more...")
+        # waveform=None → uniform random waveform per sample
+        generate_dataset(
+            missing,
+            data_dir,
+            batch_size=batch_size_gen,
+            waveform=None if with_waveform else "sine",
+            start_batch=len(existing_files),
+        )
+        existing_files = sorted(data_dir.glob("*.npz"))
+
+    # Select the files that cover ~n_samples
+    n_files = round(n_samples / batch_size_gen)
+    rng = _random.Random(seed)
+    selected = rng.sample(existing_files, min(n_files, len(existing_files)))
+
+    split = round(len(selected) * (1 - val_fraction))
+    train_ds = NpzDataset(selected[:split], with_waveform=with_waveform)
+    val_ds   = NpzDataset(selected[split:], with_waveform=with_waveform)
+
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=False, num_workers=0)
+    val_loader   = DataLoader(val_ds,   batch_size=batch_size, shuffle=False, num_workers=0)
+
+    print(f"Train: {len(train_ds)} samples ({split} files)  |  Val: {len(val_ds)} samples ({len(selected) - split} files)")
+    return train_loader, val_loader, train_ds, val_ds
+
+
 class NpzDataset:
     """torch.utils.data.Dataset backed by .npz files on disk.
 
     Args:
-        source: Directory path or list of .npz file paths.
-
-    Each item returned by __getitem__ is a tuple:
-        (mel_tensor, note_int, adsr_tensor)
-
-        mel_tensor:  float32 torch.Tensor of shape (1, MEL_BINS, T)
-        note_int:    int
-        adsr_tensor: float32 torch.Tensor of shape (4,)
+        source:        Directory path or list of .npz file paths.
+        with_waveform: If True, __getitem__ returns a 4-tuple
+                       (mel_tensor, note_int, adsr_tensor, waveform_int).
+                       If False (default), returns the 3-tuple
+                       (mel_tensor, note_int, adsr_tensor) for backwards
+                       compatibility with existing evaluation code.
+                       Files without a 'waveform' key return waveform_int=-1.
     """
 
-    def __init__(self, source: str | Path | list):
+    def __init__(self, source: str | Path | list, with_waveform: bool = False):
         if isinstance(source, (str, Path)):
             source = Path(source)
             self._paths = sorted(source.glob("*.npz"))
@@ -328,6 +406,8 @@ class NpzDataset:
 
         if not self._paths:
             raise ValueError(f"No .npz files found in {source!r}")
+
+        self._with_waveform = with_waveform
 
         # Build index: list of (file_idx, sample_idx_within_file)
         self._index: list[tuple[int, int]] = []
@@ -357,4 +437,8 @@ class NpzDataset:
         mel_tensor = torch.from_numpy(mel).float().unsqueeze(0)   # (1, MEL_BINS, T)
         adsr_tensor = torch.from_numpy(adsr).float()
 
-        return mel_tensor, note, adsr_tensor
+        if not self._with_waveform:
+            return mel_tensor, note, adsr_tensor
+
+        waveform = int(data["waveform"][sample_idx]) if "waveform" in data else -1
+        return mel_tensor, note, adsr_tensor, waveform

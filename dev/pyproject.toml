@@ -3,7 +3,7 @@ name = "rustic-devel"
 description = "A development environment for prototyping rustic features"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
     "jupyter>=1.1.1",
     "matplotlib>=3.9.2",

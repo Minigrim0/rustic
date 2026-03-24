@@ -12,6 +12,17 @@ ADSR_MIN = 0.001
 ADSR_MAX = 2.0
 
 WAVEFORMS = ["sine", "square", "saw", "triangle", "whitenoise", "pinknoise", "blank"]
+N_WAVEFORMS = len(WAVEFORMS)
+
+
+def encode_waveform(waveform: str) -> int:
+    """Return the integer index for a waveform name."""
+    return WAVEFORMS.index(waveform)
+
+
+def decode_waveform(idx: int) -> str:
+    """Return the waveform name for an integer index."""
+    return WAVEFORMS[idx]
 
 
 def encode_adsr(attack: float, decay: float, sustain: float, release: float) -> np.ndarray:
