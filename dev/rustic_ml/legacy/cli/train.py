@@ -18,7 +18,7 @@ import mlflow
 
 def _build_model(model_name: str):
     """Instantiate a model by class name."""
-    from rustic_ml import models as m
+    from rustic_ml.legacy import models as m
     cls = getattr(m, model_name, None)
     if cls is None:
         print(f"Unknown model '{model_name}'. Available: {m.__all__}", file=sys.stderr)
@@ -32,10 +32,10 @@ def main() -> None:
     parser.add_argument("--run-name", default=None, help="Optional MLflow run name")
     args = parser.parse_args()
 
-    from rustic_ml.config import load_config
+    from rustic_ml.legacy.config import load_config
     from rustic_ml.training.setup import setup_device, set_seeds, setup_mlflow
     from rustic_ml.training.trainer import Trainer
-    from rustic_ml.data.dataset import prepare_dataloaders
+    from rustic_ml.legacy.data.dataset import prepare_dataloaders
 
     config = load_config(args.config)
 

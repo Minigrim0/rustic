@@ -4,8 +4,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from rustic_ml.data.encoding import N_NOTES, N_WAVEFORMS, NOTE_MIN, WAVEFORMS, decode_adsr
-from rustic_ml.models.base import RusticModel, PreprocessingConfig
+from rustic_ml.legacy.data.encoding import N_NOTES, N_WAVEFORMS, NOTE_MIN, WAVEFORMS, decode_adsr
+from rustic_ml.legacy.models.base import RusticModel, PreprocessingConfig
 
 
 class NoteWaveformPredictor(RusticModel):
@@ -69,7 +69,7 @@ class NoteWaveformPredictor(RusticModel):
 
         Uses ground-truth ADSR from the sample (this model does not predict ADSR).
         """
-        from rustic_ml.data.generation import random_spec
+        from rustic_ml.legacy.data.generation import random_spec
 
         self.eval()
         with torch.no_grad():

@@ -4,8 +4,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from rustic_ml.data.encoding import NOTE_MIN, N_NOTES
-from rustic_ml.models.base import RusticModel, PreprocessingConfig
+from rustic_ml.legacy.data.encoding import NOTE_MIN, N_NOTES
+from rustic_ml.legacy.models.base import RusticModel, PreprocessingConfig
 
 
 class ADSRPredictor(RusticModel):

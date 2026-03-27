@@ -41,8 +41,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    from rustic_ml.config import load_config
-    from rustic_ml.data.generation import generate_dataset
+    from rustic_ml.legacy.config import load_config
+    from rustic_ml.legacy.data.generation import generate_dataset
 
     config = load_config(args.config)
 

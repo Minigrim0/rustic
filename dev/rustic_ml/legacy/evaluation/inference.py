@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from rustic_ml.data.encoding import decode_adsr, NOTE_MIN, WAVEFORMS
+from rustic_ml.legacy.data.encoding import decode_adsr, NOTE_MIN, WAVEFORMS
 
 
 def accumulate_inference(

@@ -16,7 +16,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from rustic_ml.data.encoding import decode_adsr, NOTE_MIN, WAVEFORMS
+from rustic_ml.legacy.data.encoding import decode_adsr, NOTE_MIN, WAVEFORMS
 
 if TYPE_CHECKING:
     from torch.utils.data import Dataset
@@ -106,7 +106,7 @@ def plot_note_accuracy(note_vals: dict, log_to_mlflow: bool = True) -> None:
         log_to_mlflow: If True, log the figure and overall accuracy to MLflow.
     """
     import matplotlib.pyplot as plt
-    from rustic_ml.data.encoding import NOTE_MIN, NOTE_MAX
+    from rustic_ml.legacy.data.encoding import NOTE_MIN, NOTE_MAX
 
     preds   = note_vals["note"]["preds"]
     targets = note_vals["note"]["targets"]
@@ -193,7 +193,7 @@ def compare_audio(
     import matplotlib.pyplot as plt
     from IPython.display import Audio, display
     from rustic_py.rustic_py import render  # type: ignore[import]
-    from rustic_ml.data.generation import random_spec, render_mel
+    from rustic_ml.legacy.data.generation import random_spec, render_mel
 
     sample = dataset[sample_idx]
     mel_t, note_true, adsr_true = sample["mel"], sample["note"], sample["adsr"]
@@ -264,7 +264,7 @@ def compare_audio_dual(
     import matplotlib.pyplot as plt
     from IPython.display import Audio, display
     from rustic_py.rustic_py import render  # type: ignore[import]
-    from rustic_ml.data.generation import random_spec, render_mel
+    from rustic_ml.legacy.data.generation import random_spec, render_mel
 
     sample = dataset[sample_idx]
     mel_t, note_true, adsr_true = sample["mel"], sample["note"], sample["adsr"]
@@ -340,7 +340,7 @@ def compare_audio_note_waveform(
     import matplotlib.pyplot as plt
     from IPython.display import Audio, display
     from rustic_py.rustic_py import render  # type: ignore[import]
-    from rustic_ml.data.generation import random_spec, render_mel
+    from rustic_ml.legacy.data.generation import random_spec, render_mel
 
     sample = dataset[sample_idx]
     mel_t = sample["mel"]
@@ -423,7 +423,7 @@ def log_mel_comparisons(
     """
     import mlflow
     import matplotlib.pyplot as plt
-    from rustic_ml.data.generation import render_mel
+    from rustic_ml.legacy.data.generation import render_mel
 
     version_tag = f"_vs_v{registered_version}" if registered_version else ""
 

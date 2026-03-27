@@ -15,10 +15,12 @@ import numpy as np
 import librosa
 from tqdm import tqdm
 
-from rustic_ml.data.encoding import (
+from rustic_ml.legacy.data.encoding import (
     encode_adsr, encode_waveform,
     NOTE_MIN, NOTE_MAX, ADSR_MIN, ADSR_MAX, WAVEFORMS,
 )
+
+from rustic_py import GraphSpec
 
 # Fixed audio clip constants
 DURATION = 1.0
@@ -34,7 +36,7 @@ NOTE_DURATION_MIN = 0.1
 NOTE_DURATION_MAX = 0.9
 
 
-def random_spec(waveform: str | None = None) -> dict:
+def random_spec(complexity: float) -> dict:
     """Generate a random GraphSpec-compatible dict.
 
     Samples:
@@ -48,37 +50,7 @@ def random_spec(waveform: str | None = None) -> dict:
 
     Returns a dict compatible with rustic_py.render().
     """
-    if waveform is None:
-        waveform = WAVEFORMS[int(np.random.randint(0, len(WAVEFORMS)))]
-    note = int(np.random.randint(NOTE_MIN, NOTE_MAX + 1))
-    log_min = np.log(ADSR_MIN)
-    log_max = np.log(ADSR_MAX)
-    attack = float(np.exp(np.random.uniform(log_min, log_max)))
-    decay = float(np.exp(np.random.uniform(log_min, log_max)))
-    sustain = float(np.random.uniform(0.0, 1.0))
-    release = float(np.exp(np.random.uniform(log_min, log_max)))
-
-    note_on = float(np.random.uniform(NOTE_ON_MIN, NOTE_ON_MAX))
-    note_duration = float(np.random.uniform(NOTE_DURATION_MIN, NOTE_DURATION_MAX))
-    note_off = min(note_on + note_duration, DURATION - 0.01)
-
-    return {
-        "note": note,
-        "note_on": note_on,
-        "note_off": note_off,
-        "duration": DURATION,
-        "sample_rate": float(SAMPLE_RATE),
-        "block_size": 512,
-        "source": {
-            "waveform": waveform,
-            "frequency_relation": "identity",
-            "attack": attack,
-            "decay": decay,
-            "sustain": sustain,
-            "release": release,
-        },
-        "filters": [],
-    }
+    return GraphSpec.random(complexity).canonical().to_spec()
 
 
 def render_mel(

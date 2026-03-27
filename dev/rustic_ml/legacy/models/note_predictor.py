@@ -4,8 +4,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from rustic_ml.data.encoding import N_NOTES, NOTE_MIN
-from rustic_ml.models.base import RusticModel, PreprocessingConfig
+from rustic_ml.legacy.data.encoding import N_NOTES, NOTE_MIN
+from rustic_ml.legacy.models.base import RusticModel, PreprocessingConfig
 
 
 class NotePredictor(RusticModel):
