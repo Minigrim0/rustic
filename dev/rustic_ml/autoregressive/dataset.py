@@ -71,8 +71,13 @@ class ARDataset(Dataset):
         mel = render_mel(spec)
         token_ids, cont_values, cat_values = spec_to_sequence(spec, self.vocab)
 
+        # Note class is always at position 2 (the <VALS> following NOTE), field 0.
+        # Sequence is always: SOS(0) NOTE(1) VALS(2) …
+        note_class = int(cat_values[2, 0])
+
         sample = {
             "mel": torch.from_numpy(mel),
+            "note": torch.tensor(note_class, dtype=torch.int64),
             "token_ids": torch.tensor(token_ids, dtype=torch.int64),
             "cont_values": torch.from_numpy(cont_values),
             "cat_values": torch.from_numpy(cat_values.astype(np.int64)),
@@ -95,6 +100,7 @@ class ARDataset(Dataset):
         data = np.load(path)
         return {
             "mel": torch.from_numpy(data["mel"]),
+            "note": torch.tensor(int(data["cat_values"][2, 0]), dtype=torch.int64),
             "token_ids": torch.from_numpy(data["token_ids"]),
             "cont_values": torch.from_numpy(data["cont_values"]),
             "cat_values": torch.from_numpy(data["cat_values"]),
@@ -171,8 +177,11 @@ def ar_collate_fn(
         cat_batch[i, :L]   = s["cat_values"]
         lengths[i] = L
 
+    notes = torch.stack([s["note"] for s in batch])
+
     return {
         "mel": mel_batch,
+        "note": notes,
         "token_ids": token_batch,
         "cont_values": cont_batch,
         "cat_values": cat_batch,

@@ -4,8 +4,9 @@ TheDecider inference and evaluation utilities.
 evaluate() is called by TheDecider.ipynb to compare a production model
 against a candidate from a recent training run.
 """
-# TODO: implement TheDecider evaluation
 from __future__ import annotations
+
+import torch
 
 
 def evaluate(model, loader, device) -> dict[str, float]:
@@ -23,4 +24,30 @@ def evaluate(model, loader, device) -> dict[str, float]:
     Returns:
         Dict with keys: top1_accuracy, top5_accuracy
     """
-    raise NotImplementedError("TheDecider evaluation is not yet implemented")
+    if loader is None:
+        return {}
+
+    model.eval()
+    top1_correct = 0
+    top5_correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for batch in loader:
+            mel  = batch["mel"].unsqueeze(1).to(device)   # (B, 1, MEL_BINS, T)
+            note = batch["note"].to(device)                # (B,)
+
+            logits = model(mel)                            # (B, 128)
+            top5 = logits.topk(5, dim=1).indices          # (B, 5)
+
+            top1_correct += (top5[:, 0] == note).sum().item()
+            top5_correct += (top5 == note.unsqueeze(1)).any(dim=1).sum().item()
+            total += note.size(0)
+
+    if total == 0:
+        return {"top1_accuracy": 0.0, "top5_accuracy": 0.0}
+
+    return {
+        "top1_accuracy": top1_correct / total,
+        "top5_accuracy": top5_correct / total,
+    }
