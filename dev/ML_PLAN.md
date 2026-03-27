@@ -355,3 +355,172 @@ over sequences of length ~100 will not explore productively.
 | RL algorithm | PPO + KL penalty | Prevents grammar collapse |
 | Surrogate use | Reranking pre-filter + RL value baseline | Not used for direct gradients (discrete sampling) |
 | Data | Synthetic only | Renderer is the oracle; no real-audio dataset needed |
+
+---
+
+## Implementation Notes
+
+Concrete numbers and design choices not visible from the stub files, needed to implement
+**ThePainter** and **TheOracle** without re-discussing.
+
+---
+
+### Vocabulary dimensions (runtime values from `Vocabulary.from_rustic()`)
+
+| Name | Value | Source |
+|---|---|---|
+| `vocab_size` | ~49 (auto from rustic_py) | `len(vocab.tokens)` |
+| `cont_width` | 4 (max = 4 ADSR fields: dur, peak, ct, cp) | `vocab.cont_width` |
+| `cat_width` | 2 (max = 2 connection index fields) | `vocab.cat_width` |
+| max cat classes | 128 (MIDI note) | `max(vocab.cat_n_classes.values())` |
+| `MEL_BINS` | 128 | `rustic_ml.legacy.data.generation.MEL_BINS` |
+| Mel T frames | 87 (DURATION=1.0, SR=44100, hop=512: 1+floor(44100/512)) | fixed by renderer |
+
+**`cont_layout[token_id]`** → `list[str]` of active field names (length 0–4).
+Zero-padded to `cont_width` in tensors. Fields with no entry = inactive.
+
+**`cat_layout[token_id]`** → `list[str]` of active field names (length 0–2).
+**`cat_n_classes[field_name]`** → int, n_classes for that field.
+
+Build dense mask tensors once at training start:
+```python
+# cont_mask[token_id, field_idx] = True if field is active for that token
+cont_mask = torch.zeros(vocab_size, cont_width, dtype=torch.bool)
+for tid, fields in vocab.cont_layout.items():
+    cont_mask[tid, :len(fields)] = True
+
+# cat_n_cls[token_id, field_idx] = n_classes (0 = inactive)
+cat_n_cls = torch.zeros(vocab_size, cat_width, dtype=torch.long)
+for tid, fields in vocab.cat_layout.items():
+    for i, fname in enumerate(fields):
+        cat_n_cls[tid, i] = vocab.cat_n_classes[fname]
+```
+Register both as `model.register_buffer(...)` so they move with `.to(device)`.
+
+---
+
+### ThePainter — concrete architecture
+
+`d_model = 256`, `nhead = 8`, `ffn_dim = 1024`, `n_layers = 4`, `T_fixed = 87`
+
+**Input embedding** (combined, added together):
+- Token embedding: `nn.Embedding(vocab_size, d_model)` on `token_ids`
+- Continuous projection: `nn.Linear(cont_width, d_model)` on `cont_values` (zero where inactive)
+- Categorical projection: `nn.Embedding(max_cat_classes, d_model)` × `cat_width`, sum over fields
+  (zero-embed inactive fields by treating class 0 as padding — or use a separate padding embedding)
+
+**Encoder:**
+- Prepend a learnable `[CLS]` token embedding
+- `nn.TransformerEncoder` with `n_layers=4`, bidirectional (no causal mask)
+- CLS output position → `spec_embedding` of shape `(B, d_model)` for contrastive loss
+
+**Mel decoder:**
+- `nn.Linear(d_model, d_model * 2)` → GELU → `nn.Linear(d_model * 2, MEL_BINS * T_fixed)`
+- Reshape to `(B, MEL_BINS, T_fixed)` — this is the predicted log-mel
+- No sigmoid/softmax; log-mel values are unbounded (loss is L1 or MSE against rendered log-mel)
+
+**Forward signature:**
+```python
+def forward(self, token_ids, cont_values, cat_values):
+    # returns: mel_pred (B, MEL_BINS, T_fixed), spec_emb (B, d_model)
+```
+
+**Loss:** `L1(mel_pred, rendered_mel)` + optional `multi_scale_stft_loss`. No contrastive loss
+in the standalone surrogate training run; contrastive alignment is a separate training phase.
+
+---
+
+### TheOracle — concrete architecture
+
+`d_model = 256`, `nhead = 8`, `ffn_dim = 1024`, `n_enc_layers = 4`, `n_dec_layers = 4`
+
+**Mel encoder (CNN patch → transformer):**
+```python
+# Patch embedding: non-overlapping 4×4 patches over (1, 128, 87)
+nn.Conv2d(1, d_model, kernel_size=(4, 4), stride=(4, 4))  # → (B, d_model, 32, 21)
+# Flatten spatial dims → sequence: (B, 32*21, d_model) = (B, 672, d_model)
+# Add sinusoidal 1D position embedding on the flattened sequence
+# 4 TransformerEncoder layers (bidirectional)
+```
+Output: encoder memory `(B, 672, d_model)` for cross-attention.
+
+**AR decoder input embedding** (same as ThePainter, without CLS):
+- `nn.Embedding(vocab_size, d_model)` + `nn.Linear(cont_width, d_model)` + cat embeddings
+
+**Decoder:**
+- Causal `nn.TransformerDecoder` with `n_dec_layers=4`
+- Cross-attends to encoder memory at every layer
+
+**Output heads (applied to decoder output `(B, S, d_model)`):**
+```python
+token_head : nn.Linear(d_model, vocab_size)
+             # → (B, S, vocab_size), standard CE loss
+cont_head  : nn.Sequential(nn.Linear(d_model, cont_width), nn.Sigmoid())
+             # → (B, S, cont_width), masked MSE loss
+cat_head   : nn.Linear(d_model, cat_width * MAX_CAT_CLASSES)
+             # → reshape (B, S, cat_width, MAX_CAT_CLASSES)
+             # mask logits beyond cat_n_cls[token_id, field] with float('-inf')
+             # CE loss per active field
+```
+`MAX_CAT_CLASSES = 128` (MIDI note is the largest categorical field).
+
+**Loss computation:**
+```python
+# Token loss (skip PAD positions)
+pad_mask = (tgt_ids != vocab.pad)  # (B, S)
+token_loss = F.cross_entropy(token_logits[pad_mask], tgt_ids[pad_mask])
+
+# Continuous loss (skip inactive fields)
+active_cont = cont_mask[tgt_ids]  # (B, S, cont_width) bool
+cont_loss = F.mse_loss(cont_pred[active_cont], tgt_cont[active_cont])
+
+# Categorical loss (per field, skip inactive)
+cat_loss = 0
+for f in range(cat_width):
+    active = cat_n_cls[tgt_ids, f] > 0   # (B, S)
+    if not active.any():
+        continue
+    n_cls = cat_n_cls[tgt_ids[active], f]  # varies per position
+    logits_f = cat_logits[active, f, :]    # (n_active, MAX_CAT_CLASSES)
+    # mask logits beyond n_cls — tricky with variable n_cls; simplest: use max_n_cls per token
+    # in practice all fields sharing the same field index have the same n_cls, so it's constant
+    cat_loss = cat_loss + F.cross_entropy(logits_f[:, :n_cls.max()], tgt_cat[active, f])
+
+loss = token_loss + λ_cont * cont_loss + λ_cat * cat_loss
+# λ_cont = 1.0, λ_cat = 0.5 (starting point, tune by magnitude)
+```
+
+**Inference (greedy decode with TheDecider prefix):**
+1. Encode mel → encoder memory
+2. Feed TheDecider note prediction as forced `NOTE` token (cat field 0 = note class, cont = note_on/note_off defaults)
+3. Generate tokens autoregressively until `<EOS>` or max_len
+4. Pass sequence to `sequence_to_spec(token_ids, cont_values, cat_values, vocab)` → GraphSpec dict → Rust render
+
+**Forward signature:**
+```python
+def forward(self, mel, tgt_token_ids, tgt_cont, tgt_cat):
+    # mel: (B, 1, MEL_BINS, T)
+    # tgt_*: teacher-forced targets shifted right (SOS prepended)
+    # returns: token_logits (B, S, vocab_size),
+    #          cont_pred    (B, S, cont_width),
+    #          cat_logits   (B, S, cat_width, MAX_CAT_CLASSES)
+```
+
+---
+
+### ThePainter dataset
+
+`ARDataset` from `rustic_ml.autoregressive.dataset` already produces the right keys:
+`token_ids`, `cont_values`, `cat_values`, `mel`. Use it directly with `ar_collate_fn`.
+The mel from `ar_collate_fn` is `(B, MEL_BINS, max_T)` — crop/pad to `T_fixed=87` before loss.
+
+### TheOracle dataset
+
+Same `ARDataset` + `ar_collate_fn`. All required keys are present.
+Call `GraphSpec.canonical()` on the spec before tokenizing to get canonical sequences
+(canonical sorting is implemented in `rustic-py/python/rustic_py/_classes.py`).
+
+**Note:** `ARDataset.__getitem__` currently calls `random_ar_spec()` which calls
+`GraphSpec.random().to_spec()` but does NOT call `.canonical()` before tokenizing.
+Add the canonical call in `generation.py:random_ar_spec()` before returning, so all
+generated sequences are already canonical — TheOracle training depends on this.
