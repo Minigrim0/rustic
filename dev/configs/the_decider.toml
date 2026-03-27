@@ -1,0 +1,8 @@
+# TheDecider — note classifier (mel → MIDI note 0–127)
+# Inherits defaults from base.toml
+
+[run]
+experiment = "TheDecider"
+
+[training]
+n_epochs = 40

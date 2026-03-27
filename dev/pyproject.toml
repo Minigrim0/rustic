@@ -17,8 +17,13 @@ dependencies = [
 ]
 
 [project.scripts]
-rustic-train = "rustic_ml.cli.train:main"
-rustic-generate = "rustic_ml.cli.generate:main"
+# Legacy (phases 1–3)
+rustic-train    = "rustic_ml.legacy.cli.train:main"
+rustic-generate = "rustic_ml.legacy.cli.generate:main"
+# New models
+rustic-train-decider = "rustic_ml.the_decider.train:main"
+rustic-train-painter = "rustic_ml.the_painter.train:main"
+rustic-train-oracle  = "rustic_ml.the_oracle.train:main"
 
 [project.optional-dependencies]
 rocm = [
