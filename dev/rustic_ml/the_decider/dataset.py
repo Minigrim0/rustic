@@ -21,18 +21,30 @@ class DeciderDataset(Dataset):
     Args:
         n_samples:  Number of samples.
         cache_dir:  Optional directory for pre-generated .npz files.
+        max_frames: Fixed time-axis length; mels are padded (zeros) or
+                    truncated to this size so batches can be stacked.
     """
 
     def __init__(
         self,
         n_samples: int,
         cache_dir: str | Path | None = None,
+        max_frames: int = 256,
     ) -> None:
         self.n_samples = n_samples
         self.cache_dir = Path(cache_dir) if cache_dir is not None else None
+        self.max_frames = max_frames
 
     def __len__(self) -> int:
         return self.n_samples
+
+    def _fix_length(self, mel: np.ndarray) -> np.ndarray:
+        """Pad or truncate mel to self.max_frames along the time axis."""
+        t = mel.shape[1]
+        if t >= self.max_frames:
+            return mel[:, : self.max_frames]
+        pad = np.zeros((mel.shape[0], self.max_frames - t), dtype=mel.dtype)
+        return np.concatenate([mel, pad], axis=1)
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
         if self.cache_dir is not None:
@@ -46,7 +58,7 @@ class DeciderDataset(Dataset):
         mel  = render_mel(spec)
 
         sample = {
-            "mel":  torch.from_numpy(mel),
+            "mel":  torch.from_numpy(self._fix_length(mel)),
             "note": torch.tensor(note, dtype=torch.int64),
         }
 
@@ -57,10 +69,9 @@ class DeciderDataset(Dataset):
 
         return sample
 
-    @staticmethod
-    def _load(path: Path) -> dict[str, torch.Tensor]:
+    def _load(self, path: Path) -> dict[str, torch.Tensor]:
         data = np.load(path)
         return {
-            "mel":  torch.from_numpy(data["mel"]),
+            "mel":  torch.from_numpy(self._fix_length(data["mel"])),
             "note": torch.tensor(int(data["note"]), dtype=torch.int64),
         }

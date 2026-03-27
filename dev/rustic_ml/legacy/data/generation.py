@@ -75,6 +75,7 @@ def render_mel(
 
     audio = render(spec_dict)  # shape (N, 2)
     mono = np.mean(audio, axis=1).astype(np.float32)
+    np.nan_to_num(mono, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
 
     mel = librosa.feature.melspectrogram(
         y=mono,
@@ -83,7 +84,9 @@ def render_mel(
         n_fft=n_fft,
         hop_length=hop_length,
     )
-    log_mel = librosa.power_to_db(mel, ref=np.max)
+    ref = float(mel.max()) if mel.max() > 0.0 else 1.0
+    log_mel = librosa.power_to_db(mel, ref=ref)
+    np.nan_to_num(log_mel, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
     return log_mel.astype(np.float32)
 
 

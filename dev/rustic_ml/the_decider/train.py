@@ -29,6 +29,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
+from tqdm import tqdm
 
 from rustic_ml.the_decider.dataset import DeciderDataset
 from rustic_ml.the_decider.model import TheDecider
@@ -112,16 +113,18 @@ def train(config: dict, run_name: str | None = None) -> dict[str, float]:
         for epoch in range(1, n_epochs + 1):
             model.train()
             train_loss = 0.0
-            for batch in train_loader:
-                mel  = batch["mel"].unsqueeze(1).to(device)  # (B, 1, MEL_BINS, T)
-                note = batch["note"].to(device)               # (B,)
+            with tqdm(train_loader, desc=f"Epoch {epoch:3d}/{n_epochs}", unit="batch", leave=False) as pbar:
+                for batch in pbar:
+                    mel  = batch["mel"].unsqueeze(1).to(device)  # (B, 1, MEL_BINS, T)
+                    note = batch["note"].to(device)               # (B,)
 
-                optimizer.zero_grad()
-                loss = criterion(model(mel), note)
-                loss.backward()
-                optimizer.step()
+                    optimizer.zero_grad()
+                    loss = criterion(model(mel), note)
+                    loss.backward()
+                    optimizer.step()
 
-                train_loss += loss.item() * note.size(0)
+                    train_loss += loss.item() * note.size(0)
+                    pbar.set_postfix(loss=f"{loss.item():.4f}")
 
             train_loss /= n_train
             val_metrics = evaluate(model, val_loader, device)
