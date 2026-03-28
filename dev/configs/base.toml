@@ -3,7 +3,7 @@
 # The `model` key has been removed — each model has its own config file.
 
 [run]
-mlflow_uri = "http://192.168.1.254:5000"
+mlflow_uri = "http://100.101.108.22:5000"
 experiment = "Default"
 
 [data]
