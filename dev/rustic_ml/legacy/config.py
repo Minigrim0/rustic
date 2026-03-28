@@ -104,7 +104,7 @@ def _dict_to_config(data: dict) -> Config:
 
 
 # Path to the base.toml relative to this file (dev/configs/base.toml)
-_BASE_TOML = Path(__file__).parent.parent / "configs" / "base.toml"
+_BASE_TOML = Path(__file__).parent.parent.parent / "configs" / "base.toml"
 
 
 def load_config(path: str | Path) -> Config:
