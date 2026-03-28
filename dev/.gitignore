@@ -6,6 +6,5 @@ __pycache__/
 
 # Jupyter
 .ipynb_checkpoints/
-
-*.egg-info/
-
+data/
+rustic_devel.egg-info/

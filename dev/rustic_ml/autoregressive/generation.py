@@ -1,65 +1,36 @@
 """
-Random GraphSpec generation with variable filter chains.
+Random GraphSpec generation for the autoregressive model.
 
-Extends the existing ``rustic_ml.data.generation.random_spec()`` to include a
-randomly sampled filter chain.  Each filter's parameters are sampled uniformly
-within the ranges defined by the Vocabulary (which in turn comes from
-``available_filters()`` metadata).
+Uses GraphSpec.random() from rustic_py to generate full hierarchical specs
+(multi-source, filters, DAG connections) compatible with the new token vocabulary.
 """
 from __future__ import annotations
 
 import numpy as np
 
-from rustic_ml.data.generation import (
-    random_spec as _random_source_spec,
-    ADSR_MIN,
-    ADSR_MAX,
-)
+from rustic_py import GraphSpec
 from .vocab import Vocabulary
 
 
 def random_ar_spec(
     vocab: Vocabulary,
-    max_filters: int = 3,
+    complexity: float | None = None,
+    max_filters: int | None = None,
     waveform: str | None = None,
 ) -> dict:
-    """Generate a random GraphSpec dict with a variable-length filter chain.
-
-    Starts from the existing ``random_spec()`` (source + timing) and appends
-    0 to ``max_filters`` randomly chosen filters, each with parameters sampled
-    within their metadata-defined ranges.
+    """Generate a random GraphSpec dict compatible with the new token vocabulary.
 
     Args:
-        vocab:       Vocabulary instance (used for filter token list and ranges).
-        max_filters: Maximum number of filters to append (inclusive).
-        waveform:    Fix the waveform type, or None for random.
+        vocab:       Vocabulary instance (unused but kept for API compatibility).
+        complexity:  Graph complexity in [0.0, 1.0]. If None, samples uniformly.
+        max_filters: Ignored — filter count is controlled by complexity.
+                     Kept for backwards compatibility with ARDataset callers.
+        waveform:    Ignored — waveform is chosen randomly by GraphSpec.random().
+                     Kept for backwards compatibility with ARDataset callers.
 
     Returns:
-        A dict compatible with ``rustic_py.render()``.
+        A dict from GraphSpec.to_spec(), compatible with spec_to_sequence().
     """
-    spec = _random_source_spec(waveform=waveform)
-
-    filter_token_ids = [
-        tid for tid, name in vocab.id_to_token.items()
-        if name.startswith("filter:")
-    ]
-
-    n_filters = int(np.random.randint(0, max_filters + 1))
-    filters = []
-
-    for _ in range(n_filters):
-        flt_tok_id = filter_token_ids[int(np.random.randint(0, len(filter_token_ids)))]
-        layout = vocab.param_layout.get(flt_tok_id, [])
-        params: dict[str, float] = {}
-
-        for fname in layout:
-            lo, hi = vocab.param_ranges.get(fname, (0.0, 1.0))
-            params[fname] = float(np.random.uniform(lo, hi))
-
-        filters.append({
-            "type": vocab.filter_type_id(flt_tok_id),
-            "params": params,
-        })
-
-    spec["filters"] = filters
-    return spec
+    if complexity is None:
+        complexity = float(np.random.uniform(0.0, 0.5))
+    return GraphSpec.random(complexity=complexity).to_spec()

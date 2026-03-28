@@ -2068,6 +2068,7 @@ dev = [
     { name = "mkdocs-material", specifier = ">=9.0" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.25" },
 ]
+test = [{ name = "matplotlib", specifier = ">=3.9.4" }]
 
 [[package]]
 name = "scikit-learn"

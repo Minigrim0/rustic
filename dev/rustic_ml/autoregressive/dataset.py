@@ -1,12 +1,13 @@
 """
 ARDataset: PyTorch Dataset for the autoregressive graph model.
 
-Each sample is a (mel, token_ids, values_matrix) triple generated on-the-fly
-(or loaded from a pre-generated cache).
+Each sample is a (mel, token_ids, cont_values, cat_values) quad generated
+on-the-fly (or loaded from a pre-generated cache).
 
-  mel:           (MEL_BINS, T)             float32 tensor
-  token_ids:     (seq_len,)                int64 tensor
-  values_matrix: (seq_len, values_width)   float32 tensor
+  mel:          (MEL_BINS, T)              float32 tensor
+  token_ids:    (seq_len,)                 int64 tensor
+  cont_values:  (seq_len, cont_width)      float32 tensor — normalised continuous params
+  cat_values:   (seq_len, cat_width)       int64 tensor   — categorical params
 
 Sequences are padded to the longest sequence in the batch; the DataLoader
 should use a custom collate_fn (provided below as ``ar_collate_fn``) that
@@ -21,7 +22,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from rustic_ml.data.generation import render_mel
+from rustic_ml.legacy.data.generation import render_mel
 from .generation import random_ar_spec
 from .tokenizer import spec_to_sequence
 from .vocab import Vocabulary
@@ -68,12 +69,18 @@ class ARDataset(Dataset):
 
         spec = random_ar_spec(self.vocab, max_filters=self.max_filters, waveform=self.waveform)
         mel = render_mel(spec)
-        token_ids, values = spec_to_sequence(spec, self.vocab)
+        token_ids, cont_values, cat_values = spec_to_sequence(spec, self.vocab)
+
+        # Note class is always at position 2 (the <VALS> following NOTE), field 0.
+        # Sequence is always: SOS(0) NOTE(1) VALS(2) …
+        note_class = int(cat_values[2, 0])
 
         sample = {
             "mel": torch.from_numpy(mel),
+            "note": torch.tensor(note_class, dtype=torch.int64),
             "token_ids": torch.tensor(token_ids, dtype=torch.int64),
-            "values": torch.from_numpy(values),
+            "cont_values": torch.from_numpy(cont_values),
+            "cat_values": torch.from_numpy(cat_values.astype(np.int64)),
         }
 
         if self.cache_dir is not None:
@@ -82,7 +89,8 @@ class ARDataset(Dataset):
                 path,
                 mel=mel,
                 token_ids=np.array(token_ids, dtype=np.int64),
-                values=values,
+                cont_values=cont_values,
+                cat_values=cat_values.astype(np.int64),
             )
 
         return sample
@@ -92,8 +100,10 @@ class ARDataset(Dataset):
         data = np.load(path)
         return {
             "mel": torch.from_numpy(data["mel"]),
+            "note": torch.tensor(int(data["cat_values"][2, 0]), dtype=torch.int64),
             "token_ids": torch.from_numpy(data["token_ids"]),
-            "values": torch.from_numpy(data["values"]),
+            "cont_values": torch.from_numpy(data["cont_values"]),
+            "cat_values": torch.from_numpy(data["cat_values"]),
         }
 
     def generate_cache(self, n_workers: int = 1) -> None:
@@ -129,17 +139,16 @@ def ar_collate_fn(
 ) -> dict[str, torch.Tensor]:
     """Collate a list of AR samples into padded batch tensors.
 
-    Pads token_ids and values along the sequence dimension using PAD / zeros.
-    The batch dict also includes a boolean ``values_mask`` of shape
-    (B, max_seq_len) that is True at <VALUES> token positions.
+    Pads token_ids, cont_values, and cat_values along the sequence dimension.
 
     Returns a dict with keys:
-        mel:          (B, MEL_BINS, T)               float32
-        token_ids:    (B, max_seq_len)                int64
-        values:       (B, max_seq_len, values_width)  float32
-        lengths:      (B,)                            int64  — true seq lengths
+        mel:          (B, MEL_BINS, T)                float32
+        token_ids:    (B, max_seq_len)                 int64
+        cont_values:  (B, max_seq_len, cont_width)     float32
+        cat_values:   (B, max_seq_len, cat_width)      int64
+        lengths:      (B,)                             int64  — true seq lengths
     """
-    from rustic_ml.data.generation import MEL_BINS
+    from rustic_ml.legacy.data.generation import MEL_BINS
 
     # ── mel: pad time dimension ────────────────────────────────────────────
     max_t = max(s["mel"].shape[-1] for s in batch)
@@ -150,26 +159,31 @@ def ar_collate_fn(
         mel_batch[i, :, :t] = s["mel"]
 
     # ── sequences: pad to max_seq_len ──────────────────────────────────────
-    # Infer pad token id from first sample's token_ids (first sample always
-    # starts with SOS so PAD is never 0 — we retrieve it from the first PAD
-    # we find, or default to 2 which is always PAD per Vocabulary.from_rustic)
+    # PAD token is always id=2 per Vocabulary.from_rustic()
     pad_id: int = 2
     max_seq = max(s["token_ids"].shape[0] for s in batch)
-    values_width = batch[0]["values"].shape[-1]
+    cont_width = batch[0]["cont_values"].shape[-1]
+    cat_width  = batch[0]["cat_values"].shape[-1]
 
     token_batch = torch.full((B, max_seq), pad_id, dtype=torch.int64)
-    values_batch = torch.zeros(B, max_seq, values_width, dtype=torch.float32)
-    lengths = torch.zeros(B, dtype=torch.int64)
+    cont_batch  = torch.zeros(B, max_seq, cont_width, dtype=torch.float32)
+    cat_batch   = torch.zeros(B, max_seq, cat_width,  dtype=torch.int64)
+    lengths     = torch.zeros(B, dtype=torch.int64)
 
     for i, s in enumerate(batch):
         L = s["token_ids"].shape[0]
         token_batch[i, :L] = s["token_ids"]
-        values_batch[i, :L] = s["values"]
+        cont_batch[i, :L]  = s["cont_values"]
+        cat_batch[i, :L]   = s["cat_values"]
         lengths[i] = L
+
+    notes = torch.stack([s["note"] for s in batch])
 
     return {
         "mel": mel_batch,
+        "note": notes,
         "token_ids": token_batch,
-        "values": values_batch,
+        "cont_values": cont_batch,
+        "cat_values": cat_batch,
         "lengths": lengths,
     }
