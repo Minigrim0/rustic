@@ -1,4 +1,4 @@
-# ── Jupyter runtime with CUDA 12.2 ─────────────────────────────────────────────
+# Jupyter runtime with CUDA 12.2
 FROM nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive

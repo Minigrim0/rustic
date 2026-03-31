@@ -5,4 +5,8 @@
 experiment = "TheDecider"
 
 [training]
-n_epochs = 40
+n_epochs = 20
+
+[model]
+channels = [32, 64, 128]
+dropout = 0.2

@@ -26,18 +26,18 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-# ── ADSR normalisation constants ──────────────────────────────────────────────
+# ADSR normalisation constants
 _ADSR_DUR_MIN: float = 0.001
 _ADSR_DUR_MAX: float = 4.0
 _ADSR_AMP_MIN: float = 0.0
 _ADSR_AMP_MAX: float = 1.0
 
-# ── Note / timing constants ────────────────────────────────────────────────────
+# Note / timing constants
 _NOTE_CLASSES: int = 128
 _TIMING_MIN: float = 0.0
 _TIMING_MAX: float = 20.0   # seconds (generous upper bound)
 
-# ── Frequency relation value ranges ───────────────────────────────────────────
+# Frequency relation value ranges
 _HARMONIC_CLASSES: int = 32   # integer harmonic multipliers 1–32
 _FR_OFFSET_MIN: float = -2000.0
 _FR_OFFSET_MAX: float =  2000.0
@@ -48,7 +48,7 @@ _FR_CONST_MAX:  float =  8000.0
 _FR_SEMI_MIN:   float = -24.0
 _FR_SEMI_MAX:   float =  24.0
 
-# ── Connection index size ──────────────────────────────────────────────────────
+# Connection index size
 _CN_IDX_CLASSES: int = 32   # supports up to 32 sources or filters per graph
 
 
@@ -114,7 +114,7 @@ class Vocabulary:
     cont_width:   int = 0
     cat_width:    int = 0
 
-    # ── token name constants ──────────────────────────────────────────────────
+    # token name constants
     SOS_NAME  = "<SOS>"
     EOS_NAME  = "<EOS>"
     PAD_NAME  = "<PAD>"
@@ -152,7 +152,7 @@ class Vocabulary:
     CN_FILTER_FILTER_NAME = "CN:filter_filter"
     CN_FILTER_SINK_NAME   = "CN:filter_sink"
 
-    # ── convenience ID properties ─────────────────────────────────────────────
+    # convenience ID properties
     @property
     def sos(self) -> int:       return self.tokens[self.SOS_NAME]
     @property
@@ -175,7 +175,7 @@ class Vocabulary:
     def __len__(self) -> int:
         return len(self.tokens)
 
-    # ── token type predicates ─────────────────────────────────────────────────
+    # token type predicates
     def is_wf_token(self, tid: int) -> bool:
         return self.id_to_token.get(tid, "").startswith("WF:")
 
@@ -196,7 +196,7 @@ class Vocabulary:
             self.ATK_NAME, self.DCY_NAME, self.SUS_NAME, self.REL_NAME
         )
 
-    # ── token type decoders ───────────────────────────────────────────────────
+    # token type decoders
     def wf_type_id(self, tid: int) -> str:
         """Waveform type string from a WF:* token."""
         return self.id_to_token[tid][3:]
@@ -218,7 +218,7 @@ class Vocabulary:
         """True if this token is followed by a <VALS> in the sequence."""
         return bool(self.cont_layout.get(tid) or self.cat_layout.get(tid))
 
-    # ── normalisation ─────────────────────────────────────────────────────────
+    # normalisation
     def normalize_cont(self, token_id: int, raw: np.ndarray) -> np.ndarray:
         """Normalise continuous values to [0, 1] for the given structural token.
 
@@ -260,7 +260,7 @@ class Vocabulary:
                 out[i] = float(np.clip(v * (hi - lo) + lo, lo, hi))
         return out
 
-    # ── factory ───────────────────────────────────────────────────────────────
+    # factory
     @classmethod
     def from_rustic(cls) -> "Vocabulary":
         """Build a Vocabulary from live rustic_py metadata."""
@@ -306,11 +306,11 @@ class Vocabulary:
                 (f"{prefix}_cp",   _ADSR_AMP_MIN, _ADSR_AMP_MAX),
             ]
 
-        # ── special tokens (no values) ────────────────────────────────────
+        # special tokens (no values)
         for name in (cls.SOS_NAME, cls.EOS_NAME, cls.PAD_NAME, cls.VALS_NAME):
             _add(name)
 
-        # ── NOTE: cat(note 0-127) + cont(note_on, note_off) ───────────────
+        # NOTE: cat(note 0-127) + cont(note_on, note_off)
         note_id = _add(cls.NOTE_NAME)
         _set_cat(note_id, [("note", _NOTE_CLASSES)])
         _set_cont(note_id, [
@@ -318,7 +318,7 @@ class Vocabulary:
             ("note_off", _TIMING_MIN, _TIMING_MAX),
         ])
 
-        # ── Multi-source structure ─────────────────────────────────────────
+        # Multi-source structure
         _add(cls.SOMS_NAME)
         _add(cls.EOMS_NAME)
 
@@ -326,7 +326,7 @@ class Vocabulary:
         _add(cls.MM_AVG_NAME)
         _add(cls.MM_MAX_NAME)
 
-        # ── Source definition structure ────────────────────────────────────
+        # Source definition structure
         _add(cls.SOSD_NAME)
         _add(cls.EOSD_NAME)
 
@@ -354,7 +354,7 @@ class Vocabulary:
         fr_semi_id = _add(cls.FR_SEMITONES_NAME)
         _set_cont(fr_semi_id, [("fr_semitones", _FR_SEMI_MIN, _FR_SEMI_MAX)])
 
-        # ── Envelope structure ────────────────────────────────────────────
+        # Envelope structure
         _add(cls.SOED_NAME)
         _add(cls.EOED_NAME)
 
@@ -370,7 +370,7 @@ class Vocabulary:
         rel_id = _add(cls.REL_NAME)
         _set_cont(rel_id, _adsr_fields("rel"), log=["rel_dur"])
 
-        # ── Filter structure ──────────────────────────────────────────────
+        # Filter structure
         _add(cls.SOFD_NAME)
         _add(cls.EOFD_NAME)
 
@@ -382,7 +382,7 @@ class Vocabulary:
             if params:
                 _set_cont(ft_id, params)
 
-        # ── Connection tokens ─────────────────────────────────────────────
+        # Connection tokens
         cn_ss_id = _add(cls.CN_SOURCE_SINK_NAME)
         _set_cat(cn_ss_id, [("cn_src", _CN_IDX_CLASSES)])
 
@@ -395,7 +395,7 @@ class Vocabulary:
         cn_fs_id = _add(cls.CN_FILTER_SINK_NAME)
         _set_cat(cn_fs_id, [("cn_flt", _CN_IDX_CLASSES)])
 
-        # ── Compute head widths ───────────────────────────────────────────
+        # Compute head widths
         all_cont = [len(layout) for layout in v.cont_layout.values()]
         all_cat  = [len(layout) for layout in v.cat_layout.values()]
         v.cont_width = max(all_cont) if all_cont else 1
@@ -403,7 +403,7 @@ class Vocabulary:
 
         return v
 
-    # ── pretty-print ──────────────────────────────────────────────────────────
+    # pretty-print
     def summary(self) -> str:
         lines = [
             f"Vocabulary  ({len(self)} tokens, cont_width={self.cont_width}, cat_width={self.cat_width})",

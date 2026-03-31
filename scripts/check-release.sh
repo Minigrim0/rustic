@@ -13,7 +13,7 @@ cd "$ROOT"
 FAIL=0
 BUMPED=0
 
-# ── helpers ──────────────────────────────────────────────────────────────────
+# helpers
 
 cargo_version_current() { grep '^version' "$1" | head -1 | sed 's/version = "\(.*\)"/\1/'; }
 cargo_version_base()    { git show "$BASE_REF:$1" 2>/dev/null | grep '^version' | head -1 | sed 's/version = "\(.*\)"/\1/' || true; }
@@ -55,7 +55,7 @@ check_component() {
   fi
 }
 
-# ── git state checks ─────────────────────────────────────────────────────────
+# git state checks
 
 echo "==> Comparing against $BASE_REF"
 echo ""
@@ -65,7 +65,7 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   FAIL=1
 fi
 
-# ── component checks ─────────────────────────────────────────────────────────
+# component checks
 
 echo "Rust crates:"
 check_component "rustic"          rustic/Cargo.toml          rustic          cargo
@@ -81,7 +81,7 @@ check_component "rustic-py"       rustic-py/pyproject.toml   rustic-py       pyt
 
 echo ""
 
-# ── summary ──────────────────────────────────────────────────────────────────
+# summary
 
 if [[ "$BUMPED" -eq 0 ]]; then
   echo "✘  No version bumps detected. PRs to main must include at least one version bump."

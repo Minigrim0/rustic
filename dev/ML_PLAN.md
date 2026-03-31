@@ -185,13 +185,13 @@ mel encoder output. Training data is purely synthetic.
 
 ```
 Mel spectrogram
-    ├── Note classifier  (standalone, trains independently)
-    │       ↓ hard prefix token injected into decoder
-    └── Mel encoder  (CNN + transformer, contrastively aligned to spec encoder)
-              ↓ cross-attention
-         AR Decoder → token sequence
-              ↓
-         sequence_to_spec() → GraphSpec → Rust renderer → audio
+    Note classifier  (standalone, trains independently)
+        ↓ hard prefix token injected into decoder
+    Mel encoder  (CNN + transformer, contrastively aligned to spec encoder)
+        ↓ cross-attention
+    AR Decoder → token sequence
+        ↓
+    sequence_to_spec() → GraphSpec → Rust renderer → audio
 ```
 
 **Note classifier:** 128-class softmax over mel features. Easy to train to >95% accuracy.

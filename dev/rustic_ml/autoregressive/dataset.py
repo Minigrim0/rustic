@@ -150,7 +150,7 @@ def ar_collate_fn(
     """
     from rustic_ml.legacy.data.generation import MEL_BINS
 
-    # ── mel: pad time dimension ────────────────────────────────────────────
+    # mel: pad time dimension
     max_t = max(s["mel"].shape[-1] for s in batch)
     B = len(batch)
     mel_batch = torch.zeros(B, MEL_BINS, max_t)
@@ -158,7 +158,7 @@ def ar_collate_fn(
         t = s["mel"].shape[-1]
         mel_batch[i, :, :t] = s["mel"]
 
-    # ── sequences: pad to max_seq_len ──────────────────────────────────────
+    # sequences: pad to max_seq_len
     # PAD token is always id=2 per Vocabulary.from_rustic()
     pad_id: int = 2
     max_seq = max(s["token_ids"].shape[0] for s in batch)

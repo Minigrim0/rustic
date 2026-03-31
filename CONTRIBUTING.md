@@ -8,10 +8,10 @@
 
 ```
 main
- └── core/dev
-       ├── tui/feat/vim-motions
-       ├── lang/fix/parser-panic
-       └── feat/unified-graph
+  core/dev
+    tui/feat/vim-motions
+    lang/fix/parser-panic
+    feat/unified-graph
 ```
 
 ## Branch naming

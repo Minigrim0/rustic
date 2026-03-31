@@ -118,16 +118,16 @@ def spec_to_sequence(
 
         _append(vocab.tokens[vocab.EOED_NAME])
 
-    # ── SOS ───────────────────────────────────────────────────────────────────
+    # SOS
     _append(vocab.sos)
 
-    # ── NOTE ──────────────────────────────────────────────────────────────────
+    # NOTE
     _append(vocab.note_tok)
     _vals(vocab.note_tok,
           raw_cont=[spec["note_on"], spec["note_off"]],
           raw_cat=[spec["note"]])
 
-    # ── MultiSource blocks ────────────────────────────────────────────────────
+    # MultiSource blocks
     for ms in spec.get("sources", []):
         _append(vocab.tokens[vocab.SOMS_NAME])
 
@@ -174,7 +174,7 @@ def spec_to_sequence(
 
         _append(vocab.tokens[vocab.EOMS_NAME])
 
-    # ── Filter blocks ─────────────────────────────────────────────────────────
+    # Filter blocks
     for flt in spec.get("filters", []):
         _append(vocab.tokens[vocab.SOFD_NAME])
 
@@ -192,7 +192,7 @@ def spec_to_sequence(
 
         _append(vocab.tokens[vocab.EOFD_NAME])
 
-    # ── Connection tokens ─────────────────────────────────────────────────────
+    # Connection tokens
     for conn in spec.get("connections", []):
         if "SourceSink" in conn:
             cn_tok = vocab.tokens[vocab.CN_SOURCE_SINK_NAME]
@@ -220,7 +220,7 @@ def spec_to_sequence(
             _append(cn_tok)
             _vals(cn_tok, raw_cat=[conn["FilterSink"]["filter"]])
 
-    # ── EOS ───────────────────────────────────────────────────────────────────
+    # EOS
     _append(vocab.eos)
 
     return (
@@ -274,7 +274,7 @@ def sequence_to_spec(
         "connections": [],
     }
 
-    # ── parsing state ─────────────────────────────────────────────────────────
+    # parsing state
     last_structural: int | None = None
 
     current_ms:      dict | None = None   # MultiSourceSpec being built
@@ -304,7 +304,7 @@ def sequence_to_spec(
     for i in range(start, end):
         tok = ids[i]
 
-        # ── <VALS>: decode values for the preceding structural token ──────────
+        # <VALS>: decode values for the preceding structural token
         if tok == vocab.vals_tok:
             if last_structural is None:
                 continue
@@ -380,7 +380,7 @@ def sequence_to_spec(
             last_structural = None
             continue
 
-        # ── structural tokens ─────────────────────────────────────────────────
+        # structural tokens
 
         if tok == vocab.note_tok:
             last_structural = tok
