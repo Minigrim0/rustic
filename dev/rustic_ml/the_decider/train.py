@@ -13,11 +13,13 @@ Config fields used (from rustic_ml.legacy.config.Config):
   data.data_dir        Directory for cached dataset .npz files
   data.n_samples       Number of training samples to generate
   data.val_split       Fraction held out for validation
+  data.max_frames      Time-axis length for mel spectrograms (default 256)
   training.batch_size
   training.n_epochs
   training.lr
   training.seed
-  training.dropout     (optional, defaults to 0.3)
+  model.channels       CNN channel widths, e.g. [32, 64, 128, 256]
+  model.dropout        Dropout rate before the linear head (default 0.3)
 """
 from __future__ import annotations
 
@@ -57,7 +59,7 @@ def train(config: Config, run_name: str | None = None) -> dict[str, float]:
     Returns:
         Final validation metrics dict.
     """
-    # ── Hyper-parameters ─────────────────────────────────────────────────────
+    # Hyper-parameters
     mlflow_uri = config.run.mlflow_uri
     experiment = config.run.experiment
     data_dir   = config.data.data_dir
@@ -67,9 +69,10 @@ def train(config: Config, run_name: str | None = None) -> dict[str, float]:
     n_epochs   = config.training.n_epochs
     lr         = config.training.lr
     seed       = config.training.seed
-    dropout    = getattr(config.training, "dropout", 0.3)
+    channels   = config.model.channels
+    dropout    = config.model.dropout
 
-    # ── Reproducibility ───────────────────────────────────────────────────────
+    # Reproducibility
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -79,10 +82,10 @@ def train(config: Config, run_name: str | None = None) -> dict[str, float]:
     device = setup_device()
     log.info("Device ready in %.1f s", time.monotonic() - t0)
 
-    # ── Dataset ───────────────────────────────────────────────────────────────
+    # Dataset
     log.info("Building dataset (n_samples=%d, cache_dir=%s) …", n_samples, data_dir)
     t0 = time.monotonic()
-    dataset = DeciderDataset(n_samples=n_samples, cache_dir=data_dir)
+    dataset = DeciderDataset(n_samples=n_samples, cache_dir=data_dir, max_frames=config.data.max_frames)
     log.info("Dataset ready in %.1f s", time.monotonic() - t0)
 
     n_val   = max(1, int(n_samples * val_split))
@@ -103,16 +106,16 @@ def train(config: Config, run_name: str | None = None) -> dict[str, float]:
     )
     log.info("DataLoaders ready in %.1f s", time.monotonic() - t0)
 
-    # ── Model ─────────────────────────────────────────────────────────────────
+    # Model
     log.info("Instantiating model …")
     t0 = time.monotonic()
-    model = TheDecider(dropout=dropout).to(device)
+    model = TheDecider(channels=channels, dropout=dropout).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()
     log.info("Model ready in %.1f s  (%d params)", time.monotonic() - t0,
              sum(p.numel() for p in model.parameters()))
 
-    # ── MLflow ────────────────────────────────────────────────────────────────
+    # MLflow
     log.info("Connecting to MLflow at %s …", mlflow_uri)
     t0 = time.monotonic()
     setup_mlflow(mlflow_uri, experiment)
@@ -132,6 +135,7 @@ def train(config: Config, run_name: str | None = None) -> dict[str, float]:
             "n_epochs": n_epochs,
             "lr": lr,
             "seed": seed,
+            "channels": channels,
             "dropout": dropout,
         })
         log.info("Params logged in %.1f s", time.monotonic() - t0)

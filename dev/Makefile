@@ -1,9 +1,9 @@
 .PHONY: sync-rocm sync-cuda
 
-TORCH_VERSION   := 2.4.1
-CUDA_INDEX_URL  := https://download.pytorch.org/whl/cu124
+TORCH_VERSION   := 2.9.1
+CUDA_INDEX_URL  := https://download.pytorch.org/whl/cu128
 
-# ROCm (RX 7600 XT, gfx1102) — torch fully managed by uv via rocm6.1 index
+# ROCm (RX 7600 XT, gfx1102) — torch fully managed by uv via rocm6.3 index
 sync-rocm:
 	uv sync --extra rocm
 

@@ -36,6 +36,7 @@ class DataConfig:
     n_samples: int = 80_000
     batch_size_gen: int = 1_000
     val_split: float = 0.1
+    max_frames: int = 256
 
 
 @dataclass
@@ -50,12 +51,21 @@ class TrainingConfig:
 
 
 @dataclass
+class ModelConfig:
+    """Model architecture hyperparameters."""
+
+    channels: list = field(default_factory=lambda: [32, 64, 128, 256])
+    dropout: float = 0.3
+
+
+@dataclass
 class Config:
     """Top-level configuration container."""
 
     run: RunConfig = field(default_factory=RunConfig)
     data: DataConfig = field(default_factory=DataConfig)
     training: TrainingConfig = field(default_factory=TrainingConfig)
+    model: ModelConfig = field(default_factory=ModelConfig)
 
     def to_flat_dict(self) -> dict:
         """Return a flat dict of all config values for MLflow logging."""
@@ -100,6 +110,7 @@ def _dict_to_config(data: dict) -> Config:
         run=RunConfig(**data.get("run", {})),
         data=DataConfig(**data.get("data", {})),
         training=TrainingConfig(**data.get("training", {})),
+        model=ModelConfig(**data.get("model", {})),
     )
 
 
