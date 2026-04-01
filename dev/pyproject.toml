@@ -3,7 +3,7 @@ name = "rustic-devel"
 description = "A development environment for prototyping rustic features"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
     "jupyter>=1.1.1",
     "matplotlib>=3.9.2",
@@ -16,27 +16,35 @@ dependencies = [
     "tqdm>=4.0",
 ]
 
+[project.scripts]
+# Legacy (phases 1–3)
+rustic-train    = "rustic_ml.legacy.cli.train:main"
+rustic-generate = "rustic_ml.legacy.cli.generate:main"
+# New models
+rustic-train-decider = "rustic_ml.the_decider.train:main"
+rustic-train-painter = "rustic_ml.the_painter.train:main"
+rustic-train-oracle  = "rustic_ml.the_oracle.train:main"
+
 [project.optional-dependencies]
 rocm = [
-    "torch>=2.4.0,<2.5.0",
+    "torch>=2.9.0,<2.10.0",
+    "pytorch-triton-rocm ; sys_platform == 'linux'",
 ]
 # cuda: torch is installed post-sync via `make sync-cuda`
 # uv cannot lock the same package from two different explicit indexes,
 # so torch for CUDA (cu124) is managed outside the lockfile.
 cuda = []
 
-[tool.uv]
-override-dependencies = [
-    "pytorch-triton-rocm; python_full_version < '0'",
-    "triton; python_full_version < '0'",
-]
-
 [tool.uv.sources]
 rustic-py = { path = "../rustic-py", editable = true }
 torch = { index = "pytorch-rocm", extra = "rocm" }
+pytorch-triton-rocm = { index = "pytorch-rocm" }
+
+[tool.setuptools.packages.find]
+include = ["rustic_ml*"]
 
 [[tool.uv.index]]
 name = "pytorch-rocm"
-url = "https://download.pytorch.org/whl/rocm6.1"
+url = "https://download.pytorch.org/whl/rocm6.3"
 explicit = true
 

@@ -1,0 +1,19 @@
+# Base configuration — all defaults.
+# Experiment configs override only the values that differ.
+# The `model` key has been removed — each model has its own config file.
+
+[run]
+mlflow_uri = "http://192.168.1.254:5000"
+experiment = "Default"
+
+[data]
+data_dir      = "./data/datasets"
+n_samples     = 80_000
+batch_size_gen = 1_000
+val_split     = 0.2
+
+[training]
+batch_size = 64
+n_epochs   = 80
+lr         = 1e-3
+seed       = 42

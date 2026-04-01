@@ -1,0 +1,9 @@
+# ThePainter — surrogate renderer (token sequence → mel)
+# Inherits defaults from base.toml
+
+[run]
+experiment = "ThePainter"
+
+[training]
+n_epochs = 60
+# TODO: add painter-specific hyperparameters (d_model, n_layers, etc.) once architecture is finalised

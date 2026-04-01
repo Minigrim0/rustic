@@ -51,7 +51,7 @@ export function useGraphBridge(baklava: ReturnType<typeof useBaklava>) {
         // --- Node added ---
         graph.events.addNode.subscribe("graph-bridge", async (node) => {
             const kind = getNodeKind(node);
-            const typeId = (node.inputs as any).nodeTypeId?.value ?? node.title;
+            const typeId = (node.inputs as any).nodeTypeId?.value ?? node.type;
             try {
                 const backendId = await graphAddNode(typeId, kind, [0, 0]);
                 node.inputs.backendNodeId!.value = String(backendId);

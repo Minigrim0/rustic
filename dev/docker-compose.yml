@@ -22,7 +22,8 @@ services:
     command: >
       mlflow server
       --backend-store-uri postgresql://mlflow:mlflow@postgres/mlflow
-      --default-artifact-root /mlflow/artifacts
+      --artifacts-destination /mlflow/artifacts
+      --serve-artifacts
       --allowed-hosts '*'
       --cors-allowed-origins '*'
       --host 0.0.0.0

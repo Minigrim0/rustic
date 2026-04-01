@@ -80,7 +80,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 
-// ─── Props & emits ────────────────────────────────────────────────────────────
+// Props & emits
 
 const props = defineProps<{
     attack: number;
@@ -105,7 +105,7 @@ const emit = defineEmits<{
     "update:releaseCpT":    [v: number];
 }>();
 
-// ─── Layout constants ─────────────────────────────────────────────────────────
+// Layout constants
 
 const W       = 300;   // drawable width (px)
 const H       = 110;   // drawable height (amplitude axis, px)
@@ -118,7 +118,7 @@ const SUSTAIN_DUR = 0.3;
 
 const svgEl = ref<SVGSVGElement | null>(null);
 
-// ─── Coordinate helpers ───────────────────────────────────────────────────────
+// Coordinate helpers
 
 const totalTime = computed(() => props.attack + props.decay + SUSTAIN_DUR + props.release);
 
@@ -149,7 +149,7 @@ function ampToCurve(from: number, to: number, amp: number): number {
     return Math.max(-1, Math.min(1, 2 * (amp - from) / (to - from) - 1));
 }
 
-// ─── Derived SVG positions ────────────────────────────────────────────────────
+// Derived SVG positions
 
 const xStart  = computed(() => PAD);
 const xPeak   = computed(() => timeToX(props.attack));
@@ -176,7 +176,7 @@ const cpR = computed(() => ({
     y: ampToY(curveToAmp(props.sustain, 0.0,          props.releaseCurve)),
 }));
 
-// ─── SVG paths ────────────────────────────────────────────────────────────────
+// SVG paths
 
 const curveD = computed(() =>
     `M${xStart.value},${yBottom.value} ` +
@@ -191,7 +191,7 @@ const fillD = computed(() =>
     `L${xEnd.value},${PAD + H} L${xStart.value},${PAD + H} Z`
 );
 
-// ─── Handles ─────────────────────────────────────────────────────────────────
+// Handles
 
 const curveHandles = computed(() => [
     { id: "cpA", x: cpA.value.x, y: cpA.value.y },
@@ -215,7 +215,7 @@ const phaseLabels = computed(() => [
     { text: "R", x: (xSusEnd.value + xEnd.value)    / 2 },
 ]);
 
-// ─── Drag state ───────────────────────────────────────────────────────────────
+// Drag state
 
 /** ID of the handle currently being dragged, or null. */
 const dragging = ref<string | null>(null);
@@ -278,7 +278,7 @@ function clamp(v: number, lo: number, hi: number): number {
     return Math.max(lo, Math.min(hi, v));
 }
 
-// ─── Value readout during drag ────────────────────────────────────────────────
+// Value readout during drag
 
 const readout = computed<{ x: number; y: number; text: string } | null>(() => {
     const id = dragging.value;

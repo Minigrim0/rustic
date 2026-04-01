@@ -93,6 +93,15 @@ fn render_loop(
             continue;
         }
 
+        // Sync master volume to the sink each block (cheap atomic read).
+        // The sink applies it before limiting, so the limiter always acts as
+        // a hard ceiling regardless of the volume setting.
+        system.set_sink_parameter(
+            0,
+            "master_volume",
+            shared_state.master_volume.load(Ordering::Relaxed),
+        );
+
         // Run the graph for one block
         system.run();
         chunk_buffer.clear();
@@ -100,7 +109,7 @@ fn render_loop(
             let frames = sink.consume();
             log::trace!("[render] consumed {} frames from sink", frames.len());
             for frame in &frames {
-                chunk_buffer.push(frame[0]); // L
+                chunk_buffer.push(frame[0]); // L — master volume + limiting applied inside sink
                 chunk_buffer.push(frame[1]); // R
             }
         }
@@ -129,7 +138,7 @@ fn render_loop(
             let active_sources = (0..system.sources_len())
                 .filter(|&i| system.is_source_active(i))
                 .count();
-            log::info!(
+            log::trace!(
                 "[render] block={block_count} queue={}/{} chunk={} samples max={:.4} active_sources={active_sources}/{}",
                 audio_queue.len(),
                 target_samples,
@@ -139,7 +148,10 @@ fn render_loop(
             );
         }
 
-        // Broadcast chunk for recording / analysis
+        // Broadcast chunk for recording / analysis.
+        // TODO: Arc<Vec<f32>> would eliminate the clone-per-broadcast, but
+        //       AudioEvent::Chunk derives Serialize which Arc<T> doesn't satisfy
+        //       without a serde newtype wrapper.
         event_tx.send(BackendEvent::Audio(AudioEvent::Chunk(chunk_buffer.clone())));
     }
 }

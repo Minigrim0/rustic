@@ -1,13 +1,12 @@
 //! AudioGraph — assembles all instruments into a single compiled `System`.
 //!
 //! `AudioGraph::compile()` calls `instrument.into_system()` for each slot,
-//! absorbs every sub-graph into one master graph, wires all outputs through a
-//! single `GainFilter` node at port 0 (the run-loop mixes them via `MixMode::Sum`),
-//! and returns the ready-to-run `System` for the render thread.
+//! absorbs every sub-graph into one master graph, and connects all instrument
+//! outputs directly to the `AudioOutputSink`, which handles summing, master
+//! volume, and peak-limiting in one place.
 
 use std::collections::HashMap;
 
-use crate::core::filters::prelude::GainFilter;
 use crate::core::graph::{AudioGraphError, AudioOutputSink, System};
 use crate::instruments::Instrument;
 
@@ -64,7 +63,7 @@ impl AudioGraph {
     ///
     /// The `instruments` vec is emptied by this call; re-add instruments if
     /// you need to compile again.
-    pub fn compile(&mut self) -> Result<System, AudioGraphError> {
+    pub fn compile(&mut self, sample_rate: f32) -> Result<System, AudioGraphError> {
         if self.instruments.is_empty() {
             return Ok(System::silent());
         }
@@ -80,7 +79,7 @@ impl AudioGraph {
         for (slot_idx, slot) in slots.into_iter().enumerate() {
             let source_start = main.sources_len();
 
-            let inst_system = slot.instrument.into_system();
+            let inst_system = slot.instrument.into_system(sample_rate);
             let output_node = main.absorb(inst_system)?;
 
             // Every absorbed source up to source_start is this instrument's
@@ -92,17 +91,13 @@ impl AudioGraph {
             output_nodes.push(output_node);
         }
 
-        // Wire all instrument outputs into a passthrough gain node.
-        // All connect on the same port 0; run() accumulates and sums them automatically.
-        let mixer_node = main.add_filter(Box::new(GainFilter::new(1.0)));
-        for &out_node in output_nodes.iter() {
-            main.connect(out_node, mixer_node, 0, 0);
-        }
-
-        // Final sink
-        let sink = Box::new(AudioOutputSink::new());
+        // The sink sums all instrument streams, applies master volume and limits.
+        // Each instrument connects directly — no intermediate mixer node needed.
+        let sink = Box::new(AudioOutputSink::new(sample_rate));
         let sink_idx = main.add_sink(sink);
-        main.connect_sink(mixer_node, sink_idx, 0);
+        for &out_node in output_nodes.iter() {
+            main.connect_sink(out_node, sink_idx, 0);
+        }
 
         main.compute()?;
 

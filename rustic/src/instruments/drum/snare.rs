@@ -46,8 +46,8 @@ impl Snare {
                     // TODO: Test envelope segments
                     Some(Box::new(
                         ADSREnvelopeBuilder::new()
-                            .attack(Box::new(BezierSegment::new(0.0, 1.0, 0.001, (0.0, 1.0))))
-                            .decay(Box::new(LinearSegment::new(1.0, 0.0, 0.2)))
+                            .attack(Box::new(BezierSegment::new(0.0, 1.0, 0.05, (0.0, 1.0))))
+                            .decay(Box::new(LinearSegment::new(1.0, 0.0, 0.1)))
                             .release(Box::new(LinearSegment::new(0.0, 0.0, 0.0)))
                             .build(),
                     )),
@@ -59,7 +59,7 @@ impl Snare {
                     (0.0, 1.0),
                 ))))
                 .mix_mode(MixMode::Sum)
-                .frequency(158.0)
+                .frequency(155.0)
                 .build(),
             current_tick: 0,
             output: 0.0,
@@ -95,10 +95,10 @@ impl Instrument for Snare {
         }
     }
 
-    fn into_system(self: Box<Self>) -> System {
+    fn into_system(self: Box<Self>, sample_rate: f32) -> System {
         let source = MonophonicSource::new_percussive(
             self.generator,
-            44100.0,
+            sample_rate,
             MonophonicAllocationStrategy::Replace,
         );
         let mut system = System::new();

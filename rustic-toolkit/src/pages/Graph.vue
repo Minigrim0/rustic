@@ -101,7 +101,7 @@ import EnvelopeEditor from "@/components/graph/EnvelopeEditor.vue";
 const baklava = useBaklava();
 const { isDirty, envelopeNode } = useGraphBridge(baklava);
 
-// ─── Envelope panel state ────────────────────────────────────────────────────
+// Envelope panel state
 
 /** Read a numeric node interface value, falling back to `def` when the interface is absent. */
 function nodeParam(paramName: string, def: number): number {
@@ -129,7 +129,7 @@ function setEnvParam(paramName: string, value: number) {
     (envelopeNode.value.inputs as any)[paramName].value = value;
 }
 
-// ─── Playback ────────────────────────────────────────────────────────────────
+// Playback 
 
 /** Compile the current graph and push it to the render thread. */
 async function compile() {

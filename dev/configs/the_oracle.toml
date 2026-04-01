@@ -1,0 +1,11 @@
+# TheOracle — autoregressive graph decoder (mel → GraphSpec token sequence)
+# Inherits defaults from base.toml
+
+[run]
+experiment = "TheOracle"
+
+[training]
+n_epochs   = 100
+batch_size = 32       # smaller — sequences are long
+# TODO: add oracle-specific hyperparameters (d_model, n_layers, n_heads, lambda_cont,
+#       lambda_cat, max_seq_len, complexity_cap, rl_phase toggle, etc.) once architecture is finalised
