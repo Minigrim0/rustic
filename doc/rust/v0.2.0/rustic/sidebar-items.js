@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["APP_ID"],"fn":["init_logging"],"macro":["note"],"mod":["app","audio","core","instruments","meta","prelude","score"]};

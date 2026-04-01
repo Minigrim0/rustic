@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["commands","error","inputs","player","row"]};
