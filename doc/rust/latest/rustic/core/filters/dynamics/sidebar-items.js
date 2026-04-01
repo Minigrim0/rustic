@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["amplifier","clipper","compressor"]};
+window.SIDEBAR_ITEMS = {"mod":["amplifier","clipper","compressor","limiter"]};

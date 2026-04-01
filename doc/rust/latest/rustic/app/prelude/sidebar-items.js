@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["App","FSConfig","SystemConfig"]};
+window.SIDEBAR_ITEMS = {"struct":["FSConfig","SystemConfig"]};

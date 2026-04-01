@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `rustic/src/audio/render_thread.rs`."><title>render_thread.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-77263533.css"><script id="default-settings" 
 data-use_system_theme="false"
-data-theme="ayu"></script><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustic" data-themes="" data-resource-suffix="" data-rustdoc-version="1.94.0 (4a4ef493e 2026-03-02)" data-channel="1.94.0" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-7bab91a1.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-ffcac47a.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustic/audio/</div>render_thread.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Audio render thread implementation
+data-theme="ayu"></script><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustic" data-themes="" data-resource-suffix="" data-rustdoc-version="1.94.1 (e408947bf 2026-03-25)" data-channel="1.94.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-7bab91a1.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-ffcac47a.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustic/audio/</div>render_thread.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Audio render thread implementation
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span>std::panic::{<span class="self">self</span>, AssertUnwindSafe};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>std::sync::Arc;
@@ -95,144 +95,156 @@ data-theme="ayu"></script><meta name="rustdoc-vars" data-root-path="../../../" d
 <a href=#93 id=93 data-nosnippet>93</a>            <span class="kw">continue</span>;
 <a href=#94 id=94 data-nosnippet>94</a>        }
 <a href=#95 id=95 data-nosnippet>95</a>
-<a href=#96 id=96 data-nosnippet>96</a>        <span class="comment">// Run the graph for one block
-<a href=#97 id=97 data-nosnippet>97</a>        </span>system.run();
-<a href=#98 id=98 data-nosnippet>98</a>        chunk_buffer.clear();
-<a href=#99 id=99 data-nosnippet>99</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(sink) = system.get_sink(<span class="number">0</span>) {
-<a href=#100 id=100 data-nosnippet>100</a>            <span class="kw">let </span>frames = sink.consume();
-<a href=#101 id=101 data-nosnippet>101</a>            <span class="macro">log::trace!</span>(<span class="string">"[render] consumed {} frames from sink"</span>, frames.len());
-<a href=#102 id=102 data-nosnippet>102</a>            <span class="kw">for </span>frame <span class="kw">in </span><span class="kw-2">&amp;</span>frames {
-<a href=#103 id=103 data-nosnippet>103</a>                chunk_buffer.push(frame[<span class="number">0</span>]); <span class="comment">// L
-<a href=#104 id=104 data-nosnippet>104</a>                </span>chunk_buffer.push(frame[<span class="number">1</span>]); <span class="comment">// R
-<a href=#105 id=105 data-nosnippet>105</a>            </span>}
-<a href=#106 id=106 data-nosnippet>106</a>        }
-<a href=#107 id=107 data-nosnippet>107</a>
-<a href=#108 id=108 data-nosnippet>108</a>        <span class="comment">// Write to ring buffer
-<a href=#109 id=109 data-nosnippet>109</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>written = <span class="number">0</span>;
-<a href=#110 id=110 data-nosnippet>110</a>        <span class="kw">for </span><span class="kw-2">&amp;</span>sample <span class="kw">in </span>chunk_buffer.iter() {
-<a href=#111 id=111 data-nosnippet>111</a>            <span class="kw">if </span>audio_queue.push(sample).is_ok() {
-<a href=#112 id=112 data-nosnippet>112</a>                written += <span class="number">1</span>;
-<a href=#113 id=113 data-nosnippet>113</a>            } <span class="kw">else </span>{
-<a href=#114 id=114 data-nosnippet>114</a>                <span class="kw">break</span>;
-<a href=#115 id=115 data-nosnippet>115</a>            }
-<a href=#116 id=116 data-nosnippet>116</a>        }
-<a href=#117 id=117 data-nosnippet>117</a>        <span class="kw">if </span><span class="macro">written !</span>= chunk_buffer.len() {
-<a href=#118 id=118 data-nosnippet>118</a>            <span class="macro">log::warn!</span>(
-<a href=#119 id=119 data-nosnippet>119</a>                <span class="string">"Failed to write full chunk: {} / {}"</span>,
-<a href=#120 id=120 data-nosnippet>120</a>                written,
-<a href=#121 id=121 data-nosnippet>121</a>                chunk_buffer.len()
-<a href=#122 id=122 data-nosnippet>122</a>            );
-<a href=#123 id=123 data-nosnippet>123</a>        }
-<a href=#124 id=124 data-nosnippet>124</a>
-<a href=#125 id=125 data-nosnippet>125</a>        block_count += <span class="number">1</span>;
-<a href=#126 id=126 data-nosnippet>126</a>        <span class="comment">// Every ~1 second (86 blocks @ 512 frames / 44100 Hz), log a status line
-<a href=#127 id=127 data-nosnippet>127</a>        </span><span class="kw">if </span>block_count.is_multiple_of(<span class="number">86</span>) {
-<a href=#128 id=128 data-nosnippet>128</a>            <span class="kw">let </span>max_sample = chunk_buffer.iter().cloned().fold(<span class="number">0.0_f32</span>, f32::max);
-<a href=#129 id=129 data-nosnippet>129</a>            <span class="kw">let </span>active_sources = (<span class="number">0</span>..system.sources_len())
-<a href=#130 id=130 data-nosnippet>130</a>                .filter(|<span class="kw-2">&amp;</span>i| system.is_source_active(i))
-<a href=#131 id=131 data-nosnippet>131</a>                .count();
-<a href=#132 id=132 data-nosnippet>132</a>            <span class="macro">log::info!</span>(
-<a href=#133 id=133 data-nosnippet>133</a>                <span class="string">"[render] block={block_count} queue={}/{} chunk={} samples max={:.4} active_sources={active_sources}/{}"</span>,
-<a href=#134 id=134 data-nosnippet>134</a>                audio_queue.len(),
-<a href=#135 id=135 data-nosnippet>135</a>                target_samples,
-<a href=#136 id=136 data-nosnippet>136</a>                chunk_buffer.len(),
-<a href=#137 id=137 data-nosnippet>137</a>                max_sample,
-<a href=#138 id=138 data-nosnippet>138</a>                system.sources_len()
-<a href=#139 id=139 data-nosnippet>139</a>            );
-<a href=#140 id=140 data-nosnippet>140</a>        }
-<a href=#141 id=141 data-nosnippet>141</a>
-<a href=#142 id=142 data-nosnippet>142</a>        <span class="comment">// Broadcast chunk for recording / analysis
-<a href=#143 id=143 data-nosnippet>143</a>        </span>event_tx.send(BackendEvent::Audio(AudioEvent::Chunk(chunk_buffer.clone())));
-<a href=#144 id=144 data-nosnippet>144</a>    }
-<a href=#145 id=145 data-nosnippet>145</a>}
-<a href=#146 id=146 data-nosnippet>146</a>
-<a href=#147 id=147 data-nosnippet>147</a><span class="kw">fn </span>process_instrument_message(system: <span class="kw-2">&amp;mut </span>System, cmd: InstrumentAudioMessage) {
-<a href=#148 id=148 data-nosnippet>148</a>    <span class="kw">match </span>cmd {
-<a href=#149 id=149 data-nosnippet>149</a>        InstrumentAudioMessage::NoteStart {
-<a href=#150 id=150 data-nosnippet>150</a>            source_index,
-<a href=#151 id=151 data-nosnippet>151</a>            note,
-<a href=#152 id=152 data-nosnippet>152</a>            velocity,
-<a href=#153 id=153 data-nosnippet>153</a>        } =&gt; {
-<a href=#154 id=154 data-nosnippet>154</a>            system.start_note(source_index, note, velocity);
-<a href=#155 id=155 data-nosnippet>155</a>        }
-<a href=#156 id=156 data-nosnippet>156</a>        InstrumentAudioMessage::NoteStop { source_index, note } =&gt; {
-<a href=#157 id=157 data-nosnippet>157</a>            system.stop_note(source_index, note);
-<a href=#158 id=158 data-nosnippet>158</a>        }
-<a href=#159 id=159 data-nosnippet>159</a>    }
-<a href=#160 id=160 data-nosnippet>160</a>}
-<a href=#161 id=161 data-nosnippet>161</a>
-<a href=#162 id=162 data-nosnippet>162</a><span class="kw">fn </span>process_graph_message(system: <span class="kw-2">&amp;mut </span>System, cmd: GraphAudioMessage, event_tx: <span class="kw-2">&amp;</span>EventSender) {
-<a href=#163 id=163 data-nosnippet>163</a>    <span class="kw">match </span>cmd {
-<a href=#164 id=164 data-nosnippet>164</a>        GraphAudioMessage::Swap(new_system) =&gt; {
-<a href=#165 id=165 data-nosnippet>165</a>            <span class="kw-2">*</span>system = new_system;
-<a href=#166 id=166 data-nosnippet>166</a>        }
-<a href=#167 id=167 data-nosnippet>167</a>        GraphAudioMessage::Clear =&gt; {
-<a href=#168 id=168 data-nosnippet>168</a>            <span class="kw-2">*</span>system = System::silent();
-<a href=#169 id=169 data-nosnippet>169</a>        }
-<a href=#170 id=170 data-nosnippet>170</a>        GraphAudioMessage::StartSource { source_index } =&gt; {
-<a href=#171 id=171 data-nosnippet>171</a>            <span class="macro">log::info!</span>(
-<a href=#172 id=172 data-nosnippet>172</a>                <span class="string">"[render] StartSource source_index={source_index} (system has {} sources)"</span>,
-<a href=#173 id=173 data-nosnippet>173</a>                system.sources_len()
-<a href=#174 id=174 data-nosnippet>174</a>            );
-<a href=#175 id=175 data-nosnippet>175</a>            system.start_source(source_index);
-<a href=#176 id=176 data-nosnippet>176</a>            <span class="macro">log::info!</span>(
-<a href=#177 id=177 data-nosnippet>177</a>                <span class="string">"[render] source {source_index} is_active={}"</span>,
-<a href=#178 id=178 data-nosnippet>178</a>                system.is_source_active(source_index)
-<a href=#179 id=179 data-nosnippet>179</a>            );
-<a href=#180 id=180 data-nosnippet>180</a>        }
-<a href=#181 id=181 data-nosnippet>181</a>        GraphAudioMessage::StopSource { source_index } =&gt; {
-<a href=#182 id=182 data-nosnippet>182</a>            <span class="macro">log::info!</span>(<span class="string">"[render] StopSource source_index={source_index}"</span>);
-<a href=#183 id=183 data-nosnippet>183</a>            system.stop_source(source_index);
-<a href=#184 id=184 data-nosnippet>184</a>        }
-<a href=#185 id=185 data-nosnippet>185</a>        GraphAudioMessage::KillSource { source_index } =&gt; {
-<a href=#186 id=186 data-nosnippet>186</a>            <span class="macro">log::info!</span>(<span class="string">"[render] KillSource source_index={source_index}"</span>);
-<a href=#187 id=187 data-nosnippet>187</a>            system.kill_source(source_index);
-<a href=#188 id=188 data-nosnippet>188</a>        }
-<a href=#189 id=189 data-nosnippet>189</a>        GraphAudioMessage::SetParameter {
-<a href=#190 id=190 data-nosnippet>190</a>            node_index,
-<a href=#191 id=191 data-nosnippet>191</a>            param_name,
-<a href=#192 id=192 data-nosnippet>192</a>            value,
-<a href=#193 id=193 data-nosnippet>193</a>        } =&gt; {
-<a href=#194 id=194 data-nosnippet>194</a>            <span class="kw">if </span>param_name == <span class="string">"mix_mode" </span>{
-<a href=#195 id=195 data-nosnippet>195</a>                <span class="kw">let </span>mode = rustic_meta::MixMode::from_ordinal(value <span class="kw">as </span>usize);
-<a href=#196 id=196 data-nosnippet>196</a>                system.set_mix_mode(NodeIndex::new(node_index), mode);
-<a href=#197 id=197 data-nosnippet>197</a>            } <span class="kw">else if let </span><span class="prelude-val">Some</span>(f) = system.get_filter_mut(NodeIndex::new(node_index)) {
-<a href=#198 id=198 data-nosnippet>198</a>                f.set_parameter(param_name.as_str(), value);
-<a href=#199 id=199 data-nosnippet>199</a>            }
+<a href=#96 id=96 data-nosnippet>96</a>        <span class="comment">// Sync master volume to the sink each block (cheap atomic read).
+<a href=#97 id=97 data-nosnippet>97</a>        // The sink applies it before limiting, so the limiter always acts as
+<a href=#98 id=98 data-nosnippet>98</a>        // a hard ceiling regardless of the volume setting.
+<a href=#99 id=99 data-nosnippet>99</a>        </span>system.set_sink_parameter(
+<a href=#100 id=100 data-nosnippet>100</a>            <span class="number">0</span>,
+<a href=#101 id=101 data-nosnippet>101</a>            <span class="string">"master_volume"</span>,
+<a href=#102 id=102 data-nosnippet>102</a>            shared_state.master_volume.load(Ordering::Relaxed),
+<a href=#103 id=103 data-nosnippet>103</a>        );
+<a href=#104 id=104 data-nosnippet>104</a>
+<a href=#105 id=105 data-nosnippet>105</a>        <span class="comment">// Run the graph for one block
+<a href=#106 id=106 data-nosnippet>106</a>        </span>system.run();
+<a href=#107 id=107 data-nosnippet>107</a>        chunk_buffer.clear();
+<a href=#108 id=108 data-nosnippet>108</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(sink) = system.get_sink(<span class="number">0</span>) {
+<a href=#109 id=109 data-nosnippet>109</a>            <span class="kw">let </span>frames = sink.consume();
+<a href=#110 id=110 data-nosnippet>110</a>            <span class="macro">log::trace!</span>(<span class="string">"[render] consumed {} frames from sink"</span>, frames.len());
+<a href=#111 id=111 data-nosnippet>111</a>            <span class="kw">for </span>frame <span class="kw">in </span><span class="kw-2">&amp;</span>frames {
+<a href=#112 id=112 data-nosnippet>112</a>                chunk_buffer.push(frame[<span class="number">0</span>]); <span class="comment">// L — master volume + limiting applied inside sink
+<a href=#113 id=113 data-nosnippet>113</a>                </span>chunk_buffer.push(frame[<span class="number">1</span>]); <span class="comment">// R
+<a href=#114 id=114 data-nosnippet>114</a>            </span>}
+<a href=#115 id=115 data-nosnippet>115</a>        }
+<a href=#116 id=116 data-nosnippet>116</a>
+<a href=#117 id=117 data-nosnippet>117</a>        <span class="comment">// Write to ring buffer
+<a href=#118 id=118 data-nosnippet>118</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>written = <span class="number">0</span>;
+<a href=#119 id=119 data-nosnippet>119</a>        <span class="kw">for </span><span class="kw-2">&amp;</span>sample <span class="kw">in </span>chunk_buffer.iter() {
+<a href=#120 id=120 data-nosnippet>120</a>            <span class="kw">if </span>audio_queue.push(sample).is_ok() {
+<a href=#121 id=121 data-nosnippet>121</a>                written += <span class="number">1</span>;
+<a href=#122 id=122 data-nosnippet>122</a>            } <span class="kw">else </span>{
+<a href=#123 id=123 data-nosnippet>123</a>                <span class="kw">break</span>;
+<a href=#124 id=124 data-nosnippet>124</a>            }
+<a href=#125 id=125 data-nosnippet>125</a>        }
+<a href=#126 id=126 data-nosnippet>126</a>        <span class="kw">if </span><span class="macro">written !</span>= chunk_buffer.len() {
+<a href=#127 id=127 data-nosnippet>127</a>            <span class="macro">log::warn!</span>(
+<a href=#128 id=128 data-nosnippet>128</a>                <span class="string">"Failed to write full chunk: {} / {}"</span>,
+<a href=#129 id=129 data-nosnippet>129</a>                written,
+<a href=#130 id=130 data-nosnippet>130</a>                chunk_buffer.len()
+<a href=#131 id=131 data-nosnippet>131</a>            );
+<a href=#132 id=132 data-nosnippet>132</a>        }
+<a href=#133 id=133 data-nosnippet>133</a>
+<a href=#134 id=134 data-nosnippet>134</a>        block_count += <span class="number">1</span>;
+<a href=#135 id=135 data-nosnippet>135</a>        <span class="comment">// Every ~1 second (86 blocks @ 512 frames / 44100 Hz), log a status line
+<a href=#136 id=136 data-nosnippet>136</a>        </span><span class="kw">if </span>block_count.is_multiple_of(<span class="number">86</span>) {
+<a href=#137 id=137 data-nosnippet>137</a>            <span class="kw">let </span>max_sample = chunk_buffer.iter().cloned().fold(<span class="number">0.0_f32</span>, f32::max);
+<a href=#138 id=138 data-nosnippet>138</a>            <span class="kw">let </span>active_sources = (<span class="number">0</span>..system.sources_len())
+<a href=#139 id=139 data-nosnippet>139</a>                .filter(|<span class="kw-2">&amp;</span>i| system.is_source_active(i))
+<a href=#140 id=140 data-nosnippet>140</a>                .count();
+<a href=#141 id=141 data-nosnippet>141</a>            <span class="macro">log::trace!</span>(
+<a href=#142 id=142 data-nosnippet>142</a>                <span class="string">"[render] block={block_count} queue={}/{} chunk={} samples max={:.4} active_sources={active_sources}/{}"</span>,
+<a href=#143 id=143 data-nosnippet>143</a>                audio_queue.len(),
+<a href=#144 id=144 data-nosnippet>144</a>                target_samples,
+<a href=#145 id=145 data-nosnippet>145</a>                chunk_buffer.len(),
+<a href=#146 id=146 data-nosnippet>146</a>                max_sample,
+<a href=#147 id=147 data-nosnippet>147</a>                system.sources_len()
+<a href=#148 id=148 data-nosnippet>148</a>            );
+<a href=#149 id=149 data-nosnippet>149</a>        }
+<a href=#150 id=150 data-nosnippet>150</a>
+<a href=#151 id=151 data-nosnippet>151</a>        <span class="comment">// Broadcast chunk for recording / analysis.
+<a href=#152 id=152 data-nosnippet>152</a>        // TODO: Arc&lt;Vec&lt;f32&gt;&gt; would eliminate the clone-per-broadcast, but
+<a href=#153 id=153 data-nosnippet>153</a>        //       AudioEvent::Chunk derives Serialize which Arc&lt;T&gt; doesn't satisfy
+<a href=#154 id=154 data-nosnippet>154</a>        //       without a serde newtype wrapper.
+<a href=#155 id=155 data-nosnippet>155</a>        </span>event_tx.send(BackendEvent::Audio(AudioEvent::Chunk(chunk_buffer.clone())));
+<a href=#156 id=156 data-nosnippet>156</a>    }
+<a href=#157 id=157 data-nosnippet>157</a>}
+<a href=#158 id=158 data-nosnippet>158</a>
+<a href=#159 id=159 data-nosnippet>159</a><span class="kw">fn </span>process_instrument_message(system: <span class="kw-2">&amp;mut </span>System, cmd: InstrumentAudioMessage) {
+<a href=#160 id=160 data-nosnippet>160</a>    <span class="kw">match </span>cmd {
+<a href=#161 id=161 data-nosnippet>161</a>        InstrumentAudioMessage::NoteStart {
+<a href=#162 id=162 data-nosnippet>162</a>            source_index,
+<a href=#163 id=163 data-nosnippet>163</a>            note,
+<a href=#164 id=164 data-nosnippet>164</a>            velocity,
+<a href=#165 id=165 data-nosnippet>165</a>        } =&gt; {
+<a href=#166 id=166 data-nosnippet>166</a>            system.start_note(source_index, note, velocity);
+<a href=#167 id=167 data-nosnippet>167</a>        }
+<a href=#168 id=168 data-nosnippet>168</a>        InstrumentAudioMessage::NoteStop { source_index, note } =&gt; {
+<a href=#169 id=169 data-nosnippet>169</a>            system.stop_note(source_index, note);
+<a href=#170 id=170 data-nosnippet>170</a>        }
+<a href=#171 id=171 data-nosnippet>171</a>    }
+<a href=#172 id=172 data-nosnippet>172</a>}
+<a href=#173 id=173 data-nosnippet>173</a>
+<a href=#174 id=174 data-nosnippet>174</a><span class="kw">fn </span>process_graph_message(system: <span class="kw-2">&amp;mut </span>System, cmd: GraphAudioMessage, event_tx: <span class="kw-2">&amp;</span>EventSender) {
+<a href=#175 id=175 data-nosnippet>175</a>    <span class="kw">match </span>cmd {
+<a href=#176 id=176 data-nosnippet>176</a>        GraphAudioMessage::Swap(new_system) =&gt; {
+<a href=#177 id=177 data-nosnippet>177</a>            <span class="kw-2">*</span>system = new_system;
+<a href=#178 id=178 data-nosnippet>178</a>        }
+<a href=#179 id=179 data-nosnippet>179</a>        GraphAudioMessage::Clear =&gt; {
+<a href=#180 id=180 data-nosnippet>180</a>            <span class="kw-2">*</span>system = System::silent();
+<a href=#181 id=181 data-nosnippet>181</a>        }
+<a href=#182 id=182 data-nosnippet>182</a>        GraphAudioMessage::StartSource { source_index } =&gt; {
+<a href=#183 id=183 data-nosnippet>183</a>            <span class="macro">log::info!</span>(
+<a href=#184 id=184 data-nosnippet>184</a>                <span class="string">"[render] StartSource source_index={source_index} (system has {} sources)"</span>,
+<a href=#185 id=185 data-nosnippet>185</a>                system.sources_len()
+<a href=#186 id=186 data-nosnippet>186</a>            );
+<a href=#187 id=187 data-nosnippet>187</a>            system.start_source(source_index);
+<a href=#188 id=188 data-nosnippet>188</a>            <span class="macro">log::info!</span>(
+<a href=#189 id=189 data-nosnippet>189</a>                <span class="string">"[render] source {source_index} is_active={}"</span>,
+<a href=#190 id=190 data-nosnippet>190</a>                system.is_source_active(source_index)
+<a href=#191 id=191 data-nosnippet>191</a>            );
+<a href=#192 id=192 data-nosnippet>192</a>        }
+<a href=#193 id=193 data-nosnippet>193</a>        GraphAudioMessage::StopSource { source_index } =&gt; {
+<a href=#194 id=194 data-nosnippet>194</a>            <span class="macro">log::info!</span>(<span class="string">"[render] StopSource source_index={source_index}"</span>);
+<a href=#195 id=195 data-nosnippet>195</a>            system.stop_source(source_index);
+<a href=#196 id=196 data-nosnippet>196</a>        }
+<a href=#197 id=197 data-nosnippet>197</a>        GraphAudioMessage::KillSource { source_index } =&gt; {
+<a href=#198 id=198 data-nosnippet>198</a>            <span class="macro">log::info!</span>(<span class="string">"[render] KillSource source_index={source_index}"</span>);
+<a href=#199 id=199 data-nosnippet>199</a>            system.kill_source(source_index);
 <a href=#200 id=200 data-nosnippet>200</a>        }
-<a href=#201 id=201 data-nosnippet>201</a>        GraphAudioMessage::SetSourceParameter {
-<a href=#202 id=202 data-nosnippet>202</a>            source_index,
+<a href=#201 id=201 data-nosnippet>201</a>        GraphAudioMessage::SetParameter {
+<a href=#202 id=202 data-nosnippet>202</a>            node_index,
 <a href=#203 id=203 data-nosnippet>203</a>            param_name,
 <a href=#204 id=204 data-nosnippet>204</a>            value,
 <a href=#205 id=205 data-nosnippet>205</a>        } =&gt; {
-<a href=#206 id=206 data-nosnippet>206</a>            system.set_source_parameter(source_index, param_name.as_str(), value);
-<a href=#207 id=207 data-nosnippet>207</a>        }
-<a href=#208 id=208 data-nosnippet>208</a>        GraphAudioMessage::AddModulation {
-<a href=#209 id=209 data-nosnippet>209</a>            from_source,
-<a href=#210 id=210 data-nosnippet>210</a>            target,
-<a href=#211 id=211 data-nosnippet>211</a>            param_name,
-<a href=#212 id=212 data-nosnippet>212</a>        } =&gt; {
-<a href=#213 id=213 data-nosnippet>213</a>            system.add_mod_wire(from_source, target, param_name);
-<a href=#214 id=214 data-nosnippet>214</a>        }
-<a href=#215 id=215 data-nosnippet>215</a>        GraphAudioMessage::RemoveModulation {
-<a href=#216 id=216 data-nosnippet>216</a>            from_source,
-<a href=#217 id=217 data-nosnippet>217</a>            target,
-<a href=#218 id=218 data-nosnippet>218</a>            param_name,
-<a href=#219 id=219 data-nosnippet>219</a>        } =&gt; {
-<a href=#220 id=220 data-nosnippet>220</a>            system.remove_mod_wire(from_source, <span class="kw-2">&amp;</span>target, <span class="kw-2">&amp;</span>param_name);
-<a href=#221 id=221 data-nosnippet>221</a>        }
-<a href=#222 id=222 data-nosnippet>222</a>    }
-<a href=#223 id=223 data-nosnippet>223</a>    <span class="comment">// Suppress unused parameter warning when no variant uses event_tx yet
-<a href=#224 id=224 data-nosnippet>224</a>    </span><span class="kw">let _ </span>= event_tx;
-<a href=#225 id=225 data-nosnippet>225</a>}
-<a href=#226 id=226 data-nosnippet>226</a>
-<a href=#227 id=227 data-nosnippet>227</a><span class="kw">fn </span>process_audio_message(system: <span class="kw-2">&amp;mut </span>System, msg: AudioMessage, event_tx: <span class="kw-2">&amp;</span>EventSender) {
-<a href=#228 id=228 data-nosnippet>228</a>    <span class="kw">match </span>msg {
-<a href=#229 id=229 data-nosnippet>229</a>        AudioMessage::Instrument(cmd) =&gt; process_instrument_message(system, cmd),
-<a href=#230 id=230 data-nosnippet>230</a>        AudioMessage::Graph(cmd) =&gt; process_graph_message(system, cmd, event_tx),
-<a href=#231 id=231 data-nosnippet>231</a>        AudioMessage::Shutdown =&gt; {
-<a href=#232 id=232 data-nosnippet>232</a>            <span class="comment">// Handled via shutdown flag in shared_state
-<a href=#233 id=233 data-nosnippet>233</a>        </span>}
+<a href=#206 id=206 data-nosnippet>206</a>            <span class="kw">if </span>param_name == <span class="string">"mix_mode" </span>{
+<a href=#207 id=207 data-nosnippet>207</a>                <span class="kw">let </span>mode = rustic_meta::MixMode::from_ordinal(value <span class="kw">as </span>usize);
+<a href=#208 id=208 data-nosnippet>208</a>                system.set_mix_mode(NodeIndex::new(node_index), mode);
+<a href=#209 id=209 data-nosnippet>209</a>            } <span class="kw">else if let </span><span class="prelude-val">Some</span>(f) = system.get_filter_mut(NodeIndex::new(node_index)) {
+<a href=#210 id=210 data-nosnippet>210</a>                f.set_parameter(param_name.as_str(), value);
+<a href=#211 id=211 data-nosnippet>211</a>            }
+<a href=#212 id=212 data-nosnippet>212</a>        }
+<a href=#213 id=213 data-nosnippet>213</a>        GraphAudioMessage::SetSourceParameter {
+<a href=#214 id=214 data-nosnippet>214</a>            source_index,
+<a href=#215 id=215 data-nosnippet>215</a>            param_name,
+<a href=#216 id=216 data-nosnippet>216</a>            value,
+<a href=#217 id=217 data-nosnippet>217</a>        } =&gt; {
+<a href=#218 id=218 data-nosnippet>218</a>            system.set_source_parameter(source_index, param_name.as_str(), value);
+<a href=#219 id=219 data-nosnippet>219</a>        }
+<a href=#220 id=220 data-nosnippet>220</a>        GraphAudioMessage::AddModulation {
+<a href=#221 id=221 data-nosnippet>221</a>            from_source,
+<a href=#222 id=222 data-nosnippet>222</a>            target,
+<a href=#223 id=223 data-nosnippet>223</a>            param_name,
+<a href=#224 id=224 data-nosnippet>224</a>        } =&gt; {
+<a href=#225 id=225 data-nosnippet>225</a>            system.add_mod_wire(from_source, target, param_name);
+<a href=#226 id=226 data-nosnippet>226</a>        }
+<a href=#227 id=227 data-nosnippet>227</a>        GraphAudioMessage::RemoveModulation {
+<a href=#228 id=228 data-nosnippet>228</a>            from_source,
+<a href=#229 id=229 data-nosnippet>229</a>            target,
+<a href=#230 id=230 data-nosnippet>230</a>            param_name,
+<a href=#231 id=231 data-nosnippet>231</a>        } =&gt; {
+<a href=#232 id=232 data-nosnippet>232</a>            system.remove_mod_wire(from_source, <span class="kw-2">&amp;</span>target, <span class="kw-2">&amp;</span>param_name);
+<a href=#233 id=233 data-nosnippet>233</a>        }
 <a href=#234 id=234 data-nosnippet>234</a>    }
-<a href=#235 id=235 data-nosnippet>235</a>}
+<a href=#235 id=235 data-nosnippet>235</a>    <span class="comment">// Suppress unused parameter warning when no variant uses event_tx yet
+<a href=#236 id=236 data-nosnippet>236</a>    </span><span class="kw">let _ </span>= event_tx;
+<a href=#237 id=237 data-nosnippet>237</a>}
+<a href=#238 id=238 data-nosnippet>238</a>
+<a href=#239 id=239 data-nosnippet>239</a><span class="kw">fn </span>process_audio_message(system: <span class="kw-2">&amp;mut </span>System, msg: AudioMessage, event_tx: <span class="kw-2">&amp;</span>EventSender) {
+<a href=#240 id=240 data-nosnippet>240</a>    <span class="kw">match </span>msg {
+<a href=#241 id=241 data-nosnippet>241</a>        AudioMessage::Instrument(cmd) =&gt; process_instrument_message(system, cmd),
+<a href=#242 id=242 data-nosnippet>242</a>        AudioMessage::Graph(cmd) =&gt; process_graph_message(system, cmd, event_tx),
+<a href=#243 id=243 data-nosnippet>243</a>        AudioMessage::Shutdown =&gt; {
+<a href=#244 id=244 data-nosnippet>244</a>            <span class="comment">// Handled via shutdown flag in shared_state
+<a href=#245 id=245 data-nosnippet>245</a>        </span>}
+<a href=#246 id=246 data-nosnippet>246</a>    }
+<a href=#247 id=247 data-nosnippet>247</a>}
 </code></pre></div></section></main></body></html>
