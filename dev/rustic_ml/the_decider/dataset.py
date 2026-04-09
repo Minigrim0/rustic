@@ -75,3 +75,4 @@ class DeciderDataset(Dataset):
             "mel":  torch.from_numpy(self._fix_length(data["mel"])),
             "note": torch.tensor(int(data["note"]), dtype=torch.int64),
         }
+
