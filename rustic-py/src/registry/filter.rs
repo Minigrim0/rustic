@@ -38,6 +38,15 @@ pub fn build_filter(spec: &FilterSpec, sample_rate: f32) -> Result<Box<dyn Filte
             }
             Box::new(c)
         }
+        "Limiter" => {
+            let mut l = Limiter::default();
+            for (k, v) in p {
+                if let Some(f) = v.as_f64() {
+                    l.set_parameter(k.as_str(), f as f32);
+                }
+            }
+            Box::new(l)
+        }
         "Tremolo" => Box::new(Tremolo::new(
             get_f32(p, "frequency", 5.0),
             get_f32(p, "depth", 0.5),

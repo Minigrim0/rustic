@@ -47,7 +47,19 @@ class TrainingConfig:
     n_epochs: int = 80
     lr: float = 1e-3
     seed: int = 42
+    dropout: float = 0.1
     lambda_waveform: float = 1.0
+
+    # ── TheOracle / transformer-specific ──────────────────────────────────
+    d_model: int = 256
+    nhead: int = 8
+    ffn_dim: int = 1024
+    n_enc_layers: int = 4
+    n_dec_layers: int = 4
+    lambda_cont: float = 1.0
+    lambda_cat: float = 0.5
+    max_seq_len: int = 256
+    ckpt_every: int = 10
 
 
 @dataclass

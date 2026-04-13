@@ -3,9 +3,16 @@
 
 [run]
 experiment = "TheOracle"
+mlflow_uri = "http://127.0.0.1:5000"
 
 [training]
-n_epochs   = 100
-batch_size = 32       # smaller — sequences are long
-# TODO: add oracle-specific hyperparameters (d_model, n_layers, n_heads, lambda_cont,
-#       lambda_cat, max_seq_len, complexity_cap, rl_phase toggle, etc.) once architecture is finalised
+n_epochs     = 10
+batch_size   = 32
+d_model      = 256
+nhead        = 8
+ffn_dim      = 1024
+n_enc_layers = 4
+n_dec_layers = 4
+lambda_cont  = 1.0
+lambda_cat   = 0.5
+max_seq_len  = 256

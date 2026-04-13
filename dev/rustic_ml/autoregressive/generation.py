@@ -33,4 +33,4 @@ def random_ar_spec(
     """
     if complexity is None:
         complexity = float(np.random.uniform(0.0, 0.5))
-    return GraphSpec.random(complexity=complexity).to_spec()
+    return GraphSpec.random(complexity=complexity).canonical().to_spec()

@@ -28,7 +28,6 @@ import logging
 import random
 import time
 
-import mlflow
 import numpy as np
 import torch
 import torch.nn as nn
@@ -39,7 +38,10 @@ from rustic_ml.legacy.config import Config
 from rustic_ml.the_decider.dataset import DeciderDataset
 from rustic_ml.the_decider.model import TheDecider
 from rustic_ml.the_decider.inference import evaluate
-from rustic_ml.training.setup import setup_mlflow, setup_device
+from rustic_ml.training.setup import (
+    setup_mlflow, setup_device,
+    mlflow_run, mlflow_log_params, mlflow_log_metrics, mlflow_log_model,
+)
 
 log = logging.getLogger(__name__)
 logging.basicConfig(
@@ -118,17 +120,17 @@ def train(config: Config, run_name: str | None = None) -> dict[str, float]:
     # MLflow
     log.info("Connecting to MLflow at %s …", mlflow_uri)
     t0 = time.monotonic()
-    setup_mlflow(mlflow_uri, experiment)
-    log.info("MLflow connected in %.1f s", time.monotonic() - t0)
+    use_mlflow = setup_mlflow(mlflow_uri, experiment)
+    log.info("MLflow ready in %.1f s", time.monotonic() - t0)
 
     log.info("Opening MLflow run …")
     t0 = time.monotonic()
     val_metrics: dict[str, float] = {}
-    with mlflow.start_run(run_name=run_name) as run:
+    with mlflow_run(use_mlflow, run_name=run_name) as run:
         log.info("Run opened in %.1f s  (id=%s)", time.monotonic() - t0, run.info.run_id)
         log.info("Logging params …")
         t0 = time.monotonic()
-        mlflow.log_params({
+        mlflow_log_params(use_mlflow, {
             "n_samples": n_samples,
             "val_split": val_split,
             "batch_size": batch_size,
@@ -160,10 +162,7 @@ def train(config: Config, run_name: str | None = None) -> dict[str, float]:
             train_loss /= n_train
             val_metrics = evaluate(model, val_loader, device)
 
-            mlflow.log_metrics(
-                {"train_loss": train_loss, **val_metrics},
-                step=epoch,
-            )
+            mlflow_log_metrics(use_mlflow, {"train_loss": train_loss, **val_metrics}, step=epoch)
             print(
                 f"Epoch {epoch:3d}/{n_epochs}  "
                 f"loss={train_loss:.4f}  "
@@ -173,7 +172,7 @@ def train(config: Config, run_name: str | None = None) -> dict[str, float]:
 
         log.info("Saving model artifact …")
         t0 = time.monotonic()
-        mlflow.pytorch.log_model(model, "model")
+        mlflow_log_model(use_mlflow, model, "model")
         log.info("Model artifact saved in %.1f s", time.monotonic() - t0)
         print(f"Run saved: {run.info.run_id}")
 

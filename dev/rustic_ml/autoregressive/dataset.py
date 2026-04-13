@@ -67,8 +67,15 @@ class ARDataset(Dataset):
             if path.exists():
                 return self._load(path)
 
-        spec = random_ar_spec(self.vocab, max_filters=self.max_filters, waveform=self.waveform)
-        mel = render_mel(spec)
+        for _attempt in range(10):
+            spec = random_ar_spec(self.vocab, max_filters=self.max_filters, waveform=self.waveform)
+            try:
+                mel = render_mel(spec)
+                break
+            except (ValueError, RuntimeError):
+                pass
+        else:
+            raise RuntimeError("ARDataset: failed to render a valid spec after 10 attempts")
         token_ids, cont_values, cat_values = spec_to_sequence(spec, self.vocab)
 
         # Note class is always at position 2 (the <VALS> following NOTE), field 0.
