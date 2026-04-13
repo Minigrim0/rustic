@@ -133,7 +133,7 @@ jobs:
           maturin develop -q
           mike deploy \
             --config-file mkdocs.yml \
-            --prefix doc/python \
+            --deploy-prefix doc/python \
             --push \
             ${{ steps.detect.outputs.py_version }} latest
 
